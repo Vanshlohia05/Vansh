@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+    color: #111111;
+    background-color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: #d2fd78;
+    color: #000000;
+  }
+
+  /* Hide scrollbars for clean minimal aesthetic */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* urfd.net Signature Styling */
+.op-link {
+  opacity: 0.45;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.op-link::before {
+  content: "(";
+  opacity: 0;
+  transform: translateX(2px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  margin-right: 1px;
+}
+
+.op-link::after {
+  content: ")";
+  opacity: 0;
+  transform: translateX(-2px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  margin-left: 1px;
+}
+
+.op-link:hover,
+.op-link.active {
+  opacity: 1;
+}
+
+.op-link:hover::before,
+.op-link:hover::after,
+.op-link.active::before,
+.op-link.active::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Animated Underline */
+.ul-link {
+  position: relative;
+  text-decoration: none;
+}
+
+.ul-link::after {
+  background-color: currentColor;
+  bottom: -1px;
+  content: "";
+  height: 1px;
+  left: 0;
+  position: absolute;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 0%;
+}
+
+.ul-link:hover::after {
+  width: 100%;
+}
+
+/* Gallery hover dimming effect */
+.gallery-grid:hover .gallery-item {
+  opacity: 0.15;
+}
+
+.gallery-grid:hover .gallery-item:hover {
+  opacity: 1;
+}
+
+/* Crossfade transitions */
+.fade-enter {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
