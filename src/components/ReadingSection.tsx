@@ -8,6 +8,7 @@ import {
   loadEssays,
   saveEssays,
 } from '../data/reading';
+import { supabase } from '../utils/supabase';
 import { playClickSound } from '../utils/sound';
 import {
   ArrowUpRight,
@@ -64,26 +65,48 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     setBooks(localB);
     setEssays(localE);
 
-    // 2. Fetch live data from backend/Supabase API
+    // 2. Fetch live data from Supabase
     const fetchLiveData = async () => {
       try {
-        const res = await fetch('/api/data');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.books && Array.isArray(data.books) && data.books.length > 0) {
-            // Merge live books on top of local
-            const merged = [...data.books, ...localB.filter((lb) => !data.books.some((db: any) => db.id === lb.id || db.title.toLowerCase() === lb.title.toLowerCase()))];
-            setBooks(merged);
-            saveBooks(merged);
-          }
-          if (data.essays && Array.isArray(data.essays) && data.essays.length > 0) {
-            const merged = [...data.essays, ...localE.filter((le) => !data.essays.some((de: any) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
-            setEssays(merged);
-            saveEssays(merged);
-          }
+        const [booksRes, essaysRes] = await Promise.all([
+          supabase.from('books').select('*').order('created_at', { ascending: false }),
+          supabase.from('essays').select('*').order('created_at', { ascending: false }),
+        ]);
+
+        if (booksRes.data && Array.isArray(booksRes.data) && booksRes.data.length > 0) {
+          const liveBooks: BookItem[] = booksRes.data.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            author: b.author,
+            year: b.year || '2026',
+            note: b.note || '',
+            h: b.h || 220,
+            w: b.w || 40,
+            c: b.c || '#1e293b',
+            fg: b.fg || '#ffffff',
+            link: b.link || undefined,
+          }));
+          const merged = [...liveBooks, ...localB.filter((lb) => !liveBooks.some((db) => db.id === lb.id || db.title.toLowerCase() === lb.title.toLowerCase()))];
+          setBooks(merged);
+          saveBooks(merged);
         }
-      } catch {
-        // Fallback gracefully to cached local data
+
+        if (essaysRes.data && Array.isArray(essaysRes.data) && essaysRes.data.length > 0) {
+          const liveEssays: EssayItem[] = essaysRes.data.map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            year: e.year || '2026',
+            type: e.type || 'Essay',
+            source: e.source || 'Web',
+            url: e.url || '',
+            cap: e.cap || e.source || 'Archive',
+          }));
+          const merged = [...liveEssays, ...localE.filter((le) => !liveEssays.some((de) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
+          setEssays(merged);
+          saveEssays(merged);
+        }
+      } catch (err) {
+        console.warn('Supabase direct fetch fallback:', err);
       }
     };
     fetchLiveData();

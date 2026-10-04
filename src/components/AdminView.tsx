@@ -8,6 +8,7 @@ import {
   saveEssays,
 } from '../data/reading';
 import { ARTICLES, Article } from '../data/writings';
+import { supabase } from '../utils/supabase';
 import { playClickSound } from '../utils/sound';
 import {
   Lock,
@@ -87,11 +88,73 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     content: '',
   });
 
-  // Check existing session token on mount
+  // Check existing session token on mount & fetch live Supabase records
   useEffect(() => {
-    setBooks(loadBooks());
-    setEssays(loadEssays());
+    const localB = loadBooks();
+    const localE = loadEssays();
+    setBooks(localB);
+    setEssays(localE);
     setArticles(ARTICLES);
+
+    const loadLive = async () => {
+      try {
+        const [booksRes, essaysRes, writingsRes] = await Promise.all([
+          supabase.from('books').select('*').order('created_at', { ascending: false }),
+          supabase.from('essays').select('*').order('created_at', { ascending: false }),
+          supabase.from('writings').select('*').order('created_at', { ascending: false }),
+        ]);
+
+        if (booksRes.data && Array.isArray(booksRes.data) && booksRes.data.length > 0) {
+          const liveBooks: BookItem[] = booksRes.data.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            author: b.author,
+            year: b.year || '2026',
+            note: b.note || '',
+            h: b.h || 220,
+            w: b.w || 40,
+            c: b.c || '#1e293b',
+            fg: b.fg || '#ffffff',
+            link: b.link || undefined,
+          }));
+          const merged = [...liveBooks, ...localB.filter((lb) => !liveBooks.some((db) => db.id === lb.id || db.title.toLowerCase() === lb.title.toLowerCase()))];
+          setBooks(merged);
+        }
+
+        if (essaysRes.data && Array.isArray(essaysRes.data) && essaysRes.data.length > 0) {
+          const liveEssays: EssayItem[] = essaysRes.data.map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            year: e.year || '2026',
+            type: e.type || 'Essay',
+            source: e.source || 'Web',
+            url: e.url || '',
+            cap: e.cap || e.source || 'Archive',
+          }));
+          const merged = [...liveEssays, ...localE.filter((le) => !liveEssays.some((de) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
+          setEssays(merged);
+        }
+
+        if (writingsRes.data && Array.isArray(writingsRes.data) && writingsRes.data.length > 0) {
+          const liveWritings: Article[] = writingsRes.data.map((w: any) => ({
+            id: w.id,
+            slug: w.slug || `art-${w.id}`,
+            title: w.title,
+            date: w.date || 'Recent',
+            year: w.year || '2026',
+            readTime: w.read_time || w.readTime || '5 min read',
+            category: w.category || 'Essays & Notes',
+            excerpt: w.excerpt || '',
+            content: Array.isArray(w.content) ? w.content : typeof w.content === 'string' ? w.content.split('\n\n') : [''],
+          }));
+          const merged = [...liveWritings, ...ARTICLES.filter((a) => !liveWritings.some((fl) => fl.slug === a.slug || fl.title.toLowerCase() === a.title.toLowerCase()))];
+          setArticles(merged);
+        }
+      } catch (err) {
+        console.warn('Admin load error:', err);
+      }
+    };
+    loadLive();
 
     const savedToken = sessionStorage.getItem('vansh_admin_token');
     if (savedToken) {
@@ -166,7 +229,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   };
 
   // Book Handlers
-  const handleAddBook = (e: React.FormEvent) => {
+  const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBook.title || !newBook.author) return;
 
@@ -198,20 +261,42 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       link: '',
     });
 
+    try {
+      await supabase.from('books').upsert({
+        id: bookToAdd.id,
+        title: bookToAdd.title,
+        author: bookToAdd.author,
+        year: bookToAdd.year,
+        note: bookToAdd.note,
+        h: bookToAdd.h,
+        w: bookToAdd.w,
+        c: bookToAdd.c,
+        fg: bookToAdd.fg,
+        link: bookToAdd.link || null,
+      });
+    } catch (err) {
+      console.warn('Supabase book upsert error:', err);
+    }
+
     playClickSound('book-slide');
     setSaveSuccessMsg(`Added "${bookToAdd.title}" to Bookshelf!`);
     setTimeout(() => setSaveSuccessMsg(''), 3500);
   };
 
-  const handleDeleteBook = (id: string) => {
+  const handleDeleteBook = async (id: string) => {
     playClickSound('pop');
     const updated = books.filter((b) => b.id !== id);
     setBooks(updated);
     saveBooks(updated);
+    try {
+      await supabase.from('books').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Supabase book delete error:', err);
+    }
   };
 
   // Essay Handlers
-  const handleAddEssay = (e: React.FormEvent) => {
+  const handleAddEssay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEssay.title || !newEssay.url) return;
 
@@ -237,16 +322,35 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       cap: '',
     });
 
+    try {
+      await supabase.from('essays').upsert({
+        id: essayToAdd.id,
+        title: essayToAdd.title,
+        year: essayToAdd.year,
+        type: essayToAdd.type,
+        source: essayToAdd.source,
+        url: essayToAdd.url,
+        cap: essayToAdd.cap,
+      });
+    } catch (err) {
+      console.warn('Supabase essay upsert error:', err);
+    }
+
     playClickSound('high');
     setSaveSuccessMsg(`Added "${essayToAdd.title}" to Essays & Reports!`);
     setTimeout(() => setSaveSuccessMsg(''), 3500);
   };
 
-  const handleDeleteEssay = (id: string) => {
+  const handleDeleteEssay = async (id: string) => {
     playClickSound('pop');
     const updated = essays.filter((e) => e.id !== id);
     setEssays(updated);
     saveEssays(updated);
+    try {
+      await supabase.from('essays').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Supabase essay delete error:', err);
+    }
   };
 
   // ─────────────────────────────────────────────────────────────

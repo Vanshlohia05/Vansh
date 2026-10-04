@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ARTICLES, Article } from '../data/writings';
+import { supabase } from '../utils/supabase';
 import { playClickSound } from '../utils/sound';
 import { ArrowUpRight, Search, Clock, ArrowDown } from 'lucide-react';
 
@@ -83,26 +84,25 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
   useEffect(() => {
     const fetchLiveArticles = async () => {
       try {
-        const res = await fetch('/api/data');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.writings && Array.isArray(data.writings) && data.writings.length > 0) {
-            const formattedLive: Article[] = data.writings.map((w: any) => ({
-              id: w.id,
-              slug: w.slug || `art-${w.id}`,
-              title: w.title,
-              date: w.date || 'Recent',
-              year: w.year || '2026',
-              readTime: w.read_time || w.readTime || '5 min read',
-              category: w.category || 'Essays & Notes',
-              excerpt: w.excerpt || '',
-              content: Array.isArray(w.content) ? w.content : typeof w.content === 'string' ? w.content.split('\n\n') : [''],
-            }));
-            const merged = [...formattedLive, ...ARTICLES.filter((a) => !formattedLive.some((fl) => fl.slug === a.slug || fl.title.toLowerCase() === a.title.toLowerCase()))];
-            setArticlesList(merged);
-          }
+        const { data, error } = await supabase.from('writings').select('*').order('created_at', { ascending: false });
+        if (!error && data && Array.isArray(data) && data.length > 0) {
+          const formattedLive: Article[] = data.map((w: any) => ({
+            id: w.id,
+            slug: w.slug || `art-${w.id}`,
+            title: w.title,
+            date: w.date || 'Recent',
+            year: w.year || '2026',
+            readTime: w.read_time || w.readTime || '5 min read',
+            category: w.category || 'Essays & Notes',
+            excerpt: w.excerpt || '',
+            content: Array.isArray(w.content) ? w.content : typeof w.content === 'string' ? w.content.split('\n\n') : [''],
+          }));
+          const merged = [...formattedLive, ...ARTICLES.filter((a) => !formattedLive.some((fl) => fl.slug === a.slug || fl.title.toLowerCase() === a.title.toLowerCase()))];
+          setArticlesList(merged);
         }
-      } catch {}
+      } catch (err) {
+        console.warn('Supabase direct writings fetch fallback:', err);
+      }
     };
     fetchLiveArticles();
   }, []);
