@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { playClickSound } from '../utils/sound';
-import { Coffee, Code, Bug, Rocket, PenTool, Play, RefreshCw, Zap } from 'lucide-react';
+import { Coffee, Code, Rocket, PenTool, Play, RefreshCw, Zap } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────
 // Physics & Vector Data Structures
 // ─────────────────────────────────────────────────────────────
 interface PhysicsProp {
   id: number;
-  type: 'cup' | 'bug' | 'cube' | 'disk' | 'gear' | 'rocketDebris';
+  type: 'cup' | 'cube' | 'disk' | 'gear' | 'rocketDebris';
   x: number;
   y: number;
   vx: number;
@@ -28,7 +28,7 @@ interface Particle {
   color: string;
   life: number;
   maxLife: number;
-  type?: 'smoke' | 'spark' | 'lightning' | 'steam';
+  type?: 'smoke' | 'spark' | 'lightning' | 'steam' | 'fire';
 }
 
 interface FloatingSkill {
@@ -42,7 +42,7 @@ interface FloatingSkill {
   rotation: number;
 }
 
-export type WorkRoutine = 'coffee' | 'design' | 'code' | 'bug' | 'deploy';
+export type WorkRoutine = 'coffee' | 'design' | 'code' | 'rocket';
 
 // Vansh's Real Skills from Resume
 const VANSH_SKILLS = [
@@ -68,9 +68,8 @@ export const StickmanHero: React.FC<{
   const [currentTask, setCurrentTask] = useState<WorkRoutine>('coffee');
   const [autoCycle, setAutoCycle] = useState<boolean>(true);
   const [taskName, setTaskName] = useState<string>('Morning Coffee & System Reboot ☕');
-  const [score, setScore] = useState<{ bugs: number; deploys: number; coffee: number }>({
-    bugs: 0,
-    deploys: 0,
+  const [score, setScore] = useState<{ launches: number; coffee: number }>({
+    launches: 1,
     coffee: 1,
   });
 
@@ -82,9 +81,8 @@ export const StickmanHero: React.FC<{
   const particlesRef = useRef<Particle[]>([]);
   const skillsRef = useRef<FloatingSkill[]>([]);
   const animFrameRef = useRef<number>(0);
-  const pcBurstedRef = useRef<boolean>(false);
 
-  // Stickman Physical Coordinates & Articulated Rig (Starts at coffee station x: 180)
+  // Stickman Physical Coordinates & Articulated Rig
   const stickmanRef = useRef({
     x: 180,
     y: 330,
@@ -92,14 +90,16 @@ export const StickmanHero: React.FC<{
     vy: 0,
     targetX: 180,
     isSitting: false,
+    isOnRocket: false,
+    isFalling: false,
     facing: -1,
-    actionState: 'pouring',
+    actionState: 'pouring', // pouring, walking, typing, riding, falling, fried
     headAngle: 0,
     armLAngle: 0,
     armRAngle: 0,
     squashY: 1,
     squashX: 1,
-    expression: 'focus',
+    expression: 'focus', // focus, happy, shocked, fried
   });
 
   // Routine Switcher
@@ -114,61 +114,46 @@ export const StickmanHero: React.FC<{
       setCurrentTask(routine);
 
       const sm = stickmanRef.current;
-      pcBurstedRef.current = false;
+      sm.isOnRocket = false;
+      sm.isFalling = false;
       skillsRef.current = []; // Clear previous floating text
 
       if (routine === 'coffee') {
-        setTaskName('Morning Coffee & System Reboot ☕');
+        setTaskName('1. Morning Coffee & System Reboot ☕');
         sm.targetX = 180;
+        sm.y = 330;
         sm.isSitting = false;
         sm.facing = -1;
         sm.expression = 'focus';
         playClickSound('paper');
         onActivityChange?.('Coffee Station & Fueling Up ☕', 1);
       } else if (routine === 'design') {
-        setTaskName('Interconnected Hobbies & Non-Linear Mindmap 🌀');
+        setTaskName('2. Interconnected Hobbies & Non-Linear Mindmap 🌀');
         sm.targetX = 720;
+        sm.y = 330;
         sm.isSitting = false;
         sm.facing = 1;
         sm.expression = 'focus';
         playClickSound('high');
         onActivityChange?.('Interconnected Mindmap & Non-Linear Ideas 🌀', 2);
       } else if (routine === 'code') {
-        setTaskName('Deep Code & Skill Emission Engine 💻');
+        setTaskName('3. Deep Code & Skill Emission Engine 💻');
         sm.targetX = 420;
+        sm.y = 330;
         sm.isSitting = true;
         sm.facing = 1;
         sm.expression = 'focus';
         playClickSound('tick');
         onActivityChange?.('Deep Coding & Skills Synthesis 💻', 3);
-      } else if (routine === 'bug') {
-        setTaskName('Physics Bug Squashing 🐛');
-        sm.targetX = 420;
+      } else if (routine === 'rocket') {
+        setTaskName('4. Rocket Ride ➔ Mid-Air Burst ➔ PC Meltdown 🚀💥');
+        sm.targetX = 630;
         sm.isSitting = false;
-        sm.facing = 1;
-        sm.expression = 'shocked';
-        playClickSound('pop');
-        propsRef.current.push({
-          id: Date.now(),
-          type: 'bug',
-          x: 430 + (Math.random() * 80 - 40),
-          y: 50,
-          vx: (Math.random() - 0.5) * 6,
-          vy: 2,
-          radius: 14,
-          angle: 0,
-          angularVelocity: 0.15,
-          bounces: 0,
-        });
-        onActivityChange?.('Bug Hunting & Physics Fixes 🐛', 4);
-      } else if (routine === 'deploy') {
-        setTaskName('Production Launch ➔ PC Burst & Brain Fried 🤯⚡');
-        sm.targetX = 420;
-        sm.isSitting = true;
         sm.facing = 1;
         sm.expression = 'happy';
         playClickSound('spear');
-        onActivityChange?.('Production Launch & Overclock Meltdown 🚀💥', 5);
+        setScore((s) => ({ ...s, launches: s.launches + 1 }));
+        onActivityChange?.('Rocket Ride, Mid-Air Burst & PC Meltdown 🚀🤯', 4);
       }
     },
     [onActivityChange]
@@ -182,7 +167,7 @@ export const StickmanHero: React.FC<{
     const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
 
-    const propTypes: ('cup' | 'cube' | 'disk' | 'bug' | 'gear')[] = ['cup', 'cube', 'disk', 'bug', 'gear'];
+    const propTypes: ('cup' | 'cube' | 'disk' | 'gear')[] = ['cup', 'cube', 'disk', 'gear'];
     const selectedType = propTypes[Math.floor(Math.random() * propTypes.length)];
 
     propsRef.current.push({
@@ -227,31 +212,33 @@ export const StickmanHero: React.FC<{
     const DESK_X = 390;
     const DESK_Y = 280;
     const DESK_W = 160;
+    const CHAIR_X = 405;
 
-    const routinesList: WorkRoutine[] = ['coffee', 'design', 'code', 'bug', 'deploy'];
+    const routinesList: WorkRoutine[] = ['coffee', 'design', 'code', 'rocket'];
 
     // Timing durations per routine (in seconds)
     const routineDurations: Record<WorkRoutine, number> = {
       coffee: 6.5,
       design: 8.0,
       code: 8.5,
-      bug: 7.0,
-      deploy: 9.0, // Rocket 0-2.8s, then PC burst & fried brain at 2.8s-9s, then loops back to coffee!
+      rocket: 10.5, // 0-0.8s mount, 0.8-2.8s fly, 2.8s burst, 2.8-4.2s fall, 4.2-10.5s PC burst & fried brain
     };
+
+    let rocketExploded = false;
 
     const animate = (time: number) => {
       const dt = Math.min((time - lastTime) / 1000, 0.05);
       lastTime = time;
       routineTimeRef.current += dt;
 
-      // ── Auto-cycle Work Routine in Sequence: coffee ➔ design ➔ code ➔ bug ➔ deploy (burst) ➔ reboot ──
-      const currentDuration = routineDurations[routineRef.current] || 7.5;
+      // ── Auto-cycle Work Routine Sequence ──
+      const currentDuration = routineDurations[routineRef.current] || 8.0;
       if (autoCycleRef.current && routineTimeRef.current > currentDuration) {
         const nextIdx = (routinesList.indexOf(routineRef.current) + 1) % routinesList.length;
         switchRoutine(routinesList[nextIdx]);
       }
 
-      // Resize canvas to match display size (Retina crispness)
+      // Resize canvas to match display size
       const dpr = window.devicePixelRatio || 1;
       const displayW = canvas.clientWidth;
       const displayH = canvas.clientHeight;
@@ -277,6 +264,7 @@ export const StickmanHero: React.FC<{
       ctx.lineJoin = 'round';
 
       const t = routineTimeRef.current;
+      const sm = stickmanRef.current;
 
       // ── 1. ENVIRONMENT / LAB STAGE ─────────────────────────
       // Ground baseline
@@ -342,9 +330,7 @@ export const StickmanHero: React.FC<{
       }
 
       // ── Environment Station B: Whiteboard Hobbies & Non-Linear Mindmap ──
-      // Whiteboard outer frame
       ctx.strokeRect(680, 90, 230, 175);
-      // Stand legs
       ctx.beginPath();
       ctx.moveTo(695, 265);
       ctx.lineTo(680, FLOOR_Y);
@@ -352,57 +338,45 @@ export const StickmanHero: React.FC<{
       ctx.lineTo(910, FLOOR_Y);
       ctx.stroke();
 
-      // Board Header
       ctx.font = 'bold 8px monospace';
       ctx.fillText('HOBBIES & MINDMAP', 740, 105);
 
       ctx.lineWidth = 1.8;
 
-      // ── 1. Cosmology Node 🌌 ──
+      // Mindmap nodes
       ctx.strokeRect(695, 115, 68, 20);
       ctx.fillText('Cosmology 🌌', 700, 128);
 
-      // ── 2. Books Node 📚 ──
       ctx.strokeRect(825, 115, 55, 20);
       ctx.fillText('Books 📚', 832, 128);
 
-      // ── 3. Travelling Node 🧭 ──
       ctx.strokeRect(695, 155, 68, 20);
       ctx.fillText('Travelling 🧭', 698, 168);
 
-      // ── 4. Mountains Node ⛰️ ──
       ctx.strokeRect(820, 155, 70, 20);
       ctx.fillText('Mountains ⛰️', 823, 168);
 
-      // ── 5. Trekking Node 🥾 ──
       ctx.strokeRect(820, 195, 65, 20);
       ctx.fillText('Trekking 🥾', 824, 208);
 
-      // Standard Interconnecting Mindmap lines
+      // Graph connections
       ctx.beginPath();
-      // Cosmology <---> Books
       ctx.moveTo(763, 125);
       ctx.lineTo(825, 125);
-      // Books <---> Mountains
       ctx.moveTo(855, 135);
       ctx.lineTo(855, 155);
-      // Travelling <---> Mountains
       ctx.moveTo(763, 165);
       ctx.lineTo(820, 165);
-      // Mountains <---> Trekking
       ctx.moveTo(855, 175);
       ctx.lineTo(855, 195);
-      // Cosmology <---> Travelling
       ctx.moveTo(729, 135);
       ctx.lineTo(729, 155);
       ctx.stroke();
 
-      // ── 6. NON-LINEAR THINKING 🌀 (Weirdly Placed & Looped Unconventionally) ──
+      // Non-Linear Thinking (Weird tilted node + wild loop)
       ctx.save();
       ctx.translate(692, 195);
-      ctx.rotate(-0.08); // tilted off-grid angle
-
-      // Wavy dashed / cloud border
+      ctx.rotate(-0.08);
       ctx.setLineDash([3, 3]);
       ctx.strokeRect(0, 0, 108, 24);
       ctx.setLineDash([]);
@@ -410,26 +384,21 @@ export const StickmanHero: React.FC<{
       ctx.fillText('Non-Linear Thinking 🌀', 4, 15);
       ctx.restore();
 
-      // Wacky, wild looping curved line spiraling across the board
       ctx.beginPath();
       ctx.setLineDash([4, 2]);
       ctx.moveTo(796, 207);
-      // Loop 1: spirals up and through Travelling
       ctx.bezierCurveTo(775, 230, 680, 240, 690, 175);
-      // Loop 2: curls around Cosmology up over Books
       ctx.bezierCurveTo(680, 95, 780, 85, 855, 105);
-      // Loop 3: cuts wildly through Mountains down into Trekking and loops back
       ctx.bezierCurveTo(915, 125, 910, 235, 885, 215);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Small handwritten annotation
       ctx.font = 'italic 7px monospace';
       ctx.fillText('~ (non-linear loop) ~', 710, 240);
 
       ctx.lineWidth = 3.5;
 
-      // ── Environment Station C: Workstation Desk & PC ──
+      // ── Environment Station C: Workstation Desk & Multi-Monitor ──
       ctx.strokeRect(DESK_X, DESK_Y, DESK_W, 12);
       ctx.beginPath();
       ctx.moveTo(DESK_X + 15, DESK_Y + 12);
@@ -438,10 +407,10 @@ export const StickmanHero: React.FC<{
       ctx.lineTo(DESK_X + DESK_W - 15, FLOOR_Y);
       ctx.stroke();
 
-      // Check if PC is currently BURSTED during deploy phase (t > 2.8s in deploy)
-      const isDeployBurst = routineRef.current === 'deploy' && t > 2.8;
+      // Check if PC is currently BURSTED (in rocket routine after landing t > 4.2s)
+      const isPcBursted = routineRef.current === 'rocket' && t > 4.2;
 
-      if (isDeployBurst) {
+      if (isPcBursted) {
         // ── PC BURSTED STATE 💥 ──
         const shakeX = (Math.random() - 0.5) * 6;
         const shakeY = (Math.random() - 0.5) * 4;
@@ -540,52 +509,48 @@ export const StickmanHero: React.FC<{
       ctx.strokeRect(DESK_X + 50, DESK_Y - 6, 32, 6);
 
       // Swivel Chair
-      const chairX = 405;
       ctx.beginPath();
-      ctx.moveTo(chairX - 25, DESK_Y - 55);
-      ctx.lineTo(chairX - 25, DESK_Y + 5);
-      ctx.lineTo(chairX + 10, DESK_Y + 5);
-      ctx.moveTo(chairX - 10, DESK_Y + 5);
-      ctx.lineTo(chairX - 10, FLOOR_Y - 5);
-      ctx.moveTo(chairX - 25, FLOOR_Y - 3);
-      ctx.lineTo(chairX + 5, FLOOR_Y - 3);
+      ctx.moveTo(CHAIR_X - 25, DESK_Y - 55);
+      ctx.lineTo(CHAIR_X - 25, DESK_Y + 5);
+      ctx.lineTo(CHAIR_X + 10, DESK_Y + 5);
+      ctx.moveTo(CHAIR_X - 10, DESK_Y + 5);
+      ctx.lineTo(CHAIR_X - 10, FLOOR_Y - 5);
+      ctx.moveTo(CHAIR_X - 25, FLOOR_Y - 3);
+      ctx.lineTo(CHAIR_X + 5, FLOOR_Y - 3);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(chairX - 25, FLOOR_Y - 2, 2.5, 0, Math.PI * 2);
-      ctx.arc(chairX + 5, FLOOR_Y - 2, 2.5, 0, Math.PI * 2);
+      ctx.arc(CHAIR_X - 25, FLOOR_Y - 2, 2.5, 0, Math.PI * 2);
+      ctx.arc(CHAIR_X + 5, FLOOR_Y - 2, 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // ── Deploy Rocket (Phase 1 of deploy: 0s to 3s) ──
-      if (routineRef.current === 'deploy' && t < 3.2) {
-        const launchProgress = Math.min(t / 2.5, 1);
-        const rocketY = FLOOR_Y - 10 - launchProgress * 360;
+      // ── 2. ROCKET FLIGHT & MID-AIR BURST SEQUENCE ─────────
+      const isRocketRoutine = routineRef.current === 'rocket';
+      let rocketY = FLOOR_Y - 10;
 
-        ctx.save();
-        ctx.translate(630, rocketY);
-        ctx.beginPath();
-        ctx.moveTo(0, -35);
-        ctx.lineTo(12, -10);
-        ctx.lineTo(12, 15);
-        ctx.lineTo(-12, 15);
-        ctx.lineTo(-12, -10);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(-12, 5);
-        ctx.lineTo(-20, 20);
-        ctx.lineTo(-12, 18);
-        ctx.moveTo(12, 5);
-        ctx.lineTo(20, 20);
-        ctx.lineTo(12, 18);
-        ctx.stroke();
+      if (isRocketRoutine) {
+        if (t < 0.8) {
+          // Stickman runs to rocket
+          sm.targetX = 630;
+          sm.isSitting = false;
+          sm.isOnRocket = false;
+          sm.isFalling = false;
+          rocketExploded = false;
+        } else if (t >= 0.8 && t < 2.8) {
+          // Rocket ignition & ascending flight with Stickman ON THE ROCKET!
+          const flightProgress = (t - 0.8) / 2.0;
+          rocketY = FLOOR_Y - 10 - flightProgress * 380;
+          sm.isOnRocket = true;
+          sm.isFalling = false;
+          sm.x = 630;
+          sm.y = rocketY + 20;
 
-        if (launchProgress > 0.05 && rocketY > -50) {
+          // Thruster flames & smoke particles
           for (let i = 0; i < 4; i++) {
             particlesRef.current.push({
               x: 630 + (Math.random() - 0.5) * 8,
               y: rocketY + 20,
-              vx: (Math.random() - 0.5) * 4,
-              vy: 3 + Math.random() * 5,
+              vx: (Math.random() - 0.5) * 5,
+              vy: 4 + Math.random() * 6,
               size: 3 + Math.random() * 4,
               alpha: 1,
               color: '#000000',
@@ -593,25 +558,93 @@ export const StickmanHero: React.FC<{
               maxLife: 25,
             });
           }
+
+          // Draw Rocket
+          ctx.save();
+          ctx.translate(630, rocketY);
+          ctx.beginPath();
+          ctx.moveTo(0, -35);
+          ctx.lineTo(14, -10);
+          ctx.lineTo(14, 18);
+          ctx.lineTo(-14, 18);
+          ctx.lineTo(-14, -10);
+          ctx.closePath();
+          ctx.stroke();
+          // Fins
+          ctx.beginPath();
+          ctx.moveTo(-14, 6);
+          ctx.lineTo(-24, 22);
+          ctx.lineTo(-14, 20);
+          ctx.moveTo(14, 6);
+          ctx.lineTo(24, 22);
+          ctx.lineTo(14, 20);
+          ctx.stroke();
+          ctx.restore();
+        } else if (t >= 2.8 && t < 4.2) {
+          // ── MID-AIR ROCKET BURST 💥 & FREEFALL ONTO CHAIR ──
+          sm.isOnRocket = false;
+          sm.isFalling = true;
+
+          if (!rocketExploded) {
+            rocketExploded = true;
+            playClickSound('pop');
+            // Spawn Rocket Debris props and explosion particles!
+            for (let i = 0; i < 18; i++) {
+              particlesRef.current.push({
+                x: 630 + (Math.random() - 0.5) * 20,
+                y: -10 + Math.random() * 40,
+                vx: (Math.random() - 0.5) * 12,
+                vy: (Math.random() - 0.5) * 10,
+                size: 4 + Math.random() * 5,
+                alpha: 1,
+                color: '#000000',
+                life: 0,
+                maxLife: 35,
+              });
+            }
+          }
+
+          // Freefall physics trajectory from (x: 630, y: 10) down to chair (x: 405, y: DESK_Y + 2)
+          const fallProgress = Math.min((t - 2.8) / 1.4, 1);
+          // Ease in quad for gravity acceleration
+          const gravityEase = fallProgress * fallProgress;
+          sm.x = 630 - fallProgress * (630 - (CHAIR_X - 8));
+          sm.y = -20 + gravityEase * (DESK_Y + 2 - (-20));
+          sm.expression = 'shocked';
+
+          // Draw "💥 BOOM!" in sky
+          if (t < 3.4) {
+            ctx.save();
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText('💥 BOOM!', 600, 40);
+            ctx.restore();
+          }
+        } else {
+          // ── LANDED ON CHAIR ➔ SQUASH & PC BURST 🤯 ──
+          sm.isFalling = false;
+          sm.isOnRocket = false;
+          sm.isSitting = true;
+          sm.x = CHAIR_X - 8;
+          sm.y = DESK_Y + 2;
+          sm.expression = 'fried';
         }
-        ctx.restore();
       }
 
-      // ── 2. STICKMAN RIG & FRIED BRAIN PHYSICS ──────────────
-      const sm = stickmanRef.current;
-
-      const dx = sm.targetX - sm.x;
-      if (Math.abs(dx) > 4) {
-        sm.vx = Math.sign(dx) * 3.2;
-        sm.x += sm.vx;
-        sm.isSitting = false;
-        sm.actionState = 'walking';
-      } else {
-        sm.x = sm.targetX;
-        sm.vx = 0;
-        if (routineRef.current === 'code') {
-          sm.isSitting = true;
-          sm.actionState = 'typing';
+      // ── 3. STICKMAN RIG & ARTICULATED PHYSICS ──────────────
+      if (!isRocketRoutine || t < 0.8) {
+        const dx = sm.targetX - sm.x;
+        if (Math.abs(dx) > 4) {
+          sm.vx = Math.sign(dx) * 3.2;
+          sm.x += sm.vx;
+          sm.isSitting = false;
+          sm.actionState = 'walking';
+        } else {
+          sm.x = sm.targetX;
+          sm.vx = 0;
+          if (routineRef.current === 'code') {
+            sm.isSitting = true;
+            sm.actionState = 'typing';
+          }
         }
       }
 
@@ -619,17 +652,49 @@ export const StickmanHero: React.FC<{
       let headY = FLOOR_Y - 110;
       let hipX = sm.x;
 
-      if (sm.isSitting) {
+      if (sm.isOnRocket) {
+        hipY = sm.y;
+        headY = sm.y - 50;
+      } else if (sm.isFalling) {
+        hipY = sm.y;
+        headY = sm.y - 50;
+      } else if (sm.isSitting) {
         hipY = DESK_Y + 2;
         headY = DESK_Y - 60;
-        hipX = chairX - 8;
+        hipX = CHAIR_X - 8;
       }
 
       ctx.save();
       ctx.translate(hipX, hipY);
 
+      if (sm.isFalling) {
+        // Tumble rotation while falling
+        ctx.rotate(Math.sin(t * 15) * 0.4);
+      }
+
       // A. Legs
-      if (sm.isSitting) {
+      if (sm.isOnRocket) {
+        // Gripping rocket sides
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-12, 18);
+        ctx.lineTo(-14, 30);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(12, 18);
+        ctx.lineTo(14, 30);
+        ctx.stroke();
+      } else if (sm.isFalling) {
+        // Flailing legs in freefall
+        const flail = Math.sin(t * 24) * 20;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-18, 15 + flail);
+        ctx.lineTo(-24, 35 - flail);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(18, 15 - flail);
+        ctx.lineTo(24, 35 + flail);
+        ctx.stroke();
+      } else if (sm.isSitting) {
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(26, 0);
@@ -650,8 +715,8 @@ export const StickmanHero: React.FC<{
         ctx.stroke();
       }
 
-      // B. Torso
-      const isFried = isDeployBurst;
+      // B. Torso (Spine)
+      const isFried = isPcBursted;
       const spineBend = isFried ? -0.35 : sm.isSitting ? 0.1 : Math.sin(t * 4) * 0.04;
       ctx.beginPath();
       ctx.moveTo(0, 0);
@@ -718,21 +783,46 @@ export const StickmanHero: React.FC<{
             type: 'smoke',
           });
         }
-      } else if (routineRef.current === 'bug') {
-        ctx.fillRect(headCenterX + 3 * sm.facing, headCenterY - 3, 3, 3);
+      } else if (sm.isFalling) {
+        // Shocked O-mouth in freefall
+        ctx.fillRect(headCenterX - 2, headCenterY - 4, 3, 3);
+        ctx.fillRect(headCenterX + 3, headCenterY - 4, 3, 3);
         ctx.beginPath();
-        ctx.arc(headCenterX + 4 * sm.facing, headCenterY + 5, 4, Math.PI, 0, true);
+        ctx.arc(headCenterX + 1, headCenterY + 4, 4, 0, Math.PI * 2);
         ctx.stroke();
-      } else if (routineRef.current === 'deploy') {
+      } else if (sm.isOnRocket) {
+        // Thrilled grinning eyes
         ctx.beginPath();
-        ctx.arc(headCenterX + 3 * sm.facing, headCenterY + 2, 5, 0, Math.PI);
+        ctx.arc(headCenterX + 3, headCenterY - 1, 3, Math.PI, 0);
+        ctx.arc(headCenterX + 3, headCenterY + 3, 4, 0, Math.PI);
         ctx.stroke();
       } else {
         ctx.fillRect(headCenterX + 4 * sm.facing, headCenterY - 2, 2.5, 2.5);
       }
 
       // E. Arms & Hands
-      if (isFried) {
+      if (sm.isOnRocket) {
+        // Clinging tightly to rocket fuselage
+        ctx.beginPath();
+        ctx.moveTo(neckX, neckY + 4);
+        ctx.lineTo(neckX - 16, neckY + 8);
+        ctx.lineTo(neckX - 12, neckY + 18);
+        ctx.moveTo(neckX, neckY + 4);
+        ctx.lineTo(neckX + 16, neckY + 8);
+        ctx.lineTo(neckX + 12, neckY + 18);
+        ctx.stroke();
+      } else if (sm.isFalling) {
+        // Flailing arms up in air
+        const flailArm = Math.sin(t * 22) * 15;
+        ctx.beginPath();
+        ctx.moveTo(neckX, neckY + 4);
+        ctx.lineTo(neckX - 22, neckY - 15 + flailArm);
+        ctx.lineTo(neckX - 30, neckY - 30 - flailArm);
+        ctx.moveTo(neckX, neckY + 4);
+        ctx.lineTo(neckX + 22, neckY - 15 - flailArm);
+        ctx.lineTo(neckX + 30, neckY - 30 + flailArm);
+        ctx.stroke();
+      } else if (isFried) {
         ctx.beginPath();
         ctx.moveTo(neckX, neckY + 4);
         ctx.lineTo(neckX - 18, neckY + 28);
@@ -783,21 +873,11 @@ export const StickmanHero: React.FC<{
         ctx.lineTo(neckX + 24, neckY + drawArmY);
         ctx.lineTo(neckX + 50 + drawArmX, neckY - 20 + drawArmY);
         ctx.stroke();
-      } else if (routineRef.current === 'bug') {
-        const swing = Math.sin(t * 14) * 1.2;
-        ctx.beginPath();
-        ctx.moveTo(neckX, neckY + 4);
-        ctx.lineTo(neckX + 18, neckY - 15);
-        ctx.lineTo(neckX + 25 + Math.cos(swing) * 25, neckY - 15 + Math.sin(swing) * 25);
-        ctx.stroke();
-        const hx = neckX + 25 + Math.cos(swing) * 25;
-        const hy = neckY - 15 + Math.sin(swing) * 25;
-        ctx.strokeRect(hx - 6, hy - 12, 12, 24);
       }
 
       ctx.restore();
 
-      // ── 3. FLOATING SKILLS GOING UPWARD ──
+      // ── 4. FLOATING SKILLS GOING UPWARD ──
       skillsRef.current = skillsRef.current.filter((sk) => {
         sk.x += sk.vx;
         sk.y += sk.vy;
@@ -828,7 +908,7 @@ export const StickmanHero: React.FC<{
         return true;
       });
 
-      // ── 4. RIGID BODY PHYSICS PROPS ─────────────────────────
+      // ── 5. RIGID BODY PHYSICS PROPS ─────────────────────────
       const gravity = 0.42;
       const friction = 0.985;
       const restitution = 0.65;
@@ -845,25 +925,6 @@ export const StickmanHero: React.FC<{
           prop.vy = -prop.vy * restitution;
           prop.angularVelocity *= 0.8;
           prop.bounces++;
-
-          if (prop.type === 'bug' && routineRef.current === 'bug' && prop.bounces >= 2) {
-            setScore((s) => ({ ...s, bugs: s.bugs + 1 }));
-            for (let i = 0; i < 14; i++) {
-              particlesRef.current.push({
-                x: prop.x,
-                y: prop.y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: -Math.random() * 6,
-                size: 3 + Math.random() * 3,
-                alpha: 1,
-                color: '#000000',
-                life: 0,
-                maxLife: 35,
-              });
-            }
-            playClickSound('pop');
-            return false;
-          }
         }
 
         if (
@@ -893,17 +954,7 @@ export const StickmanHero: React.FC<{
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2.5;
 
-        if (prop.type === 'bug') {
-          ctx.beginPath();
-          ctx.arc(0, 0, prop.radius, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(-4, -prop.radius);
-          ctx.lineTo(-8, -prop.radius - 6);
-          ctx.moveTo(4, -prop.radius);
-          ctx.lineTo(8, -prop.radius - 6);
-          ctx.stroke();
-        } else if (prop.type === 'cup') {
+        if (prop.type === 'cup') {
           ctx.strokeRect(-8, -10, 16, 20);
           ctx.beginPath();
           ctx.arc(8, 0, 5, -Math.PI / 2, Math.PI / 2);
@@ -920,7 +971,7 @@ export const StickmanHero: React.FC<{
         return prop.bounces < 25;
       });
 
-      // ── 5. PARTICLE ENGINE ─────────────────────────────────
+      // ── 6. PARTICLE ENGINE ─────────────────────────────────
       particlesRef.current = particlesRef.current.filter((p) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -955,10 +1006,10 @@ export const StickmanHero: React.FC<{
           <span className="font-semibold tracking-tight text-black">{taskName}</span>
         </div>
 
-        {/* Live Score & Metrics */}
+        {/* Live Metrics */}
         <div className="flex items-center gap-4 text-micro text-neutral-600">
           <span>
-            Bugs Squashed: <strong className="text-black font-mono">{score.bugs}</strong>
+            Rocket Flights: <strong className="text-black font-mono">{score.launches}</strong>
           </span>
           <span>•</span>
           <span>
@@ -977,20 +1028,20 @@ export const StickmanHero: React.FC<{
           title="Click anywhere to drop bouncing physics props!"
         />
 
-        {/* Status Callout during fried brain */}
-        {currentTask === 'deploy' && (
+        {/* Status Callout during rocket ride and fried brain */}
+        {currentTask === 'rocket' && (
           <div className="absolute top-3 left-3 px-2.5 py-1 bg-black text-white text-[11px] font-mono rounded tracking-tight animate-bounce flex items-center gap-1.5 shadow-md">
             <Zap size={13} className="text-yellow-300" />
-            <span>OVERCLOCK 9999% • PC BURST & BRAIN FRIED!</span>
+            <span>ROCKET RIDE ➔ MID-AIR BURST ➔ PC CRASH 🤯💥</span>
           </div>
         )}
 
         <div className="absolute top-3 right-3 px-2 py-1 bg-black text-white text-[10px] font-mono rounded tracking-tight opacity-80 pointer-events-none">
-          MINDMAP & PHYSICS • 60FPS VERLET
+          STORY ENGINE • 60FPS VERLET
         </div>
       </div>
 
-      {/* Task Control Ribbon */}
+      {/* Task Control Ribbon (4-Step Streamlined Sequence) */}
       <div className="w-full max-w-4xl flex flex-wrap items-center justify-between gap-2 mt-3 px-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <button
@@ -1030,27 +1081,15 @@ export const StickmanHero: React.FC<{
           </button>
 
           <button
-            onClick={() => switchRoutine('bug', true)}
+            onClick={() => switchRoutine('rocket', true)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono transition-all border ${
-              currentTask === 'bug'
-                ? 'bg-black text-white border-black shadow-2xs'
-                : 'bg-white text-black border-neutral-300 hover:border-black'
-            }`}
-          >
-            <Bug size={13} />
-            <span>4. Squash Bug</span>
-          </button>
-
-          <button
-            onClick={() => switchRoutine('deploy', true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono transition-all border ${
-              currentTask === 'deploy'
+              currentTask === 'rocket'
                 ? 'bg-black text-white border-black shadow-2xs'
                 : 'bg-white text-black border-neutral-300 hover:border-black'
             }`}
           >
             <Rocket size={13} />
-            <span>5. Deploy & Burst 🤯</span>
+            <span>4. Rocket Ride & Meltdown 🚀💥</span>
           </button>
         </div>
 
@@ -1068,7 +1107,7 @@ export const StickmanHero: React.FC<{
               ? 'bg-neutral-100 text-black border-black font-semibold'
               : 'bg-white text-neutral-400 border-neutral-200 hover:border-neutral-400'
           }`}
-          title="Toggle automatic story routine progression (Coffee ➔ Mindmap ➔ Code ➔ Bug ➔ Deploy/Burst ➔ Reboot)"
+          title="Toggle automatic story routine progression (Coffee ➔ Mindmap ➔ Code ➔ Rocket Ride & Meltdown ➔ Reboot)"
         >
           {autoCycle ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
           <span>{autoCycle ? 'Auto Story [Active]' : 'Manual Mode'}</span>
