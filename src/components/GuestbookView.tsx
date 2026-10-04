@@ -47,13 +47,30 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
 
     playClickSound('high');
 
-    // Trigger celebratory confetti
+    // Trigger celebratory Diwali cracker fireworks
     confetti({
-      particleCount: 50,
-      spread: 60,
-      origin: { y: 0.7 },
-      colors: ['#d2fd78', '#000000', '#686058', '#dedede'],
+      particleCount: 80,
+      spread: 80,
+      origin: { y: 0.65 },
+      colors: ['#ffd700', '#ff3366', '#d2fd78', '#00e5ff', '#ff9900', '#ffffff'],
     });
+
+    setTimeout(() => {
+      confetti({
+        particleCount: 45,
+        angle: 60,
+        spread: 60,
+        origin: { x: 0.15, y: 0.7 },
+        colors: ['#ffd700', '#ff0055', '#d2fd78'],
+      });
+      confetti({
+        particleCount: 45,
+        angle: 120,
+        spread: 60,
+        origin: { x: 0.85, y: 0.7 },
+        colors: ['#ffd700', '#00e5ff', '#d2fd78'],
+      });
+    }, 180);
 
     onAddEntry({
       name: name.trim(),
