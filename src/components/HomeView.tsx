@@ -1,207 +1,97 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { HOME_ARTWORKS, Artwork } from '../data/homeArtworks';
-import { playClickSound } from '../utils/sound';
-import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import React, { useCallback } from 'react';
 import { StickmanHero } from './StickmanHero';
+import { playClickSound } from '../utils/sound';
 
 interface HomeViewProps {
   onSlideChange?: (current: number, total: number, title: string) => void;
-  onOpenArtworkModal?: (artwork: Artwork) => void;
   onNavigateToStuff?: () => void;
+  onNavigateToWritings?: () => void;
+  onNavigateToGuestbook?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onSlideChange,
-  onOpenArtworkModal,
   onNavigateToStuff,
+  onNavigateToWritings,
+  onNavigateToGuestbook,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
-
-  const activeArtwork = HOME_ARTWORKS[currentIndex];
-
-  const goToNext = useCallback(() => {
-    playClickSound('tick');
-    setCurrentIndex((prev) => (prev + 1) % HOME_ARTWORKS.length);
-  }, []);
-
-  const goToPrev = useCallback(() => {
-    playClickSound('tick');
-    setCurrentIndex((prev) => (prev - 1 + HOME_ARTWORKS.length) % HOME_ARTWORKS.length);
-  }, []);
-
-  // Update parent for header indicator
-  useEffect(() => {
-    if (onSlideChange && activeArtwork) {
-      onSlideChange(currentIndex + 1, HOME_ARTWORKS.length, activeArtwork.title);
-    }
-  }, [currentIndex]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        goToNext();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goToPrev();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNext, goToPrev]);
+  const handleActivityChange = useCallback(
+    (title: string, step: number) => {
+      onSlideChange?.(step, 5, title);
+    },
+    [onSlideChange]
+  );
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col justify-between pt-16 pb-8 select-none">
-      
-      {/* Stickman Storytelling Hero Animation (Desktop / Laptop Only) */}
-      <div className="relative z-30 w-full">
-        <StickmanHero />
-      </div>
-
-      {/* Invisible Interactive Click Zones (Left half = prev, Right half = next) */}
-      <div className="absolute inset-0 z-10 flex">
-        <button
-          onClick={goToPrev}
-          title="Previous (or Left Arrow)"
-          className="w-1/2 h-full cursor-w-resize focus:outline-none"
-          aria-label="Previous artwork"
-        />
-        <button
-          onClick={goToNext}
-          title="Next (or Right Arrow / Space)"
-          className="w-1/2 h-full cursor-e-resize focus:outline-none"
-          aria-label="Next artwork"
-        />
-      </div>
-
-      {/* Main Center Artwork Stage */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-4 py-6">
-        <div 
-          className="relative max-w-lg md:max-w-xl w-full flex flex-col items-center group cursor-pointer"
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
-          onClick={(e) => {
-            // If clicking image directly, can open inspect or cycle
-            e.stopPropagation();
-            goToNext();
-          }}
-        >
-          {/* Main Visual Frame */}
-          <div className="relative w-full overflow-hidden bg-neutral-100 shadow-sm border border-neutral-200/60 rounded-sm transition-transform duration-500 ease-out group-hover:scale-[1.01]">
-            <img
-              key={activeArtwork.id}
-              src={activeArtwork.imageUrl}
-              alt={activeArtwork.title}
-              className="w-full h-[52vh] sm:h-[58vh] md:h-[62vh] object-cover transition-opacity duration-500 animate-fadeIn"
-              loading="eager"
-            />
-
-            {/* Subtle overlay inspect button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                playClickSound('high');
-                if (onOpenArtworkModal) onOpenArtworkModal(activeArtwork);
-              }}
-              title="Inspect details"
-              className="absolute top-3 right-3 p-1.5 bg-black/70 backdrop-blur-sm text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black"
-            >
-              <Maximize2 size={13} />
-            </button>
-
-            {/* Micro pill counter on image */}
-            <div className="absolute bottom-3 left-3 px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white text-[11px] font-mono rounded tracking-tight">
-              {String(currentIndex + 1).padStart(2, '0')} / {String(HOME_ARTWORKS.length).padStart(2, '0')}
-            </div>
-          </div>
-
-          {/* Under-Artwork Caption Details (Exact urfd aesthetic) */}
-          <div className="w-full mt-3 flex items-baseline justify-between text-sub px-0.5">
-            <div>
-              <span className="font-medium text-black">
-                {activeArtwork.title}
-              </span>
-              <span className="text-neutral-400 mx-1.5">•</span>
-              <span className="text-neutral-500">
-                {activeArtwork.category}
-              </span>
-            </div>
-            <div className="text-neutral-400 font-mono text-micro">
-              {activeArtwork.year}
-            </div>
-          </div>
-
-          {/* Narrative Excerpt */}
-          <p className="w-full text-micro text-neutral-500 mt-1 text-left line-clamp-2">
-            {activeArtwork.caption}
+    <div className="relative w-full min-h-[calc(100vh-80px)] flex flex-col justify-between pt-16 pb-8 select-none px-4">
+      {/* Top Narrative Introduction (Minimalist urfd aesthetic) */}
+      <div className="max-w-4xl mx-auto w-full pt-2 pb-1 flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-2 border-b border-black/10">
+        <div>
+          <h1 className="text-base font-semibold tracking-tight text-black">
+            Vansh Lohia <span className="font-normal text-neutral-400 font-mono text-xs">/ Creative Engineering Lab</span>
+          </h1>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Real-time articulated physics simulation • 60 FPS Verlet Kinematics & Interactive Story
           </p>
         </div>
+
+        <div className="text-micro font-mono text-neutral-400 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>STATUS: ALL SYSTEMS LIVE</span>
+        </div>
       </div>
 
-      {/* Bottom Footer Controls: "Tap for more" indicator & Quick Thumbnails */}
-      <div className="relative z-20 w-full px-4 flex flex-col items-center gap-3">
-        {/* "Tap for more" urfd signature micro-text */}
-        <div className="flex items-center gap-2 text-micro">
-          <button
-            onClick={goToPrev}
-            className="p-1 text-neutral-400 hover:text-black transition-colors"
-            title="Previous"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          
-          <button
-            onClick={goToNext}
-            className="text-neutral-400 hover:text-black transition-colors op-50 font-normal tracking-wide"
-          >
-            Click or Tap for next ({currentIndex + 1}/{HOME_ARTWORKS.length})
-          </button>
+      {/* Main Centerpiece: Proper Physics Stickman Animation */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center my-3 w-full">
+        <StickmanHero onActivityChange={handleActivityChange} />
+      </div>
 
-          <button
-            onClick={goToNext}
-            className="p-1 text-neutral-400 hover:text-black transition-colors"
-            title="Next"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
+      {/* Bottom Navigation & Contextual Explore Links */}
+      <div className="max-w-4xl mx-auto w-full pt-3 border-t border-black/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+        <div className="flex items-center gap-4 text-neutral-500">
+          <span className="text-black font-medium">Explore:</span>
 
-        {/* Thumbnail Dots Bar */}
-        <div className="flex items-center gap-1.5">
-          {HOME_ARTWORKS.map((artwork, idx) => (
+          {onNavigateToStuff && (
             <button
-              key={artwork.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                playClickSound('tick');
-                setCurrentIndex(idx);
+              onClick={() => {
+                playClickSound('high');
+                onNavigateToStuff();
               }}
-              title={artwork.title}
-              className={`transition-all duration-300 rounded-full ${
-                idx === currentIndex
-                  ? 'w-6 h-1.5 bg-black'
-                  : 'w-1.5 h-1.5 bg-neutral-300 hover:bg-neutral-500'
-              }`}
-            />
-          ))}
+              className="hover:text-black ul-link transition-colors cursor-pointer"
+            >
+              (Stuff & Projects)
+            </button>
+          )}
+
+          {onNavigateToWritings && (
+            <button
+              onClick={() => {
+                playClickSound('high');
+                onNavigateToWritings();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer"
+            >
+              (Writings & Essays)
+            </button>
+          )}
+
+          {onNavigateToGuestbook && (
+            <button
+              onClick={() => {
+                playClickSound('high');
+                onNavigateToGuestbook();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer"
+            >
+              (Sign Guestbook)
+            </button>
+          )}
         </div>
 
-        {/* Quick jump to Stuff */}
-        {onNavigateToStuff && (
-          <button
-            onClick={() => {
-              playClickSound('high');
-              onNavigateToStuff();
-            }}
-            className="text-micro text-neutral-400 hover:text-black ul-link mt-1"
-          >
-            Explore all projects & journal entries →
-          </button>
-        )}
+        <div className="text-micro text-neutral-400">
+          Click canvas to drop physics props • Hotkeys [1-4]
+        </div>
       </div>
-
     </div>
   );
 };

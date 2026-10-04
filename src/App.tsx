@@ -158,8 +158,9 @@ export const App: React.FC = () => {
         {activeTab === 'home' && (
           <HomeView
             onSlideChange={handleSlideChange}
-            onOpenArtworkModal={(artwork) => setSelectedProject(artwork)}
             onNavigateToStuff={() => setActiveTab('stuff')}
+            onNavigateToWritings={() => setActiveTab('writings')}
+            onNavigateToGuestbook={() => setActiveTab('guestbook')}
           />
         )}
 
