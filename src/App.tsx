@@ -90,18 +90,24 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Sync tab with URL hash
+  // Sync tab with URL hash and pathname
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as NavTab;
-      if (['story', 'home', 'writings', 'stuff', 'guestbook', 'admin'].includes(hash)) {
-        setActiveTabState(hash);
+      const path = window.location.pathname.replace(/^\//, '').split('/')[0] as NavTab;
+      const target = (hash || path) as NavTab;
+      if (['story', 'home', 'writings', 'stuff', 'guestbook', 'admin'].includes(target)) {
+        setActiveTabState(target);
       }
     };
 
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
   }, []);
 
   // Whenever user switches to Guestbook or returns to tab, refresh from Supabase
@@ -225,8 +231,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-black selection:bg-[#d2fd78] selection:text-black flex flex-col justify-between font-sans">
-      {/* Spear Cursor: active everywhere, click explosion animation disabled on stuff and admin */}
-      <KingCursor disableClickAnimation={activeTab === 'stuff' || activeTab === 'admin'} />
+      {/* Spear Cursor: active everywhere, click explosion/tap animation disabled on stuff, guestbook, and admin */}
+      <KingCursor disableClickAnimation={activeTab === 'stuff' || activeTab === 'guestbook' || activeTab === 'admin'} />
 
       {/* Top Fixed Masthead Header */}
       <Header

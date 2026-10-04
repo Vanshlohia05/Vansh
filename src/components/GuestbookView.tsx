@@ -85,7 +85,10 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   );
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 pt-24 pb-24 select-text page-transition">
+    <div
+      data-no-strike="true"
+      className="guestbook-container w-full max-w-4xl mx-auto px-4 pt-24 pb-24 select-text page-transition"
+    >
       
       {/* Header Info */}
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-neutral-100 pb-6">

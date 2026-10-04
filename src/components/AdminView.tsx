@@ -398,7 +398,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   // ─────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[85vh] flex items-center justify-center px-4 pt-16 font-mono select-text">
+      <div
+        data-no-strike="true"
+        className="admin-container min-h-[85vh] flex items-center justify-center px-4 pt-16 font-mono select-text"
+      >
         <div className="w-full max-w-md p-8 bg-neutral-50 border border-neutral-200 rounded-lg shadow-xl space-y-6 animate-fadeIn">
           
           <div className="flex items-center justify-between border-b border-neutral-200/80 pb-3">
@@ -464,7 +467,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   // RENDER: AUTHENTICATED ADMIN DASHBOARD
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 pt-20 pb-24 font-sans select-text page-transition">
+    <div
+      data-no-strike="true"
+      className="admin-container w-full max-w-6xl mx-auto px-4 pt-20 pb-24 font-sans select-text page-transition"
+    >
       
       {/* Top Admin Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-4 mb-8">

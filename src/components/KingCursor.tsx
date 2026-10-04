@@ -119,10 +119,31 @@ export const KingCursor: React.FC<KingCursorProps> = ({
     };
   }, [isMobile, disabled, isVisible]);
 
+  // Reset all active strikes and particles immediately if click animation is disabled
+  useEffect(() => {
+    if (disableClickAnimation) {
+      setStrikes([]);
+      setParticles([]);
+      setWisps([]);
+      setIsThrusting(false);
+    }
+  }, [disableClickAnimation]);
+
   // 3. Spear Strike & Word Blue Light Emission on Click (Skipped when disableClickAnimation is true)
   const handleStrike = useCallback(
     (e: MouseEvent) => {
       if (isMobile || disabled || disableClickAnimation) return;
+
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.closest(
+          'input, textarea, select, form, .guestbook-container, .admin-container, [data-no-strike]'
+        ) ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
 
       const cx = e.clientX;
       const cy = e.clientY;
@@ -137,6 +158,9 @@ export const KingCursor: React.FC<KingCursorProps> = ({
       const newWisps: BlueWisp[] = [];
 
       elements.forEach((el) => {
+        // Skip elements inside no-strike containers
+        if (el.closest('.guestbook-container, .admin-container, [data-no-strike]')) return;
+
         const rect = el.getBoundingClientRect();
         const elCx = rect.left + rect.width / 2;
         const elCy = rect.top + rect.height / 2;

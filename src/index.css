@@ -17,6 +17,7 @@
     background-color: #ffffff;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
   }
 
   ::selection {
@@ -141,6 +142,16 @@ h3 { --shimmer-offset: 3; }
 /* King-strike: words near click burst blue */
 .king-struck {
   animation: blueWordBurst 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Explicitly disable tap/click animations on Guestbook, Admin, and no-strike sections */
+.guestbook-container .king-struck,
+.admin-container .king-struck,
+[data-no-strike] .king-struck {
+  animation: none !important;
+  text-shadow: none !important;
+  color: inherit !important;
+  filter: none !important;
 }
 
 /* Passive ambient glow on all text elements */
