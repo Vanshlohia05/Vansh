@@ -6,6 +6,7 @@ import { StuffView } from './components/StuffView';
 import { GuestbookView } from './components/GuestbookView';
 import { ProjectModal } from './components/ProjectModal';
 import { ArticleModal } from './components/ArticleModal';
+import { KingCursor } from './components/KingCursor';
 import { STUFF_ITEMS, StuffItem } from './data/stuff';
 import { Artwork } from './data/homeArtworks';
 import { Article } from './data/writings';
@@ -134,7 +135,9 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-black selection:bg-[#d2fd78] selection:text-black flex flex-col justify-between">
-      
+      {/* Indian King Cursor with Spear Strike and Blue Word Light */}
+      <KingCursor />
+
       {/* Top Fixed Masthead Header */}
       <Header
         activeTab={activeTab}

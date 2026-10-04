@@ -24,15 +24,135 @@
     color: #000000;
   }
 
-  /* Hide scrollbars for clean minimal aesthetic */
-  ::-webkit-scrollbar {
-    display: none;
+  /* ── King Cursor: hide OS cursor everywhere ── */
+  *, *::before, *::after {
+    cursor: none !important;
   }
-  * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  /* Hide scrollbars */
+  ::-webkit-scrollbar { display: none; }
+  * { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ══════════════════════════════════════════
+   KING SPEAR STRIKE ANIMATIONS
+══════════════════════════════════════════ */
+
+/* Expanding ring */
+@keyframes kingStrikeRing {
+  0%   { transform: scale(0.1); opacity: 1; border-width: 4px; }
+  60%  { transform: scale(1.4); opacity: 0.7; border-width: 2px; }
+  100% { transform: scale(2);   opacity: 0; border-width: 1px; }
+}
+
+/* White core flash */
+@keyframes kingStrikeCore {
+  0%   { transform: scale(1.8); opacity: 1; }
+  100% { transform: scale(0.1); opacity: 0; }
+}
+
+/* Spike ray shoot */
+@keyframes kingStrikeRay {
+  0%   { height: 4px;  opacity: 1; }
+  60%  { height: 44px; opacity: 0.8; }
+  100% { height: 56px; opacity: 0; }
+}
+
+/* ══════════════════════════════════════════
+   BLUE WORD GLOW — headings & paragraphs
+══════════════════════════════════════════ */
+
+/* Ambient shimmer on headings */
+@keyframes blueWordShimmer {
+  0%, 100% {
+    text-shadow:
+      0 0 6px rgba(59, 130, 246, 0),
+      0 0 12px rgba(99, 179, 237, 0);
+  }
+  50% {
+    text-shadow:
+      0 0 8px rgba(59, 130, 246, 0.35),
+      0 0 20px rgba(99, 179, 237, 0.18),
+      0 0 40px rgba(147, 197, 253, 0.10);
   }
 }
+
+/* Pulsing aura on the tip of the Spear */
+@keyframes tipPulse {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.75;
+    box-shadow: 0 0 6px #38bdf8, 0 0 14px #2563eb;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    box-shadow: 0 0 12px #ffffff, 0 0 22px #38bdf8, 0 0 36px #2563eb;
+  }
+}
+
+/* Click-triggered intense blue word burst: word emits blue lights */
+@keyframes blueWordBurst {
+  0% {
+    text-shadow: 0 0 0px transparent;
+    color: inherit;
+    filter: brightness(1);
+  }
+  12% {
+    color: #0284c7 !important;
+    text-shadow:
+      0 0 6px #ffffff,
+      0 0 14px #38bdf8,
+      0 0 28px #0284c7,
+      0 0 50px #2563eb,
+      0 0 75px #1d4ed8;
+    filter: brightness(1.4) drop-shadow(0 0 8px #38bdf8);
+  }
+  50% {
+    color: #2563eb;
+    text-shadow:
+      0 0 10px #38bdf8,
+      0 0 24px #2563eb,
+      0 0 40px #1d4ed8;
+    filter: brightness(1.2);
+  }
+  100% {
+    text-shadow:
+      0 0 4px rgba(56, 189, 248, 0.35),
+      0 0 12px rgba(37, 99, 235, 0.15);
+    color: inherit;
+    filter: brightness(1);
+  }
+}
+
+/* Apply shimmer to headings */
+h1, h2, h3, h4 {
+  animation: blueWordShimmer 6s ease-in-out infinite;
+  animation-delay: calc(var(--shimmer-offset, 0) * 1s);
+}
+
+/* Each heading gets a slightly different delay for organic feel */
+h1 { --shimmer-offset: 0; }
+h2 { --shimmer-offset: 1.5; }
+h3 { --shimmer-offset: 3; }
+
+/* King-strike: words near click burst blue */
+.king-struck {
+  animation: blueWordBurst 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Passive ambient glow on all text elements */
+p, span, a, button, td, th, li {
+  transition: text-shadow 0.3s ease;
+}
+
+/* Blue particle trail hint on interactive elements */
+button:hover, a:hover {
+  text-shadow:
+    0 0 6px rgba(59, 130, 246, 0.25),
+    0 0 14px rgba(147, 197, 253, 0.12);
+}
+
 
 /* urfd.net Signature Styling */
 .op-link {
