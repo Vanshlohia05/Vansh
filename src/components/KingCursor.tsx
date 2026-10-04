@@ -16,7 +16,7 @@ interface StrikeParticle {
   born: number;
 }
 
-interface StrikeRays {
+interface StrikeRay {
   id: number;
   x: number;
   y: number;
@@ -38,48 +38,74 @@ interface Strike {
   x: number;
   y: number;
   born: number;
-  rays: StrikeRays[];
+  rays: StrikeRay[];
 }
 
 // ─────────────────────────────────────────────
-// Geometry: King sprite & spear tip
-// In the 1024x1024 sprite, the spear tip is at pixel (44, 46).
-// Rendered dimensions: 110 x 110 px
+// Pixel Art King Sprite Geometry
+// Source image: 1024x1024 px
+// Spear tip in source: pixel (25, 10)
+// Render size: 46x46 px (compact & agile cursor)
 // ─────────────────────────────────────────────
-const KING_W = 110;
-const KING_H = 110;
-const TIP_X = Math.round((44 / 1024) * KING_W); // 5px
-const TIP_Y = Math.round((46 / 1024) * KING_H); // 5px
+const KING_W = 46;
+const KING_H = 46;
+const TIP_X = Math.round((25 / 1024) * KING_W); // 1px
+const TIP_Y = Math.round((10 / 1024) * KING_H); // 0px
 
 export const KingCursor: React.FC = () => {
-  const mousePosRef = useRef({ x: -400, y: -400 });
-  const [cursorPos, setCursorPos] = useState({ x: -400, y: -400 });
+  const [isMobile, setIsMobile] = useState<boolean>(true); // default true to avoid flash on mobile
+  const mousePosRef = useRef({ x: -200, y: -200 });
+  const [cursorPos, setCursorPos] = useState({ x: -200, y: -200 });
+  const [isVisible, setIsVisible] = useState(false);
   const [strikes, setStrikes] = useState<Strike[]>([]);
   const [particles, setParticles] = useState<StrikeParticle[]>([]);
   const [wisps, setWisps] = useState<BlueWisp[]>([]);
   const [isThrusting, setIsThrusting] = useState(false);
-  
+
   const strikeIdCounter = useRef(0);
   const particleIdCounter = useRef(0);
   const wispIdCounter = useRef(0);
   const rafId = useRef<number>();
 
-  // Smooth cursor follow with minimal latency
+  // 1. Mobile Detection: disable completely on mobile phones/touch devices
   useEffect(() => {
+    const checkMobile = () => {
+      const isTouch =
+        window.innerWidth < 768 ||
+        window.matchMedia('(pointer: coarse)').matches ||
+        'ontouchstart' in window;
+      setIsMobile(isTouch);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // 2. Mouse tracking for desktop
+  useEffect(() => {
+    if (isMobile) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       mousePosRef.current = { x: e.clientX, y: e.clientY };
+      if (!isVisible) setIsVisible(true);
     };
+
+    const handleMouseLeave = () => setIsVisible(false);
+    const handleMouseEnter = () => setIsVisible(true);
+
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
 
     const loop = () => {
       setCursorPos((prev) => {
         const dx = mousePosRef.current.x - prev.x;
         const dy = mousePosRef.current.y - prev.y;
-        // Ultra-responsive spring
         if (Math.abs(dx) < 0.2 && Math.abs(dy) < 0.2) return prev;
         return {
-          x: prev.x + dx * 0.45,
-          y: prev.y + dy * 0.45,
+          x: prev.x + dx * 0.55,
+          y: prev.y + dy * 0.55,
         };
       });
       rafId.current = requestAnimationFrame(loop);
@@ -88,110 +114,115 @@ export const KingCursor: React.FC = () => {
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseenter', handleMouseEnter);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, []);
+  }, [isMobile, isVisible]);
 
-  // Click handler: spear strike + word blue light emission
-  const handleStrike = useCallback((e: MouseEvent) => {
-    const cx = e.clientX;
-    const cy = e.clientY;
+  // 3. Spear Strike & Word Blue Light Emission on Click
+  const handleStrike = useCallback(
+    (e: MouseEvent) => {
+      if (isMobile) return;
 
-    // Trigger king thrust animation
-    setIsThrusting(true);
-    setTimeout(() => setIsThrusting(false), 140);
+      const cx = e.clientX;
+      const cy = e.clientY;
 
-    // Play spear hit sound
-    playClickSound('spear');
+      // Pixel thrust animation
+      setIsThrusting(true);
+      setTimeout(() => setIsThrusting(false), 120);
 
-    // 1. Emit Blue Lights on Words around the spear tip
-    const textSelectors = 'h1, h2, h3, h4, p, span, a, button, td, th, li, code';
-    const elements = document.querySelectorAll<HTMLElement>(textSelectors);
-    const newWisps: BlueWisp[] = [];
+      // Play metallic spear strike sound
+      playClickSound('spear');
 
-    elements.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const elCx = rect.left + rect.width / 2;
-      const elCy = rect.top + rect.height / 2;
-      const dist = Math.hypot(elCx - cx, elCy - cy);
+      // ── Word Blue Light Glow ───────────────────────────
+      const textSelectors = 'h1, h2, h3, h4, p, span, a, button, td, th, li, code';
+      const elements = document.querySelectorAll<HTMLElement>(textSelectors);
+      const newWisps: BlueWisp[] = [];
 
-      // Elements within 220px of spear strike ignite with blue lights
-      if (dist < 220) {
-        el.classList.remove('king-struck');
-        void el.offsetWidth; // Trigger DOM reflow to restart CSS animation
-        el.classList.add('king-struck');
+      elements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const elCx = rect.left + rect.width / 2;
+        const elCy = rect.top + rect.height / 2;
+        const dist = Math.hypot(elCx - cx, elCy - cy);
 
-        // Spawn floating blue light embers from the struck word
-        const wispCount = Math.min(6, Math.max(2, Math.floor(rect.width / 40)));
-        for (let i = 0; i < wispCount; i++) {
-          newWisps.push({
-            id: ++wispIdCounter.current,
-            x: rect.left + Math.random() * rect.width,
-            y: rect.top + Math.random() * rect.height,
-            size: 3 + Math.random() * 5,
-            opacity: 1,
-            born: Date.now(),
-          });
+        // Strike radius: 180px
+        if (dist < 180) {
+          el.classList.remove('king-struck');
+          void el.offsetWidth; // restart animation
+          el.classList.add('king-struck');
+
+          // Rising blue light embers
+          const wispCount = Math.min(4, Math.max(1, Math.floor(rect.width / 50)));
+          for (let i = 0; i < wispCount; i++) {
+            newWisps.push({
+              id: ++wispIdCounter.current,
+              x: rect.left + Math.random() * rect.width,
+              y: rect.top + Math.random() * rect.height,
+              size: 2 + Math.random() * 4,
+              opacity: 1,
+              born: Date.now(),
+            });
+          }
+
+          setTimeout(() => el.classList.remove('king-struck'), 1300);
         }
+      });
 
-        setTimeout(() => el.classList.remove('king-struck'), 1400);
+      if (newWisps.length > 0) {
+        setWisps((prev) => [...prev, ...newWisps]);
+        setTimeout(() => {
+          setWisps((prev) => prev.filter((w) => !newWisps.find((nw) => nw.id === w.id)));
+        }, 1100);
       }
-    });
 
-    if (newWisps.length > 0) {
-      setWisps((prev) => [...prev, ...newWisps]);
-      setTimeout(() => {
-        setWisps((prev) => prev.filter((w) => !newWisps.find((nw) => nw.id === w.id)));
-      }, 1200);
-    }
-
-    // 2. Spear Strike visual fx at the exact spear point
-    const sid = ++strikeIdCounter.current;
-    const rays: StrikeRays[] = Array.from({ length: 8 }, (_, i) => ({
-      id: i,
-      x: cx,
-      y: cy,
-      angle: (i * 45) + (Math.random() * 20 - 10),
-      length: 28 + Math.random() * 24,
-    }));
-
-    setStrikes((prev) => [...prev, { id: sid, x: cx, y: cy, born: Date.now(), rays }]);
-    setTimeout(() => setStrikes((prev) => prev.filter((s) => s.id !== sid)), 600);
-
-    // 3. High-velocity electric blue particles
-    const particleColors = ['#93c5fd', '#60a5fa', '#3b82f6', '#38bdf8', '#ffffff'];
-    const pCount = 18 + Math.floor(Math.random() * 10);
-    const newParticles: StrikeParticle[] = Array.from({ length: pCount }, () => {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 2.5 + Math.random() * 6.5;
-      return {
-        id: ++particleIdCounter.current,
+      // ── Spear Strike Impact Burst at exact spear point ──
+      const sid = ++strikeIdCounter.current;
+      const rays: StrikeRay[] = Array.from({ length: 6 }, (_, i) => ({
+        id: i,
         x: cx,
         y: cy,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 3 + Math.random() * 4,
-        opacity: 1,
-        color: particleColors[Math.floor(Math.random() * particleColors.length)],
-        born: Date.now(),
-      };
-    });
+        angle: i * 60 + (Math.random() * 20 - 10),
+        length: 18 + Math.random() * 16,
+      }));
 
-    setParticles((prev) => [...prev, ...newParticles]);
-    setTimeout(() => {
-      setParticles((prev) => prev.filter((p) => !newParticles.find((np) => np.id === p.id)));
-    }, 750);
-  }, []);
+      setStrikes((prev) => [...prev, { id: sid, x: cx, y: cy, born: Date.now(), rays }]);
+      setTimeout(() => setStrikes((prev) => prev.filter((s) => s.id !== sid)), 500);
 
-  // Attach global click and mousedown listeners
+      // ── Pixel Spark Particles ──────────────────────────
+      const particleColors = ['#93c5fd', '#38bdf8', '#60a5fa', '#2563eb', '#ffffff'];
+      const pCount = 12 + Math.floor(Math.random() * 6);
+      const newParticles: StrikeParticle[] = Array.from({ length: pCount }, () => {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 4.5;
+        return {
+          id: ++particleIdCounter.current,
+          x: cx,
+          y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 2 + Math.random() * 3,
+          opacity: 1,
+          color: particleColors[Math.floor(Math.random() * particleColors.length)],
+          born: Date.now(),
+        };
+      });
+
+      setParticles((prev) => [...prev, ...newParticles]);
+      setTimeout(() => {
+        setParticles((prev) => prev.filter((p) => !newParticles.find((np) => np.id === p.id)));
+      }, 650);
+    },
+    [isMobile]
+  );
+
   useEffect(() => {
+    if (isMobile) return;
     window.addEventListener('click', handleStrike);
-    return () => {
-      window.removeEventListener('click', handleStrike);
-    };
-  }, [handleStrike]);
+    return () => window.removeEventListener('click', handleStrike);
+  }, [handleStrike, isMobile]);
 
-  // Particle & Wisp physics animation loop
+  // 4. Particle and Wisp physics loop
   useEffect(() => {
     if (particles.length === 0 && wisps.length === 0) return;
     const tick = () => {
@@ -199,11 +230,11 @@ export const KingCursor: React.FC = () => {
       setParticles((prev) =>
         prev
           .map((p) => {
-            const age = (now - p.born) / 750;
+            const age = (now - p.born) / 650;
             return {
               ...p,
-              x: p.x + p.vx * 0.94,
-              y: p.y + p.vy * 0.94,
+              x: p.x + p.vx * 0.93,
+              y: p.y + p.vy * 0.93,
               opacity: Math.max(0, 1 - age),
               size: p.size * (1 - age * 0.4),
             };
@@ -214,11 +245,11 @@ export const KingCursor: React.FC = () => {
       setWisps((prev) =>
         prev
           .map((w) => {
-            const age = (now - w.born) / 1200;
+            const age = (now - w.born) / 1100;
             return {
               ...w,
-              y: w.y - 1.2, // Float upward like glowing blue spirits
-              x: w.x + Math.sin(age * 8) * 0.6,
+              y: w.y - 1.0,
+              x: w.x + Math.sin(age * 6) * 0.4,
               opacity: Math.max(0, 1 - age),
               size: w.size * (1 + age * 0.2),
             };
@@ -231,16 +262,19 @@ export const KingCursor: React.FC = () => {
     return () => cancelAnimationFrame(id);
   }, [particles, wisps]);
 
-  // Spear tip alignment:
-  // Mouse position (cursorPos.x, cursorPos.y) aligns precisely with spear tip (TIP_X, TIP_Y).
-  // When thrusting, spear lunges -8px along spear axis (up-left) and returns!
-  const thrustOffset = isThrusting ? -10 : 0;
+  // If on mobile device or touch screen: render nothing!
+  if (isMobile) {
+    return null;
+  }
+
+  // Spear tip alignment
+  const thrustOffset = isThrusting ? -5 : 0;
   const kingLeft = cursorPos.x - TIP_X + thrustOffset;
   const kingTop = cursorPos.y - TIP_Y + thrustOffset;
 
   return (
     <>
-      {/* ── Indian King with Spear Cursor ───────────────── */}
+      {/* ── Pixel Art Indian King with Spear Cursor ─────── */}
       <div
         style={{
           position: 'fixed',
@@ -250,46 +284,48 @@ export const KingCursor: React.FC = () => {
           height: KING_H,
           pointerEvents: 'none',
           zIndex: 999999,
+          opacity: isVisible ? 1 : 0,
           willChange: 'transform, left, top',
           transform: isThrusting
-            ? 'scale(1.08) rotate(-6deg)'
+            ? 'scale(1.1) rotate(-6deg)'
             : 'scale(1) rotate(0deg)',
-          transition: 'transform 0.08s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'transform 0.07s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease',
           filter: isThrusting
-            ? 'drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 5px #ffffff)'
-            : 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35))',
+            ? 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.9)) drop-shadow(0 0 3px #ffffff)'
+            : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
         }}
       >
         <img
-          src="/king-cursor.png"
-          alt="King Cursor"
+          src="/king-pixel.png"
+          alt="Pixel King Cursor"
           draggable={false}
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'contain',
             objectPosition: 'top left',
+            imageRendering: 'pixelated', // authentic retro pixel art crispness
             userSelect: 'none',
             pointerEvents: 'none',
           }}
         />
-        {/* Glowing aura at the tip of the spear */}
+        {/* Subtle glowing beacon at the spear tip */}
         <div
           style={{
             position: 'absolute',
-            left: TIP_X - 4,
-            top: TIP_Y - 4,
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, #ffffff 0%, #38bdf8 60%, rgba(37,99,235,0) 100%)',
-            boxShadow: '0 0 10px #38bdf8, 0 0 18px #2563eb',
+            left: TIP_X - 2,
+            top: TIP_Y - 2,
+            width: 4,
+            height: 4,
+            borderRadius: '1px', // pixel square
+            backgroundColor: '#ffffff',
+            boxShadow: '0 0 6px #38bdf8, 0 0 10px #2563eb',
             animation: 'tipPulse 1.8s infinite ease-in-out',
           }}
         />
       </div>
 
-      {/* ── Spear Strike Impact Burst at (cx, cy) ──────── */}
+      {/* ── Spear Strike Shockwave at (cx, cy) ──────────── */}
       {strikes.map((s) => (
         <div
           key={s.id}
@@ -301,18 +337,18 @@ export const KingCursor: React.FC = () => {
             zIndex: 999998,
           }}
         >
-          {/* Shockwave expanding ring */}
+          {/* Pixelated shockwave ring */}
           <div
             style={{
               position: 'absolute',
-              left: -48,
-              top: -48,
-              width: 96,
-              height: 96,
+              left: -24,
+              top: -24,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
               border: '2px solid rgba(56, 189, 248, 0.9)',
-              background: 'radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(37, 99, 235, 0.15) 50%, transparent 75%)',
-              animation: 'kingStrikeRing 0.5s ease-out forwards',
+              background: 'radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 70%)',
+              animation: 'kingStrikeRing 0.45s ease-out forwards',
             }}
           />
 
@@ -320,18 +356,18 @@ export const KingCursor: React.FC = () => {
           <div
             style={{
               position: 'absolute',
-              left: -14,
-              top: -14,
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, #ffffff 10%, #60a5fa 60%, transparent 100%)',
-              boxShadow: '0 0 20px #38bdf8, 0 0 40px #2563eb',
-              animation: 'kingStrikeCore 0.35s ease-out forwards',
+              left: -6,
+              top: -6,
+              width: 12,
+              height: 12,
+              borderRadius: '2px',
+              background: 'radial-gradient(circle, #ffffff 20%, #38bdf8 80%)',
+              boxShadow: '0 0 12px #38bdf8, 0 0 24px #2563eb',
+              animation: 'kingStrikeCore 0.3s ease-out forwards',
             }}
           />
 
-          {/* Electric energy rays radiating from spear point */}
+          {/* Spark rays */}
           {s.rays.map((ray) => (
             <div
               key={ray.id}
@@ -341,17 +377,17 @@ export const KingCursor: React.FC = () => {
                 top: 0,
                 width: 2,
                 height: ray.length,
-                background: 'linear-gradient(to bottom, #ffffff, #38bdf8 40%, transparent)',
+                background: 'linear-gradient(to bottom, #ffffff, #38bdf8 60%, transparent)',
                 transformOrigin: 'top center',
                 transform: `rotate(${ray.angle}deg)`,
-                animation: 'kingStrikeRay 0.45s ease-out forwards',
+                animation: 'kingStrikeRay 0.4s ease-out forwards',
               }}
             />
           ))}
         </div>
       ))}
 
-      {/* ── Electric Blue Particles ────────────────────── */}
+      {/* ── Pixel Particles ────────────────────────────── */}
       {particles.map((p) => (
         <div
           key={p.id}
@@ -361,9 +397,9 @@ export const KingCursor: React.FC = () => {
             top: p.y - p.size / 2,
             width: p.size,
             height: p.size,
-            borderRadius: '50%',
+            borderRadius: '1px', // pixel square particle
             backgroundColor: p.color,
-            boxShadow: `0 0 8px ${p.color}, 0 0 16px rgba(56,189,248,${p.opacity})`,
+            boxShadow: `0 0 4px ${p.color}, 0 0 8px rgba(56,189,248,${p.opacity})`,
             opacity: p.opacity,
             pointerEvents: 'none',
             zIndex: 999997,
@@ -381,9 +417,9 @@ export const KingCursor: React.FC = () => {
             top: w.y - w.size / 2,
             width: w.size,
             height: w.size,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, #ffffff 0%, #38bdf8 50%, #2563eb 100%)',
-            boxShadow: `0 0 10px #38bdf8, 0 0 20px rgba(37,99,235,${w.opacity})`,
+            borderRadius: '1px',
+            backgroundColor: '#38bdf8',
+            boxShadow: `0 0 6px #38bdf8, 0 0 12px rgba(37,99,235,${w.opacity})`,
             opacity: w.opacity,
             pointerEvents: 'none',
             zIndex: 999996,

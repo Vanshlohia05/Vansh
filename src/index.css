@@ -24,9 +24,11 @@
     color: #000000;
   }
 
-  /* ── King Cursor: hide OS cursor everywhere ── */
-  *, *::before, *::after {
-    cursor: none !important;
+  /* ── King Cursor: hide OS cursor only on desktop/mouse devices ── */
+  @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+    *, *::before, *::after {
+      cursor: none !important;
+    }
   }
 
   /* Hide scrollbars */
