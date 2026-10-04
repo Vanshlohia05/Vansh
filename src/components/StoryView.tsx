@@ -78,7 +78,7 @@ export const StoryView: React.FC<StoryViewProps> = ({
   }, [triggerScrollToHomeCV]);
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-80px)] flex flex-col justify-between pt-16 pb-8 select-none px-4">
+    <div className="relative w-full min-h-[calc(100vh-80px)] flex flex-col justify-between pt-16 pb-8 select-none px-4 page-transition">
       {/* Top Narrative Introduction */}
       <div className="max-w-4xl mx-auto w-full pt-2 pb-1 flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-2 border-b border-black/10">
         <div>

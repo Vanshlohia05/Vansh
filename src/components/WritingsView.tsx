@@ -1,17 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ARTICLES, Article } from '../data/writings';
 import { playClickSound } from '../utils/sound';
-import { ArrowUpRight, Search, Clock, Calendar } from 'lucide-react';
+import { ArrowUpRight, Search, Clock, ArrowDown } from 'lucide-react';
 
 interface WritingsViewProps {
   onSelectArticle: (article: Article) => void;
+  onNavigateToHomeCV?: () => void;
+  onNavigateToStuff?: () => void;
+  onNavigateToStory?: () => void;
+  onNavigateToGuestbook?: () => void;
 }
 
-export const WritingsView: React.FC<WritingsViewProps> = ({ onSelectArticle }) => {
+export const WritingsView: React.FC<WritingsViewProps> = ({
+  onSelectArticle,
+  onNavigateToHomeCV,
+  onNavigateToStuff,
+  onNavigateToStory,
+  onNavigateToGuestbook,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const isNavigatingRef = useRef(false);
+  const touchStartY = useRef<number | null>(null);
 
   const categories = ['All', 'Design Philosophy', 'Creative Engineering', 'Aesthetics', 'Experiments'];
+
+  const triggerScrollToStuff = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    playClickSound('high');
+    onNavigateToStuff?.();
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1000);
+  }, [onNavigateToStuff]);
+
+  const triggerScrollToHomeCV = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    playClickSound('tick');
+    onNavigateToHomeCV?.();
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1000);
+  }, [onNavigateToHomeCV]);
+
+  // Scroll / Wheel / Touch listener for bidirectional seamless page changing
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const scrollPos = window.innerHeight + window.scrollY;
+      const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
+      const isTop = window.scrollY <= 10;
+
+      if (e.deltaY > 35 && isBottom) {
+        triggerScrollToStuff();
+      } else if (e.deltaY < -35 && isTop) {
+        triggerScrollToHomeCV();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartY.current !== null) {
+        const delta = touchStartY.current - e.changedTouches[0].clientY;
+        const scrollPos = window.innerHeight + window.scrollY;
+        const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
+        const isTop = window.scrollY <= 10;
+
+        if (delta > 50 && isBottom) {
+          triggerScrollToStuff();
+        } else if (delta < -50 && isTop) {
+          triggerScrollToHomeCV();
+        }
+        touchStartY.current = null;
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [triggerScrollToStuff, triggerScrollToHomeCV]);
 
   const filteredArticles = ARTICLES.filter((article) => {
     const matchesCategory = selectedCategory === 'All' || article.category === selectedCategory;
@@ -23,12 +100,17 @@ export const WritingsView: React.FC<WritingsViewProps> = ({ onSelectArticle }) =
   });
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 pt-24 pb-20">
+    <div className="w-full max-w-4xl mx-auto px-4 pt-24 pb-20 select-text page-transition">
       
       {/* Header Info */}
       <div className="mb-10">
-        <h1 className="text-xl md:text-2xl font-normal tracking-tight text-black mb-2">
-          Writings
+        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-3 tracking-wide">
+          <span>PAGE 3</span>
+          <span>•</span>
+          <span>ESSAYS & THOUGHTS</span>
+        </div>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-black mb-2">
+          Writings & Longform Notes
         </h1>
         <p className="text-sub text-neutral-500 max-w-xl">
           Observations on software tactility, high-framerate engineering, typography, and personal web experiments.
@@ -72,7 +154,7 @@ export const WritingsView: React.FC<WritingsViewProps> = ({ onSelectArticle }) =
       </div>
 
       {/* Articles Feed */}
-      <div className="space-y-8">
+      <div className="space-y-6">
         {filteredArticles.length === 0 ? (
           <div className="py-12 text-center text-neutral-400 text-sub">
             No writings found matching your filter.
@@ -121,6 +203,56 @@ export const WritingsView: React.FC<WritingsViewProps> = ({ onSelectArticle }) =
             </article>
           ))
         )}
+      </div>
+
+      {/* ── Bottom Page Continuation Bar ────────────────────── */}
+      <div className="mt-16 pt-8 border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+        <div className="flex items-center gap-3">
+          {onNavigateToHomeCV && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToHomeCV();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              ← Back to Page 2: Home/CV
+            </button>
+          )}
+
+          {onNavigateToStory && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToStory();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              (Story)
+            </button>
+          )}
+
+          {onNavigateToGuestbook && (
+            <button
+              onClick={() => {
+                playClickSound('high');
+                onNavigateToGuestbook();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              (Guestbook)
+            </button>
+          )}
+        </div>
+
+        {/* Scroll Next Page Cue */}
+        <button
+          onClick={triggerScrollToStuff}
+          className="flex items-center gap-1.5 text-xs text-black font-semibold hover:text-blue-600 transition-colors cursor-pointer animate-pulse"
+        >
+          <span>Scroll down for Page 4: Stuff</span>
+          <ArrowDown size={13} className="animate-bounce" />
+        </button>
       </div>
 
     </div>

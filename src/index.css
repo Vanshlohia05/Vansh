@@ -246,6 +246,22 @@ button:hover, a:hover {
   animation: pulseGlow 3s infinite ease-in-out;
 }
 
+/* Page Transition Animation */
+@keyframes pageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: pageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    STICKMAN STORYTELLING HERO ANIMATION
    - 0 Dependencies | ~3 KB CSS | Only transform & opacity

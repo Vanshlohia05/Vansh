@@ -28,14 +28,27 @@ export const HomeView: React.FC<HomeViewProps> = ({
     }, 1000);
   }, [onNavigateToWritings]);
 
-  // Scroll / Wheel / Touch listener to navigate from Page 2 (CV) to Page 3 (Writings)
+  const triggerScrollToStory = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    playClickSound('tick');
+    onNavigateToStory?.();
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1000);
+  }, [onNavigateToStory]);
+
+  // Scroll / Wheel / Touch listener for seamless page switching
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      // Check if user is scrolled near bottom of page before transitioning
       const scrollPos = window.innerHeight + window.scrollY;
-      const threshold = document.documentElement.scrollHeight - 60;
-      if (e.deltaY > 30 && scrollPos >= threshold) {
+      const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
+      const isTop = window.scrollY <= 10;
+
+      if (e.deltaY > 35 && isBottom) {
         triggerScrollToWritings();
+      } else if (e.deltaY < -35 && isTop) {
+        triggerScrollToStory();
       }
     };
 
@@ -47,9 +60,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
       if (touchStartY.current !== null) {
         const delta = touchStartY.current - e.changedTouches[0].clientY;
         const scrollPos = window.innerHeight + window.scrollY;
-        const threshold = document.documentElement.scrollHeight - 60;
-        if (delta > 50 && scrollPos >= threshold) {
+        const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
+        const isTop = window.scrollY <= 10;
+
+        if (delta > 50 && isBottom) {
           triggerScrollToWritings();
+        } else if (delta < -50 && isTop) {
+          triggerScrollToStory();
         }
         touchStartY.current = null;
       }
@@ -64,10 +81,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [triggerScrollToWritings]);
+  }, [triggerScrollToWritings, triggerScrollToStory]);
 
   return (
-    <div className="relative w-full min-h-screen pt-20 pb-16 px-4 max-w-4xl mx-auto select-text font-sans">
+    <div className="relative w-full min-h-screen pt-20 pb-16 px-4 max-w-4xl mx-auto select-text font-sans page-transition">
       
       {/* ── Page Header / Intro Banner ─────────────────────── */}
       <section className="border-b border-neutral-200/80 pb-8 pt-4">

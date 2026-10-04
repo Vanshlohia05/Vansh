@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { STUFF_ITEMS, StuffItem } from '../data/stuff';
 import { playClickSound } from '../utils/sound';
-import { ArrowUpRight, Shuffle, LayoutGrid, List } from 'lucide-react';
+import { ArrowUpRight, Shuffle, LayoutGrid, List, ArrowDown } from 'lucide-react';
 
 interface StuffViewProps {
   galleryMode: 'gallery' | 'index';
@@ -9,6 +9,10 @@ interface StuffViewProps {
   onSelectItem: (item: StuffItem) => void;
   shuffledItems: StuffItem[];
   onShuffle: () => void;
+  onNavigateToWritings?: () => void;
+  onNavigateToGuestbook?: () => void;
+  onNavigateToStory?: () => void;
+  onNavigateToHomeCV?: () => void;
 }
 
 export const StuffView: React.FC<StuffViewProps> = ({
@@ -17,12 +21,38 @@ export const StuffView: React.FC<StuffViewProps> = ({
   onSelectItem,
   shuffledItems,
   onShuffle,
+  onNavigateToWritings,
+  onNavigateToGuestbook,
+  onNavigateToStory,
+  onNavigateToHomeCV,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [hoveredItem, setHoveredItem] = useState<StuffItem | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isNavigatingRef = useRef(false);
+  const touchStartY = useRef<number | null>(null);
 
   const categories = ['All', 'Projects', 'Experiments', 'Visuals', 'Tools'];
+
+  const triggerScrollToGuestbook = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    playClickSound('high');
+    onNavigateToGuestbook?.();
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1000);
+  }, [onNavigateToGuestbook]);
+
+  const triggerScrollToWritings = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    playClickSound('tick');
+    onNavigateToWritings?.();
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1000);
+  }, [onNavigateToWritings]);
 
   // Track mouse coordinates for floating preview in Index mode
   useEffect(() => {
@@ -33,20 +63,70 @@ export const StuffView: React.FC<StuffViewProps> = ({
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Scroll / Wheel / Touch listener for seamless page navigation
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const scrollPos = window.innerHeight + window.scrollY;
+      const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
+      const isTop = window.scrollY <= 10;
+
+      if (e.deltaY > 35 && isBottom) {
+        triggerScrollToGuestbook();
+      } else if (e.deltaY < -35 && isTop) {
+        triggerScrollToWritings();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartY.current !== null) {
+        const delta = touchStartY.current - e.changedTouches[0].clientY;
+        const scrollPos = window.innerHeight + window.scrollY;
+        const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
+        const isTop = window.scrollY <= 10;
+
+        if (delta > 50 && isBottom) {
+          triggerScrollToGuestbook();
+        } else if (delta < -50 && isTop) {
+          triggerScrollToWritings();
+        }
+        touchStartY.current = null;
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [triggerScrollToGuestbook, triggerScrollToWritings]);
+
   const filteredItems = shuffledItems.filter((item) => {
     if (selectedFilter === 'All') return true;
     return item.category === selectedFilter;
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 pt-20 pb-24">
+    <div className="w-full max-w-7xl mx-auto px-4 pt-20 pb-24 select-text page-transition">
       
       {/* Top Bar: Title, Category Filters, Shuffle & View Switcher */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-neutral-100 pb-4">
         <div>
+          <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-2 tracking-wide">
+            <span>PAGE 4</span>
+            <span>•</span>
+            <span>EXPERIMENTS & LAB</span>
+          </div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl md:text-2xl font-normal tracking-tight text-black">
-              Stuff
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-black">
+              Stuff & Projects
             </h1>
             <span className="text-micro font-mono text-neutral-400">
               ({filteredItems.length} items)
@@ -233,7 +313,7 @@ export const StuffView: React.FC<StuffViewProps> = ({
             </table>
           </div>
 
-          {/* Floating Cursor Image Preview for Index Mode (urfd signature .hover--image) */}
+          {/* Floating Cursor Image Preview for Index Mode */}
           {hoveredItem && (
             <div
               className="pointer-events-none fixed z-50 overflow-hidden rounded shadow-2xl border border-white/20 transition-opacity duration-200 hidden md:block"
@@ -257,6 +337,56 @@ export const StuffView: React.FC<StuffViewProps> = ({
           )}
         </div>
       )}
+
+      {/* ── Bottom Page Continuation Bar ────────────────────── */}
+      <div className="mt-16 pt-8 border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+        <div className="flex items-center gap-3">
+          {onNavigateToWritings && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToWritings();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              ← Back to Page 3: Writings
+            </button>
+          )}
+
+          {onNavigateToHomeCV && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToHomeCV();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              (Home/CV)
+            </button>
+          )}
+
+          {onNavigateToStory && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToStory();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              (Story)
+            </button>
+          )}
+        </div>
+
+        {/* Scroll Next Page Cue */}
+        <button
+          onClick={triggerScrollToGuestbook}
+          className="flex items-center gap-1.5 text-xs text-black font-semibold hover:text-blue-600 transition-colors cursor-pointer animate-pulse"
+        >
+          <span>Scroll down for Page 5: Guestbook</span>
+          <ArrowDown size={13} className="animate-bounce" />
+        </button>
+      </div>
 
     </div>
   );

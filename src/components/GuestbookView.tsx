@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GuestbookEntry } from '../data/guestbook';
 import { playClickSound } from '../utils/sound';
 import confetti from 'canvas-confetti';
-import { Heart, Send, Sparkles, MapPin, AtSign, MessageSquare } from 'lucide-react';
+import { Heart, Send, Sparkles, MapPin, AtSign, RotateCcw, ArrowUp } from 'lucide-react';
 
 interface GuestbookViewProps {
   entries: GuestbookEntry[];
@@ -10,6 +10,10 @@ interface GuestbookViewProps {
   onLikeEntry: (id: string) => void;
   formOpen: boolean;
   setFormOpen: (open: boolean) => void;
+  onNavigateToStuff?: () => void;
+  onNavigateToStory?: () => void;
+  onNavigateToHomeCV?: () => void;
+  onNavigateToWritings?: () => void;
 }
 
 export const GuestbookView: React.FC<GuestbookViewProps> = ({
@@ -18,6 +22,10 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   onLikeEntry,
   formOpen,
   setFormOpen,
+  onNavigateToStuff,
+  onNavigateToStory,
+  onNavigateToHomeCV,
+  onNavigateToWritings,
 }) => {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
@@ -25,8 +33,55 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   const [message, setMessage] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('✦');
   const [filterText, setFilterText] = useState('');
+  const isNavigatingRef = useRef(false);
+  const touchStartY = useRef<number | null>(null);
 
   const avatarOptions = ['✦', '⚡', '☕', '🚀', '🖤', '🎨', '🏮', '🍀', '✨', '👾'];
+
+  const triggerScrollToStuff = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    playClickSound('tick');
+    onNavigateToStuff?.();
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1000);
+  }, [onNavigateToStuff]);
+
+  // Scroll / Wheel / Touch listener to navigate back up to Stuff
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const isTop = window.scrollY <= 10;
+      if (e.deltaY < -35 && isTop) {
+        triggerScrollToStuff();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartY.current !== null) {
+        const delta = touchStartY.current - e.changedTouches[0].clientY;
+        const isTop = window.scrollY <= 10;
+        if (delta < -50 && isTop) {
+          triggerScrollToStuff();
+        }
+        touchStartY.current = null;
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [triggerScrollToStuff]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,12 +127,17 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   );
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 pt-24 pb-24">
+    <div className="w-full max-w-4xl mx-auto px-4 pt-24 pb-24 select-text page-transition">
       
       {/* Header Info */}
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-neutral-100 pb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-normal tracking-tight text-black mb-1.5 flex items-center gap-2">
+          <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-2 tracking-wide">
+            <span>PAGE 5</span>
+            <span>•</span>
+            <span>COMMUNITY & GUESTBOOK</span>
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-black mb-1.5 flex items-center gap-2">
             <span>Guestbook</span>
             <span className="text-micro font-mono text-neutral-400">
               ({entries.length})
@@ -95,7 +155,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
               playClickSound('high');
               setFormOpen(!formOpen);
             }}
-            className="bg-black text-white hover:bg-neutral-800 transition-colors px-3.5 py-1.5 rounded text-sub font-medium flex items-center gap-1.5 shadow-sm"
+            className="bg-black text-white hover:bg-neutral-800 transition-colors px-3.5 py-1.5 rounded text-sub font-medium flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <Sparkles size={12} className="text-[#d2fd78]" />
             <span>{formOpen ? 'Close Form' : 'Sign the Guestbook'}</span>
@@ -180,7 +240,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
                     playClickSound('tick');
                     setSelectedAvatar(sym);
                   }}
-                  className={`w-8 h-8 rounded flex items-center justify-center text-sm transition-all ${
+                  className={`w-8 h-8 rounded flex items-center justify-center text-sm transition-all cursor-pointer ${
                     selectedAvatar === sym
                       ? 'bg-black text-[#d2fd78] shadow scale-105'
                       : 'bg-white hover:bg-neutral-200 text-neutral-700 border border-neutral-200'
@@ -211,13 +271,13 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
             <button
               type="button"
               onClick={() => setFormOpen(false)}
-              className="px-3 py-1.5 text-micro text-neutral-500 hover:text-black transition-colors"
+              className="px-3 py-1.5 text-micro text-neutral-500 hover:text-black transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-black text-white hover:bg-neutral-800 transition-colors px-4 py-1.5 rounded text-sub font-medium flex items-center gap-1.5 shadow"
+              className="bg-black text-white hover:bg-neutral-800 transition-colors px-4 py-1.5 rounded text-sub font-medium flex items-center gap-1.5 shadow cursor-pointer"
             >
               <Send size={12} />
               <span>Post Signature</span>
@@ -288,7 +348,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
                     playClickSound('pop');
                     onLikeEntry(entry.id);
                   }}
-                  className="flex items-center gap-1 text-micro text-neutral-400 hover:text-rose-600 transition-colors group/btn"
+                  className="flex items-center gap-1 text-micro text-neutral-400 hover:text-rose-600 transition-colors group/btn cursor-pointer"
                 >
                   <Heart
                     size={11}
@@ -300,6 +360,50 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── Bottom Page Continuation Bar ────────────────────── */}
+      <div className="mt-16 pt-8 border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+        <div className="flex items-center gap-3">
+          {onNavigateToStuff && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToStuff();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500 flex items-center gap-1"
+            >
+              <ArrowUp size={11} />
+              <span>Scroll up / Back to Page 4: Stuff</span>
+            </button>
+          )}
+
+          {onNavigateToHomeCV && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToHomeCV();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              (Home/CV)
+            </button>
+          )}
+        </div>
+
+        {/* Restart Flow Button */}
+        {onNavigateToStory && (
+          <button
+            onClick={() => {
+              playClickSound('high');
+              onNavigateToStory();
+            }}
+            className="flex items-center gap-1.5 text-xs text-black font-semibold hover:text-blue-600 transition-colors cursor-pointer"
+          >
+            <RotateCcw size={12} />
+            <span>Restart from Page 1: Story Lab</span>
+          </button>
+        )}
       </div>
 
     </div>

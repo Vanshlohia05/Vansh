@@ -177,7 +177,13 @@ export const App: React.FC = () => {
         )}
 
         {activeTab === 'writings' && (
-          <WritingsView onSelectArticle={(article) => setSelectedArticle(article)} />
+          <WritingsView
+            onSelectArticle={(article) => setSelectedArticle(article)}
+            onNavigateToHomeCV={() => setActiveTab('home')}
+            onNavigateToStuff={() => setActiveTab('stuff')}
+            onNavigateToStory={() => setActiveTab('story')}
+            onNavigateToGuestbook={() => setActiveTab('guestbook')}
+          />
         )}
 
         {activeTab === 'stuff' && (
@@ -187,6 +193,10 @@ export const App: React.FC = () => {
             shuffledItems={shuffledItems}
             onShuffle={handleShuffle}
             onSelectItem={(item) => setSelectedProject(item)}
+            onNavigateToWritings={() => setActiveTab('writings')}
+            onNavigateToGuestbook={() => setActiveTab('guestbook')}
+            onNavigateToStory={() => setActiveTab('story')}
+            onNavigateToHomeCV={() => setActiveTab('home')}
           />
         )}
 
@@ -197,6 +207,10 @@ export const App: React.FC = () => {
             onLikeEntry={handleLikeGuestbookEntry}
             formOpen={guestbookFormOpen}
             setFormOpen={setGuestbookFormOpen}
+            onNavigateToStuff={() => setActiveTab('stuff')}
+            onNavigateToStory={() => setActiveTab('story')}
+            onNavigateToHomeCV={() => setActiveTab('home')}
+            onNavigateToWritings={() => setActiveTab('writings')}
           />
         )}
       </main>
