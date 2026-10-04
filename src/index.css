@@ -144,7 +144,16 @@ h3 { --shimmer-offset: 3; }
   animation: blueWordBurst 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
 
-/* Explicitly disable tap/click animations on Guestbook, Admin, and no-strike sections */
+/* Explicitly disable tap/click and blue aura animations on Guestbook, Admin, and no-strike sections */
+.guestbook-container,
+.guestbook-container *,
+.admin-container,
+.admin-container *,
+[data-no-strike],
+[data-no-strike] * {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 .guestbook-container .king-struck,
 .admin-container .king-struck,
 [data-no-strike] .king-struck {
@@ -152,6 +161,25 @@ h3 { --shimmer-offset: 3; }
   text-shadow: none !important;
   color: inherit !important;
   filter: none !important;
+}
+
+.guestbook-container h1,
+.guestbook-container h2,
+.guestbook-container h3,
+.guestbook-container h4,
+.admin-container h1,
+.admin-container h2,
+.admin-container h3,
+.admin-container h4 {
+  animation: none !important;
+  text-shadow: none !important;
+}
+
+.guestbook-container button:hover,
+.guestbook-container a:hover,
+.admin-container button:hover,
+.admin-container a:hover {
+  text-shadow: none !important;
 }
 
 /* Passive ambient glow on all text elements */

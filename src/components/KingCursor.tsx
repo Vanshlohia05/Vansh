@@ -136,11 +136,13 @@ export const KingCursor: React.FC<KingCursorProps> = ({
 
       const target = e.target as HTMLElement | null;
       if (
-        target &&
-        (target.closest(
-          'input, textarea, select, form, .guestbook-container, .admin-container, [data-no-strike]'
-        ) ||
-          target.isContentEditable)
+        document.querySelector('.guestbook-container') ||
+        document.querySelector('.admin-container') ||
+        (target &&
+          (target.closest(
+            'input, textarea, select, form, .guestbook-container, .admin-container, [data-no-strike]'
+          ) ||
+            target.isContentEditable))
       ) {
         return;
       }
@@ -304,7 +306,7 @@ export const KingCursor: React.FC<KingCursorProps> = ({
             ? 'scale(1.1) rotate(-6deg)'
             : 'scale(1) rotate(0deg)',
           transition: 'transform 0.07s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease',
-          filter: isThrusting
+          filter: isThrusting && !disableClickAnimation
             ? 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.9)) drop-shadow(0 0 3px #ffffff)'
             : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
         }}
@@ -323,19 +325,21 @@ export const KingCursor: React.FC<KingCursorProps> = ({
             pointerEvents: 'none',
           }}
         />
-        <div
-          style={{
-            position: 'absolute',
-            left: TIP_X - 2,
-            top: TIP_Y - 2,
-            width: 4,
-            height: 4,
-            borderRadius: '1px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 0 6px #38bdf8, 0 0 10px #2563eb',
-            animation: 'tipPulse 1.8s infinite ease-in-out',
-          }}
-        />
+        {!disableClickAnimation && (
+          <div
+            style={{
+              position: 'absolute',
+              left: TIP_X - 2,
+              top: TIP_Y - 2,
+              width: 4,
+              height: 4,
+              borderRadius: '1px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 0 6px #38bdf8, 0 0 10px #2563eb',
+              animation: 'tipPulse 1.8s infinite ease-in-out',
+            }}
+          />
+        )}
       </div>
 
       {/* ── Spear Strike Shockwaves (only rendered when click animations enabled) ── */}
