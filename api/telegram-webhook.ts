@@ -3,9 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8980359347:AAGaK5wAforV3BqUBw7wN8CDgjQ7GoPv77Q';
 const ADMIN_ID = process.env.TELEGRAM_ADMIN_ID;
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://euzkujcpumwlyhpokkjp.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || '';
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1emt1amNwdW13bHlocG9ra2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMTA0MTAsImV4cCI6MjEwNjY4NjQxMH0.zwTra2QeTA3OiJ7J7x63pHm_0lPwl59bgKMwrP1iK1M';
 
-const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Helper: Send reply back to Telegram chat
 async function sendTelegramReply(chatId: number, text: string, parseMode: string = 'Markdown') {
@@ -114,9 +118,7 @@ export default async function handler(req: any, res: any) {
             content: bodyLines.join('\n'),
           };
 
-          if (supabase) {
-            await supabase.from('writings').upsert(newArticle);
-          }
+          await supabase.from('writings').upsert(newArticle);
 
           await sendTelegramReply(
             chatId,
@@ -191,15 +193,17 @@ export default async function handler(req: any, res: any) {
         author,
         year,
         note,
-        link: link || undefined,
+        link: link || null,
         h: Math.floor(Math.random() * 35 + 205),
         w: Math.floor(Math.random() * 10 + 36),
         c,
         fg,
       };
 
-      if (supabase) {
-        await supabase.from('books').upsert(newBook);
+      // Write directly to Supabase
+      const { error: dbError } = await supabase.from('books').upsert(newBook);
+      if (dbError) {
+        console.error('Supabase insert error:', dbError);
       }
 
       await sendTelegramReply(
@@ -209,7 +213,7 @@ export default async function handler(req: any, res: any) {
         `*Author:* ${newBook.author} (${newBook.year})\n` +
         `*Note:* "${newBook.note}"\n` +
         (newBook.link ? `*Link:* [Amazon Link](${newBook.link})\n` : '') +
-        `\n_Changes synced to live portfolio._`
+        `\n_Saved in Supabase & synced live across portfolio._`
       );
 
       return res.status(200).json({ ok: true, action: 'add_book', data: newBook });
@@ -238,9 +242,7 @@ export default async function handler(req: any, res: any) {
         cap,
       };
 
-      if (supabase) {
-        await supabase.from('essays').upsert(newEssay);
-      }
+      await supabase.from('essays').upsert(newEssay);
 
       await sendTelegramReply(
         chatId,

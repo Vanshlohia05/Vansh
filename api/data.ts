@@ -1,15 +1,13 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://euzkujcpumwlyhpokkjp.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || '';
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1emt1amNwdW13bHlocG9ra2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMTA0MTAsImV4cCI6MjEwNjY4NjQxMH0.zwTra2QeTA3OiJ7J7x63pHm_0lPwl59bgKMwrP1iK1M';
 
-const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-
-// In-memory fallback cache for serverless lifetime
-let cachedBooks: any[] = [];
-let cachedEssays: any[] = [];
-let cachedWritings: any[] = [];
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,48 +19,29 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // GET: Fetch live data from Supabase or server cache
     if (req.method === 'GET') {
-      if (supabase) {
-        const [booksRes, essaysRes, writingsRes] = await Promise.all([
-          supabase.from('books').select('*').order('created_at', { ascending: false }),
-          supabase.from('essays').select('*').order('created_at', { ascending: false }),
-          supabase.from('writings').select('*').order('created_at', { ascending: false }),
-        ]);
-
-        return res.status(200).json({
-          books: booksRes.data || cachedBooks,
-          essays: essaysRes.data || cachedEssays,
-          writings: writingsRes.data || cachedWritings,
-        });
-      }
+      const [booksRes, essaysRes, writingsRes] = await Promise.all([
+        supabase.from('books').select('*').order('created_at', { ascending: false }),
+        supabase.from('essays').select('*').order('created_at', { ascending: false }),
+        supabase.from('writings').select('*').order('created_at', { ascending: false }),
+      ]);
 
       return res.status(200).json({
-        books: cachedBooks,
-        essays: cachedEssays,
-        writings: cachedWritings,
+        books: booksRes.data || [],
+        essays: essaysRes.data || [],
+        writings: writingsRes.data || [],
       });
     }
 
-    // POST: Add new item from Telegram Webhook or Admin Console
     if (req.method === 'POST') {
       const { type, data } = req.body || {};
 
       if (type === 'book') {
-        cachedBooks = [data, ...cachedBooks.filter((b) => b.id !== data.id)];
-        if (supabase) {
-          await supabase.from('books').upsert(data);
-        }
+        await supabase.from('books').upsert(data);
       } else if (type === 'essay') {
-        cachedEssays = [data, ...cachedEssays.filter((e) => e.id !== data.id)];
-        if (supabase) {
-          await supabase.from('essays').upsert(data);
-        }
+        await supabase.from('essays').upsert(data);
       } else if (type === 'writing') {
-        cachedWritings = [data, ...cachedWritings.filter((w) => w.id !== data.id)];
-        if (supabase) {
-          await supabase.from('writings').upsert(data);
-        }
+        await supabase.from('writings').upsert(data);
       }
 
       return res.status(200).json({ success: true, type, data });
