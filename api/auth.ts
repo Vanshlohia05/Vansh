@@ -10,7 +10,7 @@ const SUPABASE_KEY =
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const SERVER_SECRET = process.env.ADMIN_SECRET_KEY || 'vansh_portfolio_master_secret_2026';
+const HMAC_SIGNING_KEY = process.env.SESSION_SIGNING_KEY || 'vansh_secure_hmac_session_signer_key';
 const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Helper: Secure Timing-Safe String Comparison
@@ -39,7 +39,7 @@ function generateSessionToken(): { token: string; expiresAt: number } {
 
   const payloadB64 = Buffer.from(payload).toString('base64url');
   const signature = crypto
-    .createHmac('sha256', SERVER_SECRET)
+    .createHmac('sha256', HMAC_SIGNING_KEY)
     .update(payloadB64)
     .digest('base64url');
 
@@ -57,7 +57,7 @@ export function verifySessionToken(token: string): boolean {
     if (!payloadB64 || !signature) return false;
 
     const expectedSignature = crypto
-      .createHmac('sha256', SERVER_SECRET)
+      .createHmac('sha256', HMAC_SIGNING_KEY)
       .update(payloadB64)
       .digest('base64url');
 
@@ -122,11 +122,6 @@ export default async function handler(req: any, res: any) {
         }
       } catch (dbErr) {
         console.warn('Supabase auth RPC error:', dbErr);
-      }
-
-      // Secondary fallback check for server environment secret
-      if (!isMatch) {
-        isMatch = timingSafeCompare(passcode.trim(), SERVER_SECRET.trim());
       }
 
       if (!isMatch) {

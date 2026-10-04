@@ -26,13 +26,19 @@ import {
   ExternalLink,
   ShieldCheck,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
+import {
+  GuestbookEntry,
+  deleteGuestbookEntry,
+  mapRowToEntry,
+} from '../data/guestbook';
 
 interface AdminViewProps {
   onExit: () => void;
 }
 
-type AdminTab = 'books' | 'essays' | 'writings' | 'telegram';
+type AdminTab = 'books' | 'essays' | 'guestbook' | 'writings' | 'telegram';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   // Authentication State (Session token from backend)
@@ -48,6 +54,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   const [books, setBooks] = useState<BookItem[]>([]);
   const [essays, setEssays] = useState<EssayItem[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [guestbookList, setGuestbookList] = useState<GuestbookEntry[]>([]);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>('');
 
   // New Book Form State
@@ -98,10 +105,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
 
     const loadLive = async () => {
       try {
-        const [booksRes, essaysRes, writingsRes] = await Promise.all([
+        const [booksRes, essaysRes, writingsRes, guestbookRes] = await Promise.all([
           supabase.from('books').select('*').order('created_at', { ascending: false }),
           supabase.from('essays').select('*').order('created_at', { ascending: false }),
           supabase.from('writings').select('*').order('created_at', { ascending: false }),
+          supabase.from('guestbook').select('*').order('timestamp', { ascending: false }),
         ]);
 
         if (booksRes.data && Array.isArray(booksRes.data) && booksRes.data.length > 0) {
@@ -149,6 +157,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
           }));
           const merged = [...liveWritings, ...ARTICLES.filter((a) => !liveWritings.some((fl) => fl.slug === a.slug || fl.title.toLowerCase() === a.title.toLowerCase()))];
           setArticles(merged);
+        }
+
+        if (guestbookRes.data && Array.isArray(guestbookRes.data)) {
+          setGuestbookList(guestbookRes.data.map(mapRowToEntry));
         }
       } catch (err) {
         console.warn('Admin load error:', err);
@@ -372,6 +384,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     }
   };
 
+  const handleDeleteGuestbook = async (id: string) => {
+    playClickSound('pop');
+    const updated = guestbookList.filter((g) => g.id !== id);
+    setGuestbookList(updated);
+    await deleteGuestbookEntry(id);
+    setSaveSuccessMsg('Removed entry from live Guestbook.');
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
   // ─────────────────────────────────────────────────────────────
   // RENDER: LOCK SCREEN (When unauthenticated)
   // ─────────────────────────────────────────────────────────────
@@ -513,6 +534,21 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         >
           <FileText size={13} />
           <span>Essays & Reports ({essays.length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            playClickSound('tick');
+            setActiveTab('guestbook');
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all cursor-pointer ${
+            activeTab === 'guestbook'
+              ? 'bg-black text-white font-semibold'
+              : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
+          }`}
+        >
+          <Sparkles size={13} />
+          <span>Guestbook ({guestbookList.length})</span>
         </button>
 
         <button
@@ -884,7 +920,79 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          TAB 3: TELEGRAM WEBHOOK INSTRUCTIONS & STATUS
+          TAB 3: GUESTBOOK MODERATOR
+          ═══════════════════════════════════════════════════════════════ */}
+      {activeTab === 'guestbook' && (
+        <div className="space-y-6 text-xs font-sans">
+          <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+            <div>
+              <h2 className="text-sm font-bold text-black font-mono flex items-center gap-2">
+                <Sparkles size={14} className="text-amber-500" />
+                <span>Live Guestbook Submissions</span>
+              </h2>
+              <p className="text-neutral-500 text-[11px] mt-0.5">
+                Real-time entries synced via Supabase. Deleting an entry removes it globally from all devices.
+              </p>
+            </div>
+            <span className="font-mono text-neutral-400">
+              {guestbookList.length} total signatures
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {guestbookList.length === 0 ? (
+              <div className="p-8 text-center text-neutral-400 font-mono">
+                No signatures yet.
+              </div>
+            ) : (
+              guestbookList.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="p-4 bg-white border border-neutral-200 rounded-lg hover:border-neutral-300 transition-colors flex items-start justify-between gap-4"
+                >
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-sm shrink-0 border border-neutral-200">
+                      {entry.avatar}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                        <span className="font-bold text-black text-xs">
+                          {entry.name}
+                        </span>
+                        {entry.handle && (
+                          <span className="text-[11px] text-neutral-400 font-mono">
+                            {entry.handle}
+                          </span>
+                        )}
+                        <span className="text-[11px] text-neutral-400 font-mono">
+                          • {entry.location}
+                        </span>
+                        <span className="text-[11px] text-neutral-400 font-mono ml-auto">
+                          {entry.date} ({entry.likes} likes)
+                        </span>
+                      </div>
+                      <p className="text-neutral-700 text-xs leading-relaxed break-words">
+                        {entry.message}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleDeleteGuestbook(entry.id)}
+                    className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer shrink-0"
+                    title="Delete signature from Supabase"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          TAB 4: TELEGRAM WEBHOOK INSTRUCTIONS & STATUS
           ═══════════════════════════════════════════════════════════════ */}
       {activeTab === 'telegram' && (
         <div className="space-y-6 text-xs font-sans">

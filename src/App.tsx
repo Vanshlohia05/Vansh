@@ -16,6 +16,11 @@ import {
   GuestbookEntry,
   loadGuestbookEntries,
   saveGuestbookEntries,
+  fetchGuestbookEntries,
+  insertGuestbookEntry,
+  likeGuestbookEntry,
+  subscribeToGuestbookChanges,
+  syncLocalEntriesToSupabase,
 } from './data/guestbook';
 import { toggleSound } from './utils/sound';
 
@@ -37,9 +42,52 @@ export const App: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<StuffItem | Artwork | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
-  // Initialize guestbook from localStorage
+  // Initialize guestbook from local cache & synchronize live from Supabase
   useEffect(() => {
+    // 1. Instant local render
     setGuestbookEntries(loadGuestbookEntries());
+
+    // 2. Fetch live data from Supabase across all devices
+    fetchGuestbookEntries().then((live) => {
+      if (live && live.length > 0) {
+        setGuestbookEntries(live);
+      }
+    });
+
+    // 3. Sync any unsaved local entries to the cloud
+    syncLocalEntriesToSupabase();
+
+    // 4. Real-time updates: whenever someone signs anywhere, all devices update instantly
+    const unsubscribe = subscribeToGuestbookChanges(
+      (newEntry) => {
+        setGuestbookEntries((prev) => {
+          if (prev.some((e) => e.id === newEntry.id)) {
+            return prev.map((e) => (e.id === newEntry.id ? newEntry : e));
+          }
+          const updated = [newEntry, ...prev];
+          saveGuestbookEntries(updated);
+          return updated;
+        });
+      },
+      (updatedEntry) => {
+        setGuestbookEntries((prev) => {
+          const updated = prev.map((e) => (e.id === updatedEntry.id ? updatedEntry : e));
+          saveGuestbookEntries(updated);
+          return updated;
+        });
+      },
+      (deletedId) => {
+        setGuestbookEntries((prev) => {
+          const updated = prev.filter((e) => e.id !== deletedId);
+          saveGuestbookEntries(updated);
+          return updated;
+        });
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Sync tab with URL hash
@@ -75,30 +123,40 @@ export const App: React.FC = () => {
     setShelfShuffleCount((prev) => prev + 1);
   };
 
-  // Guestbook Handlers
-  const handleAddGuestbookEntry = (
+  // Guestbook Handlers (Persisted globally to Supabase + local cache)
+  const handleAddGuestbookEntry = async (
     newEntryData: Omit<GuestbookEntry, 'id' | 'timestamp' | 'likes'>
   ) => {
     const newEntry: GuestbookEntry = {
       ...newEntryData,
-      id: `g-${Date.now()}`,
+      id: `g-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       timestamp: Date.now(),
       likes: 1,
     };
-    const updated = [newEntry, ...guestbookEntries];
-    setGuestbookEntries(updated);
-    saveGuestbookEntries(updated);
+    // Optimistic UI update
+    setGuestbookEntries((prev) => {
+      const updated = [newEntry, ...prev.filter((e) => e.id !== newEntry.id)];
+      saveGuestbookEntries(updated);
+      return updated;
+    });
+    // Global cloud broadcast
+    await insertGuestbookEntry(newEntry);
   };
 
-  const handleLikeGuestbookEntry = (id: string) => {
-    const updated = guestbookEntries.map((entry) => {
-      if (entry.id === id) {
-        return { ...entry, likes: entry.likes + 1 };
-      }
-      return entry;
+  const handleLikeGuestbookEntry = async (id: string) => {
+    // Optimistic UI update
+    setGuestbookEntries((prev) => {
+      const updated = prev.map((entry) => {
+        if (entry.id === id) {
+          return { ...entry, likes: entry.likes + 1 };
+        }
+        return entry;
+      });
+      saveGuestbookEntries(updated);
+      return updated;
     });
-    setGuestbookEntries(updated);
-    saveGuestbookEntries(updated);
+    // Cloud sync
+    await likeGuestbookEntry(id);
   };
 
   // Global hotkeys (1: Story, 2: Home/CV, 3: Writings, 4: Stuff, 5: Guestbook, Shift+A: Admin, s, m)

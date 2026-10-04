@@ -99,7 +99,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
             </span>
           </h1>
           <p className="text-sub text-neutral-500 max-w-xl">
-            Leave a note, share a thought, say hello, or just leave your signature from wherever you are in the world.
+            Leave a note, share a thought, say hello, or just leave your signature from wherever you are in the world. Synced live across all devices.
           </p>
         </div>
 
@@ -128,9 +128,13 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
             <h3 className="text-sub font-medium text-black flex items-center gap-1.5">
               <span>Leave your mark</span>
             </h3>
-            <span className="text-micro text-neutral-400 font-mono">
-              saved locally
-            </span>
+            <div className="flex items-center gap-1.5 text-micro text-emerald-600 font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>live synced globally</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
