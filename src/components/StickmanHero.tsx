@@ -44,8 +44,11 @@ interface FloatingSkill {
 
 export type WorkRoutine = 'coffee' | 'design' | 'code' | 'rocket';
 
-// Vansh's Real Skills from Resume
+// Vansh's Real Skills & Experience from Resume
 const VANSH_SKILLS = [
+  { text: 'Tax & Accounting (CMA Practice)', cat: 'FINANCE' },
+  { text: 'Tally Prime & ITR-1 Filing', cat: 'TAX' },
+  { text: 'Udyam & GeM Compliance', cat: 'REGULATORY' },
   { text: 'Graphic Design (Canva)', cat: 'DESIGN' },
   { text: 'Project Coordination', cat: 'LEADERSHIP' },
   { text: 'Vibe Coding', cat: 'CODE' },

@@ -119,6 +119,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <Phone size={12} className="text-neutral-400" />
               <span>+91 93653 24146</span>
             </a>
+            <a
+              href="https://www.linkedin.com/in/vanshlohia/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 hover:text-black transition-colors text-blue-600 font-medium"
+            >
+              <ExternalLink size={12} className="text-blue-500" />
+              <span>linkedin.com/in/vanshlohia ↗</span>
+            </a>
             <div className="flex items-center gap-2 text-neutral-500">
               <MapPin size={12} className="text-neutral-400" />
               <span>Sarupathar, Assam, India - 785601</span>
@@ -130,7 +139,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <p className="text-sm text-neutral-700 leading-relaxed mt-6 max-w-3xl">
           A highly motivated Bachelor of Business Administration (BBA) student with over three years of experience in
           community program coordination and event organization, gained through various volunteer leadership roles.
-          Experienced in full-lifecycle project coordination, rapid generative AI workflows, vibe coding, and digital design.
+          Experienced in full-lifecycle project coordination, accounting & taxation compliance, rapid generative AI workflows, vibe coding, and digital design.
         </p>
       </section>
 
@@ -143,11 +152,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
+            { title: 'Accounting & Taxation', desc: 'Tally, ITR-1, Udyam & GeM' },
             { title: 'Graphic Design', desc: 'Canva & Visual Layout' },
             { title: 'Vibe Coding', desc: 'GenAI & Fullstack Prototyping' },
             { title: 'Project Coordination', desc: 'End-to-End Execution' },
             { title: 'Volunteer Management', desc: 'Leadership & Community' },
-            { title: 'Team Management', desc: 'Cross-functional Collab' },
             { title: 'Meeting Deadlines', desc: 'High-discipline Execution' },
           ].map((skill, idx) => (
             <div
@@ -238,8 +247,28 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </h2>
 
         <div className="space-y-6">
-          {/* Marwari Yuva Manch */}
+          {/* Agarwalla & Associates - CMA Firm */}
           <div className="border-l-2 border-black pl-4">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
+              <h3 className="text-sm font-bold text-black">
+                Agarwalla & Associates (CMA Firm) • <span className="font-normal text-neutral-700">Accounts & Tax Intern</span>
+              </h3>
+              <span className="text-xs font-mono text-neutral-400">Jul 2026 - Sep 2026 (3 mos)</span>
+            </div>
+            <div className="text-micro font-mono text-neutral-500 mb-2">Sarupathar, Assam, India · On-site · Accounting & Taxation</div>
+            <p className="text-xs text-neutral-600 mb-2">
+              Worked in a professional accounting and tax practice, gaining hands-on exposure to accounting, taxation, government registrations, and compliance-related work.
+            </p>
+            <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+              <li>Completed <strong>Udyam registrations</strong>, enabling client businesses to access MSME scheme benefits.</li>
+              <li>Processed <strong>GeM registrations</strong>, facilitating client access to the government procurement marketplace.</li>
+              <li>Maintained <strong>Tally records</strong> across client accounts, supporting accurate bookkeeping and ledger upkeep.</li>
+              <li>Prepared and filed <strong>ITR-1 returns</strong> for individual clients, ensuring compliance with income tax deadlines.</li>
+            </ul>
+          </div>
+
+          {/* Marwari Yuva Manch */}
+          <div className="border-l-2 border-neutral-400 pl-4">
             <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
               <h3 className="text-sm font-bold text-black">
                 Marwari Yuva Manch (4 Years) • <span className="font-normal text-neutral-600">Joint Secretary [Apr, 2026 - Present]</span>
