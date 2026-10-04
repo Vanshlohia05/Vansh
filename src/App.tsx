@@ -5,6 +5,7 @@ import { HomeView } from './components/HomeView';
 import { WritingsView } from './components/WritingsView';
 import { StuffView } from './components/StuffView';
 import { GuestbookView } from './components/GuestbookView';
+import { AdminView } from './components/AdminView';
 import { ProjectModal } from './components/ProjectModal';
 import { ArticleModal } from './components/ArticleModal';
 import { KingCursor } from './components/KingCursor';
@@ -45,7 +46,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as NavTab;
-      if (['story', 'home', 'writings', 'stuff', 'guestbook'].includes(hash)) {
+      if (['story', 'home', 'writings', 'stuff', 'guestbook', 'admin'].includes(hash)) {
         setActiveTabState(hash);
       }
     };
@@ -100,14 +101,16 @@ export const App: React.FC = () => {
     saveGuestbookEntries(updated);
   };
 
-  // Global hotkeys (1: Story, 2: Home/CV, 3: Writings, 4: Stuff, 5: Guestbook, s, m)
+  // Global hotkeys (1: Story, 2: Home/CV, 3: Writings, 4: Stuff, 5: Guestbook, Shift+A: Admin, s, m)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         return;
       }
 
-      if (e.key === '1') {
+      if (e.shiftKey && e.key.toLowerCase() === 'a') {
+        setActiveTab('admin');
+      } else if (e.key === '1') {
         setActiveTab('story');
       } else if (e.key === '2') {
         setActiveTab('home');
@@ -130,8 +133,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-black selection:bg-[#d2fd78] selection:text-black flex flex-col justify-between font-sans">
-      {/* Spear Cursor: active everywhere, click shockwave animation disabled on stuff page only */}
-      <KingCursor disableClickAnimation={activeTab === 'stuff'} />
+      {/* Spear Cursor: active everywhere, click explosion animation disabled on stuff and admin */}
+      <KingCursor disableClickAnimation={activeTab === 'stuff' || activeTab === 'admin'} />
 
       {/* Top Fixed Masthead Header */}
       <Header
@@ -199,6 +202,10 @@ export const App: React.FC = () => {
             onNavigateToWritings={() => setActiveTab('writings')}
           />
         )}
+
+        {activeTab === 'admin' && (
+          <AdminView onExit={() => setActiveTab('story')} />
+        )}
       </main>
 
       {/* Persistent Minimalist Footer */}
@@ -211,7 +218,7 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="hidden md:inline">Hotkeys: [1] Story [2] Home/CV [3] Writings [4] Stuff [5] Guestbook [M] Mute</span>
+            <span className="hidden md:inline">Hotkeys: [1] Story [2] Home/CV [3] Writings [4] Stuff [5] Guestbook [Shift+A] Admin [M] Mute</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>

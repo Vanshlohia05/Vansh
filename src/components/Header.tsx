@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, ArrowUpRight, Compass, X, Shuffle } from 'lucide-react';
+import { Volume2, VolumeX, ArrowUpRight, Compass, X, Shuffle, Shield } from 'lucide-react';
 import { playClickSound, toggleSound, isSoundEnabled } from '../utils/sound';
 
-export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook';
+export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook' | 'admin';
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="fixed top-0 left-0 w-full z-40 bg-white/95 backdrop-blur-md border-b border-neutral-100 transition-all duration-300">
+    <header className="fixed top-0 left-0 w-full z-40 bg-white/95 backdrop-blur-md border-b border-neutral-100 transition-all duration-300 font-sans">
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-6 gap-y-2 px-4 py-3 items-baseline text-sub font-normal">
         
         {/* Col 1 & 2: Logo */}
@@ -115,6 +115,15 @@ export const Header: React.FC<HeaderProps> = ({
           >
             Guestbook
           </button>
+
+          {activeTab === 'admin' && (
+            <button
+              onClick={() => handleTabClick('admin')}
+              className="op-link active font-mono text-[11px]"
+            >
+              [Admin]
+            </button>
+          )}
         </div>
 
         {/* Col 5: Dynamic Contextual Action based on current page */}
@@ -173,6 +182,13 @@ export const Header: React.FC<HeaderProps> = ({
                   + Sign
                 </button>
               )}
+            </div>
+          )}
+
+          {activeTab === 'admin' && (
+            <div className="flex items-center gap-1.5 text-micro text-neutral-600 font-mono">
+              <Shield size={11} className="text-black" />
+              <span>Admin Mode</span>
             </div>
           )}
         </div>
@@ -260,6 +276,14 @@ export const Header: React.FC<HeaderProps> = ({
             >
               5. (Guestbook)
             </button>
+            <button
+              onClick={() => handleTabClick('admin')}
+              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
+                activeTab === 'admin' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              }`}
+            >
+              🔒 (Admin)
+            </button>
           </div>
         </div>
       )}
@@ -269,7 +293,6 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="border-t border-neutral-100 bg-neutral-50/80 px-4 py-5 transition-all duration-300">
           <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-sub">
             
-            {/* Bio */}
             <div className="md:col-span-2 space-y-2">
               <p className="text-black font-medium">
                 Vansh — Your friend; creative engineer & visual designer.
@@ -288,7 +311,6 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Socials & Contact */}
             <div className="space-y-2 text-neutral-600 md:border-l md:border-neutral-200 md:pl-6">
               <p className="text-micro uppercase tracking-wider text-neutral-400 font-medium">
                 Elsewhere
