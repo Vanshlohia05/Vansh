@@ -53,7 +53,7 @@ const VANSH_SKILLS = [
   { text: 'Project Coordination', cat: 'LEADERSHIP' },
   { text: 'Vibe Coding', cat: 'CODE' },
   { text: 'SahiRasta Platform Lead', cat: 'PRODUCT' },
-  { text: 'Author: Whispers of the Soul', cat: 'WRITING' },
+  { text: 'Wishpers of the soul (Poetry)', cat: 'WRITING' },
   { text: 'Team Management', cat: 'LEADERSHIP' },
   { text: 'Generative AI Workflows', cat: 'AI' },
   { text: 'Rapid MVP Prototyping', cat: 'DEV' },

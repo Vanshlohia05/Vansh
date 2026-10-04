@@ -209,18 +209,27 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="p-5 bg-white border border-neutral-200 rounded flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="text-base font-bold text-black">
-                Whispers of the Soul
+                Wishpers of the soul: A Journey
               </h3>
-              <span className="text-xs font-mono text-neutral-400">(Self-Published Book)</span>
+              <span className="text-xs font-mono text-neutral-400">(Poetry eBook)</span>
             </div>
-            <p className="text-xs text-neutral-600 mb-3">
-              Independently authored and published full-length title via <strong>Amazon KDP</strong>.
+            <p className="text-xs text-neutral-600 mb-2">
+              Independently authored poetry collection published on <strong>Amazon Kindle</strong>.
             </p>
-            <p className="text-xs text-neutral-700 leading-relaxed">
-              Managed all aspects of the publishing lifecycle including creative composition, editing, graphic layout, and digital distribution—demonstrating discipline and long-term project execution.
+            <p className="text-xs text-neutral-700 leading-relaxed mb-3">
+              A complete poetry ebook written by me, capturing personal reflections, emotional depth, and poetic perspectives.
             </p>
+            <a
+              href="https://www.amazon.in/Wishpers-soul-Journey-Vansh-Lohia-ebook/dp/B0CRBFN13S"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            >
+              <span>View on Amazon India</span>
+              <ExternalLink size={11} />
+            </a>
           </div>
           <div className="text-xs font-mono text-neutral-400 whitespace-nowrap sm:text-right">
             <span>Jan, 2024</span>
