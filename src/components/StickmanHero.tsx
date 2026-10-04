@@ -64,9 +64,10 @@ export const StickmanHero: React.FC<{
   onActivityChange?: (activityTitle: string, stepIndex: number) => void;
 }> = ({ onActivityChange }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [currentTask, setCurrentTask] = useState<WorkRoutine>('code');
+  // Default to coffee routine & auto mode enabled on load
+  const [currentTask, setCurrentTask] = useState<WorkRoutine>('coffee');
   const [autoCycle, setAutoCycle] = useState<boolean>(true);
-  const [taskName, setTaskName] = useState<string>('Deep Coding & Skills Engine');
+  const [taskName, setTaskName] = useState<string>('Morning Coffee & System Reboot ☕');
   const [score, setScore] = useState<{ bugs: number; deploys: number; coffee: number }>({
     bugs: 0,
     deploys: 0,
@@ -74,7 +75,7 @@ export const StickmanHero: React.FC<{
   });
 
   // State refs for animation loop
-  const routineRef = useRef<WorkRoutine>('code');
+  const routineRef = useRef<WorkRoutine>('coffee');
   const routineTimeRef = useRef<number>(0);
   const autoCycleRef = useRef<boolean>(true);
   const propsRef = useRef<PhysicsProp[]>([]);
@@ -83,22 +84,22 @@ export const StickmanHero: React.FC<{
   const animFrameRef = useRef<number>(0);
   const pcBurstedRef = useRef<boolean>(false);
 
-  // Stickman Physical Coordinates & Articulated Rig
+  // Stickman Physical Coordinates & Articulated Rig (Starts at coffee station x: 180)
   const stickmanRef = useRef({
-    x: 420,
+    x: 180,
     y: 330,
     vx: 0,
     vy: 0,
-    targetX: 420,
-    isSitting: true,
-    facing: 1,
-    actionState: 'typing', // typing, walking, hammer, pouring, drawing, fried
+    targetX: 180,
+    isSitting: false,
+    facing: -1,
+    actionState: 'pouring',
     headAngle: 0,
     armLAngle: 0,
     armRAngle: 0,
     squashY: 1,
     squashX: 1,
-    expression: 'focus', // 'focus', 'happy', 'shocked', 'fried', 'tired'
+    expression: 'focus',
   });
 
   // Routine Switcher
@@ -123,15 +124,15 @@ export const StickmanHero: React.FC<{
         sm.facing = -1;
         sm.expression = 'focus';
         playClickSound('paper');
-        onActivityChange?.('Coffee Station & System Reboot', 1);
+        onActivityChange?.('Coffee Station & Fueling Up ☕', 1);
       } else if (routine === 'design') {
-        setTaskName('System Architecture & Whiteboard Design 📐');
+        setTaskName('Interconnected Hobbies & Non-Linear Mindmap 🌀');
         sm.targetX = 720;
         sm.isSitting = false;
         sm.facing = 1;
         sm.expression = 'focus';
         playClickSound('high');
-        onActivityChange?.('Architecture & Whiteboard Design', 2);
+        onActivityChange?.('Interconnected Mindmap & Non-Linear Ideas 🌀', 2);
       } else if (routine === 'code') {
         setTaskName('Deep Code & Skill Emission Engine 💻');
         sm.targetX = 420;
@@ -139,7 +140,7 @@ export const StickmanHero: React.FC<{
         sm.facing = 1;
         sm.expression = 'focus';
         playClickSound('tick');
-        onActivityChange?.('Deep Coding & Skills Synthesis', 3);
+        onActivityChange?.('Deep Coding & Skills Synthesis 💻', 3);
       } else if (routine === 'bug') {
         setTaskName('Physics Bug Squashing 🐛');
         sm.targetX = 420;
@@ -147,7 +148,6 @@ export const StickmanHero: React.FC<{
         sm.facing = 1;
         sm.expression = 'shocked';
         playClickSound('pop');
-        // Spawn a bouncy physics bug!
         propsRef.current.push({
           id: Date.now(),
           type: 'bug',
@@ -160,7 +160,7 @@ export const StickmanHero: React.FC<{
           angularVelocity: 0.15,
           bounces: 0,
         });
-        onActivityChange?.('Bug Hunting & Physics Fixes', 4);
+        onActivityChange?.('Bug Hunting & Physics Fixes 🐛', 4);
       } else if (routine === 'deploy') {
         setTaskName('Production Launch ➔ PC Burst & Brain Fried 🤯⚡');
         sm.targetX = 420;
@@ -200,7 +200,6 @@ export const StickmanHero: React.FC<{
 
     playClickSound('pop');
 
-    // Spawn burst particles
     for (let i = 0; i < 8; i++) {
       particlesRef.current.push({
         x,
@@ -231,13 +230,23 @@ export const StickmanHero: React.FC<{
 
     const routinesList: WorkRoutine[] = ['coffee', 'design', 'code', 'bug', 'deploy'];
 
+    // Timing durations per routine (in seconds)
+    const routineDurations: Record<WorkRoutine, number> = {
+      coffee: 6.5,
+      design: 8.0,
+      code: 8.5,
+      bug: 7.0,
+      deploy: 9.0, // Rocket 0-2.8s, then PC burst & fried brain at 2.8s-9s, then loops back to coffee!
+    };
+
     const animate = (time: number) => {
       const dt = Math.min((time - lastTime) / 1000, 0.05);
       lastTime = time;
       routineTimeRef.current += dt;
 
-      // ── Auto-cycle Work Routine every 8.5 seconds ──
-      if (autoCycleRef.current && routineTimeRef.current > 8.5) {
+      // ── Auto-cycle Work Routine in Sequence: coffee ➔ design ➔ code ➔ bug ➔ deploy (burst) ➔ reboot ──
+      const currentDuration = routineDurations[routineRef.current] || 7.5;
+      if (autoCycleRef.current && routineTimeRef.current > currentDuration) {
         const nextIdx = (routinesList.indexOf(routineRef.current) + 1) % routinesList.length;
         switchRoutine(routinesList[nextIdx]);
       }
@@ -332,34 +341,92 @@ export const StickmanHero: React.FC<{
         }
       }
 
-      // ── Environment Station B: Whiteboard Architecture ──
-      ctx.strokeRect(700, 100, 190, 160);
+      // ── Environment Station B: Whiteboard Hobbies & Non-Linear Mindmap ──
+      // Whiteboard outer frame
+      ctx.strokeRect(680, 90, 230, 175);
+      // Stand legs
       ctx.beginPath();
-      ctx.moveTo(715, 260);
-      ctx.lineTo(700, FLOOR_Y);
-      ctx.moveTo(875, 260);
-      ctx.lineTo(890, FLOOR_Y);
+      ctx.moveTo(695, 265);
+      ctx.lineTo(680, FLOOR_Y);
+      ctx.moveTo(895, 265);
+      ctx.lineTo(910, FLOOR_Y);
       ctx.stroke();
 
-      ctx.lineWidth = 2;
-      ctx.strokeRect(715, 120, 42, 22);
-      ctx.strokeRect(775, 120, 42, 22);
-      ctx.strokeRect(835, 120, 42, 22);
-      ctx.strokeRect(775, 175, 42, 22);
-      ctx.beginPath();
-      ctx.moveTo(757, 131);
-      ctx.lineTo(775, 131);
-      ctx.moveTo(817, 131);
-      ctx.lineTo(835, 131);
-      ctx.moveTo(796, 142);
-      ctx.lineTo(796, 175);
-      ctx.stroke();
-
+      // Board Header
       ctx.font = 'bold 8px monospace';
-      ctx.fillText('UI', 728, 134);
-      ctx.fillText('API', 786, 134);
-      ctx.fillText('DB', 848, 134);
-      ctx.fillText('REDIS', 780, 189);
+      ctx.fillText('HOBBIES & MINDMAP', 740, 105);
+
+      ctx.lineWidth = 1.8;
+
+      // ── 1. Cosmology Node 🌌 ──
+      ctx.strokeRect(695, 115, 68, 20);
+      ctx.fillText('Cosmology 🌌', 700, 128);
+
+      // ── 2. Books Node 📚 ──
+      ctx.strokeRect(825, 115, 55, 20);
+      ctx.fillText('Books 📚', 832, 128);
+
+      // ── 3. Travelling Node 🧭 ──
+      ctx.strokeRect(695, 155, 68, 20);
+      ctx.fillText('Travelling 🧭', 698, 168);
+
+      // ── 4. Mountains Node ⛰️ ──
+      ctx.strokeRect(820, 155, 70, 20);
+      ctx.fillText('Mountains ⛰️', 823, 168);
+
+      // ── 5. Trekking Node 🥾 ──
+      ctx.strokeRect(820, 195, 65, 20);
+      ctx.fillText('Trekking 🥾', 824, 208);
+
+      // Standard Interconnecting Mindmap lines
+      ctx.beginPath();
+      // Cosmology <---> Books
+      ctx.moveTo(763, 125);
+      ctx.lineTo(825, 125);
+      // Books <---> Mountains
+      ctx.moveTo(855, 135);
+      ctx.lineTo(855, 155);
+      // Travelling <---> Mountains
+      ctx.moveTo(763, 165);
+      ctx.lineTo(820, 165);
+      // Mountains <---> Trekking
+      ctx.moveTo(855, 175);
+      ctx.lineTo(855, 195);
+      // Cosmology <---> Travelling
+      ctx.moveTo(729, 135);
+      ctx.lineTo(729, 155);
+      ctx.stroke();
+
+      // ── 6. NON-LINEAR THINKING 🌀 (Weirdly Placed & Looped Unconventionally) ──
+      ctx.save();
+      ctx.translate(692, 195);
+      ctx.rotate(-0.08); // tilted off-grid angle
+
+      // Wavy dashed / cloud border
+      ctx.setLineDash([3, 3]);
+      ctx.strokeRect(0, 0, 108, 24);
+      ctx.setLineDash([]);
+      ctx.font = 'italic bold 8px "Newsreader", "Space Grotesk", monospace';
+      ctx.fillText('Non-Linear Thinking 🌀', 4, 15);
+      ctx.restore();
+
+      // Wacky, wild looping curved line spiraling across the board
+      ctx.beginPath();
+      ctx.setLineDash([4, 2]);
+      ctx.moveTo(796, 207);
+      // Loop 1: spirals up and through Travelling
+      ctx.bezierCurveTo(775, 230, 680, 240, 690, 175);
+      // Loop 2: curls around Cosmology up over Books
+      ctx.bezierCurveTo(680, 95, 780, 85, 855, 105);
+      // Loop 3: cuts wildly through Mountains down into Trekking and loops back
+      ctx.bezierCurveTo(915, 125, 910, 235, 885, 215);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Small handwritten annotation
+      ctx.font = 'italic 7px monospace';
+      ctx.fillText('~ (non-linear loop) ~', 710, 240);
+
       ctx.lineWidth = 3.5;
 
       // ── Environment Station C: Workstation Desk & PC ──
@@ -376,16 +443,14 @@ export const StickmanHero: React.FC<{
 
       if (isDeployBurst) {
         // ── PC BURSTED STATE 💥 ──
-        // Shaking & Cracked Monitor
         const shakeX = (Math.random() - 0.5) * 6;
         const shakeY = (Math.random() - 0.5) * 4;
 
         ctx.save();
         ctx.translate(DESK_X + 50 + shakeX, DESK_Y - 95 + shakeY);
-        // Broken Frame
         ctx.strokeRect(0, 0, 75, 70);
 
-        // Glass Cracks across screen
+        // Glass Cracks
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(10, 10);
@@ -397,13 +462,11 @@ export const StickmanHero: React.FC<{
         ctx.lineTo(55, 55);
         ctx.stroke();
 
-        // Explosion text on screen
         ctx.font = 'bold 9px monospace';
         ctx.fillText('💥 OVERHEAT', 8, 30);
         ctx.fillText('CRITICAL ERR', 6, 45);
         ctx.restore();
 
-        // Monitor stand
         ctx.beginPath();
         ctx.moveTo(DESK_X + 87, DESK_Y - 25);
         ctx.lineTo(DESK_X + 87, DESK_Y);
@@ -424,7 +487,6 @@ export const StickmanHero: React.FC<{
             type: 'smoke',
           });
         }
-        // Popping electrical sparks
         if (Math.random() < 0.4) {
           particlesRef.current.push({
             x: DESK_X + 75 + (Math.random() - 0.5) * 40,
@@ -459,14 +521,12 @@ export const StickmanHero: React.FC<{
         ctx.lineTo(DESK_X + 100, DESK_Y);
         ctx.stroke();
 
-        // Second Vertical Monitor
         ctx.strokeRect(DESK_X + 130, DESK_Y - 110, 36, 85);
         ctx.beginPath();
         ctx.moveTo(DESK_X + 148, DESK_Y - 25);
         ctx.lineTo(DESK_X + 148, DESK_Y);
         ctx.stroke();
 
-        // Terminal code preview on main screen
         ctx.lineWidth = 1.5;
         ctx.font = '6px monospace';
         ctx.fillText('> Vansh.init()', DESK_X + 57, DESK_Y - 78);
@@ -495,7 +555,7 @@ export const StickmanHero: React.FC<{
       ctx.arc(chairX + 5, FLOOR_Y - 2, 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // ── Deploy Rocket (Phase 1 of deploy routine: 0s to 3s) ──
+      // ── Deploy Rocket (Phase 1 of deploy: 0s to 3s) ──
       if (routineRef.current === 'deploy' && t < 3.2) {
         const launchProgress = Math.min(t / 2.5, 1);
         const rocketY = FLOOR_Y - 10 - launchProgress * 360;
@@ -590,8 +650,7 @@ export const StickmanHero: React.FC<{
         ctx.stroke();
       }
 
-      // B. Torso (Spine)
-      // When brain fried: slouch or slump back
+      // B. Torso
       const isFried = isDeployBurst;
       const spineBend = isFried ? -0.35 : sm.isSitting ? 0.1 : Math.sin(t * 4) * 0.04;
       ctx.beginPath();
@@ -613,7 +672,6 @@ export const StickmanHero: React.FC<{
 
       // D. Expressions & BRAIN FRIED EFFECTS 🧠⚡
       if (isFried) {
-        // ── FRIED BRAIN STATE (X X eyes, open jaw, smoke & lightning) ──
         ctx.lineWidth = 2;
         // Left eye 'X'
         ctx.beginPath();
@@ -628,28 +686,24 @@ export const StickmanHero: React.FC<{
         ctx.lineTo(headCenterX + 4, headCenterY);
         ctx.stroke();
 
-        // Dropped stunned open mouth / tongue
         ctx.beginPath();
         ctx.arc(headCenterX + 2, headCenterY + 5, 5, 0, Math.PI);
         ctx.stroke();
         ctx.lineWidth = 3.5;
 
-        // Smoking Brain Fumes & Lightning zig-zags popping from head!
+        // Smoking Brain Fumes & Lightning zig-zags
         const sparkPhase = Math.sin(t * 20);
         ctx.beginPath();
-        // Lightning bolt 1
         ctx.moveTo(headCenterX - 6, headCenterY - headRadius);
         ctx.lineTo(headCenterX - 10, headCenterY - headRadius - 12);
         ctx.lineTo(headCenterX - 4, headCenterY - headRadius - 16);
         ctx.lineTo(headCenterX - 8 + sparkPhase * 3, headCenterY - headRadius - 26);
-        // Lightning bolt 2
         ctx.moveTo(headCenterX + 6, headCenterY - headRadius);
         ctx.lineTo(headCenterX + 10, headCenterY - headRadius - 14);
         ctx.lineTo(headCenterX + 5, headCenterY - headRadius - 18);
         ctx.lineTo(headCenterX + 12 - sparkPhase * 3, headCenterY - headRadius - 28);
         ctx.stroke();
 
-        // Steam rings from fried brain
         if (Math.random() < 0.35) {
           particlesRef.current.push({
             x: hipX + headCenterX + (Math.random() - 0.5) * 12,
@@ -679,7 +733,6 @@ export const StickmanHero: React.FC<{
 
       // E. Arms & Hands
       if (isFried) {
-        // Floppy limp arms hanging back in exhaustion
         ctx.beginPath();
         ctx.moveTo(neckX, neckY + 4);
         ctx.lineTo(neckX - 18, neckY + 28);
@@ -701,7 +754,6 @@ export const StickmanHero: React.FC<{
         ctx.lineTo(neckX + 48, DESK_Y - hipY - 4 + typeR);
         ctx.stroke();
 
-        // ── EMIT REAL SKILLS & HANDWRITING CODE TOKENS GOING UPWARD ──
         if (Math.random() < 0.16) {
           const randomSkill = VANSH_SKILLS[Math.floor(Math.random() * VANSH_SKILLS.length)];
           skillsRef.current.push({
@@ -710,7 +762,7 @@ export const StickmanHero: React.FC<{
             x: DESK_X + 60 + (Math.random() - 0.5) * 30,
             y: DESK_Y - 40,
             vx: (Math.random() - 0.5) * 0.9,
-            vy: -1.6 - Math.random() * 1.6, // floats UPWARD
+            vy: -1.6 - Math.random() * 1.6,
             alpha: 1,
             rotation: (Math.random() - 0.5) * 0.08,
           });
@@ -745,10 +797,10 @@ export const StickmanHero: React.FC<{
 
       ctx.restore();
 
-      // ── 3. FLOATING SKILLS GOING UPWARD (Handwriting Code Style) ──
+      // ── 3. FLOATING SKILLS GOING UPWARD ──
       skillsRef.current = skillsRef.current.filter((sk) => {
         sk.x += sk.vx;
-        sk.y += sk.vy; // Goes upward into the sky!
+        sk.y += sk.vy;
         sk.alpha -= 0.012;
         if (sk.alpha <= 0 || sk.y < 30) return false;
 
@@ -756,11 +808,9 @@ export const StickmanHero: React.FC<{
         ctx.translate(sk.x, sk.y);
         ctx.rotate(sk.rotation);
 
-        // Handwritten / monospace cursive style
         ctx.font = 'italic 500 11px "Space Grotesk", "Newsreader", "Courier New", monospace';
         ctx.fillStyle = `rgba(0, 0, 0, ${sk.alpha})`;
 
-        // Badge pill background
         const textMetrics = ctx.measureText(sk.text);
         const padX = 6;
         const padY = 3;
@@ -870,7 +920,7 @@ export const StickmanHero: React.FC<{
         return prop.bounces < 25;
       });
 
-      // ── 5. PARTICLE ENGINE (Smoke, Sparks, Steam) ───────────
+      // ── 5. PARTICLE ENGINE ─────────────────────────────────
       particlesRef.current = particlesRef.current.filter((p) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -936,7 +986,7 @@ export const StickmanHero: React.FC<{
         )}
 
         <div className="absolute top-3 right-3 px-2 py-1 bg-black text-white text-[10px] font-mono rounded tracking-tight opacity-80 pointer-events-none">
-          SKILLS ENGINE • 60FPS VERLET
+          MINDMAP & PHYSICS • 60FPS VERLET
         </div>
       </div>
 
@@ -952,7 +1002,7 @@ export const StickmanHero: React.FC<{
             }`}
           >
             <Coffee size={13} />
-            <span>Coffee Brew</span>
+            <span>1. Coffee Brew</span>
           </button>
 
           <button
@@ -964,7 +1014,7 @@ export const StickmanHero: React.FC<{
             }`}
           >
             <PenTool size={13} />
-            <span>Architecture</span>
+            <span>2. Hobbies Mindmap</span>
           </button>
 
           <button
@@ -976,7 +1026,7 @@ export const StickmanHero: React.FC<{
             }`}
           >
             <Code size={13} />
-            <span>Skills & Code</span>
+            <span>3. Skills & Code</span>
           </button>
 
           <button
@@ -988,7 +1038,7 @@ export const StickmanHero: React.FC<{
             }`}
           >
             <Bug size={13} />
-            <span>Squash Bug</span>
+            <span>4. Squash Bug</span>
           </button>
 
           <button
@@ -1000,7 +1050,7 @@ export const StickmanHero: React.FC<{
             }`}
           >
             <Rocket size={13} />
-            <span>Deploy & Burst 🤯</span>
+            <span>5. Deploy & Burst 🤯</span>
           </button>
         </div>
 
@@ -1018,7 +1068,7 @@ export const StickmanHero: React.FC<{
               ? 'bg-neutral-100 text-black border-black font-semibold'
               : 'bg-white text-neutral-400 border-neutral-200 hover:border-neutral-400'
           }`}
-          title="Toggle automatic story routine progression"
+          title="Toggle automatic story routine progression (Coffee ➔ Mindmap ➔ Code ➔ Bug ➔ Deploy/Burst ➔ Reboot)"
         >
           {autoCycle ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
           <span>{autoCycle ? 'Auto Story [Active]' : 'Manual Mode'}</span>
