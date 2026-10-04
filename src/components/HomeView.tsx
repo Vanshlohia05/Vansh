@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { HOME_ARTWORKS, Artwork } from '../data/homeArtworks';
 import { playClickSound } from '../utils/sound';
 import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { StickmanHero } from './StickmanHero';
 
 interface HomeViewProps {
   onSlideChange?: (current: number, total: number, title: string) => void;
@@ -54,6 +55,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="relative w-full min-h-screen flex flex-col justify-between pt-16 pb-8 select-none">
       
+      {/* Stickman Storytelling Hero Animation (Desktop / Laptop Only) */}
+      <div className="relative z-30 w-full">
+        <StickmanHero />
+      </div>
+
       {/* Invisible Interactive Click Zones (Left half = prev, Right half = next) */}
       <div className="absolute inset-0 z-10 flex">
         <button
