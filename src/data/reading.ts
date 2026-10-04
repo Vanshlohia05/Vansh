@@ -14,12 +14,12 @@ export interface BookItem {
   w: number;  // spine width in px (32 - 48)
   c: string;  // spine background hex/rgb
   fg: string; // spine text color hex/rgb
-  accent?: string;
   link?: string;
 }
 
 export interface EssayItem {
   id: string;
+  number?: string;
   year: string;
   title: string;
   type: 'Essay' | 'Report' | 'Video' | 'Article';
@@ -30,7 +30,7 @@ export interface EssayItem {
 }
 
 // ----------------------------------------------------------------------------
-// PART 1: BOOKS (Animated 2.5D Bookshelf - 100% Real Authentic Books)
+// PART 1: BOOKS (Animated 2.5D Bookshelf - Scalable for 100+ books)
 // ----------------------------------------------------------------------------
 export const INITIAL_BOOKS: BookItem[] = [
   {
@@ -39,8 +39,8 @@ export const INITIAL_BOOKS: BookItem[] = [
     author: 'Vansh Lohia',
     year: '2024',
     note: 'My debut poetry ebook published on Amazon Kindle. Capturing personal reflections, emotional depth, and poetic perspectives.',
-    h: 238,
-    w: 46,
+    h: 240,
+    w: 48,
     c: '#1e3a8a', // Deep royal indigo
     fg: '#d2fd78', // Acid lime text accent
     link: 'https://www.amazon.in/Wishpers-soul-Journey-Vansh-Lohia-ebook/dp/B0CRBFN13S',
@@ -125,7 +125,7 @@ export const INITIAL_BOOKS: BookItem[] = [
   {
     id: 'b-8',
     title: 'Zero to One',
-    author: 'Peter Thiel',
+    author: 'Peter Thiel & Blake Masters',
     year: '2014',
     note: 'Contrarian thinking on technological progress: moving from 0 to 1 through vertical innovation rather than horizontal 1 to n copying.',
     h: 212,
@@ -144,6 +144,72 @@ export const INITIAL_BOOKS: BookItem[] = [
     c: '#e4e4e7',
     fg: '#18181b',
   },
+  {
+    id: 'b-10',
+    title: 'Klara and the Sun',
+    author: 'Kazuo Ishiguro',
+    year: '2021',
+    note: 'A quiet, poignant exploration of artificial consciousness, observational tenderness, and what it truly means to love.',
+    h: 215,
+    w: 37,
+    c: '#1e293b',
+    fg: '#fbbf24',
+  },
+  {
+    id: 'b-11',
+    title: 'Clean Code',
+    author: 'Robert C. Martin',
+    year: '2008',
+    note: 'A handbook of agile software craftsmanship, meaningful naming, small single-responsibility functions, and readable syntax.',
+    h: 230,
+    w: 43,
+    c: '#172554',
+    fg: '#93c5fd',
+  },
+  {
+    id: 'b-12',
+    title: 'The Psychology of Money',
+    author: 'Morgan Housel',
+    year: '2020',
+    note: 'Timeless lessons on wealth, greed, ego, risk, and human behavior that spreadsheets never teach.',
+    h: 208,
+    w: 38,
+    c: '#2e1065',
+    fg: '#e9d5ff',
+  },
+  {
+    id: 'b-13',
+    title: 'Gödel, Escher, Bach',
+    author: 'Douglas Hofstadter',
+    year: '1979',
+    note: 'An eternal golden braid weaving formal mathematics, visual tessellation, fugues, and strange recursion loops.',
+    h: 242,
+    w: 47,
+    c: '#030712',
+    fg: '#e2e8f0',
+  },
+  {
+    id: 'b-14',
+    title: 'Deep Work',
+    author: 'Cal Newport',
+    year: '2016',
+    note: 'Rules for focused success in a distracted world. The vital distinction between deep cognitive focus and shallow connectivity.',
+    h: 210,
+    w: 39,
+    c: '#18181b',
+    fg: '#facc15',
+  },
+  {
+    id: 'b-15',
+    title: 'Zen and the Art of Motorcycle Maintenance',
+    author: 'Robert M. Pirsig',
+    year: '1974',
+    note: 'An inquiry into values, classical rationality versus romantic beauty, and the metaphysics of quality in craftsmanship.',
+    h: 226,
+    w: 41,
+    c: '#365314',
+    fg: '#ecfccb',
+  }
 ];
 
 // ----------------------------------------------------------------------------
@@ -204,11 +270,27 @@ export const INITIAL_ESSAYS: EssayItem[] = [
     url: 'https://www.youtube.com/watch?v=j3mhkYbznBk',
     cap: 'Symmetry, conservation laws, and mathematical elegance in nature',
   },
+  {
+    id: 'e-7',
+    year: '2025',
+    title: 'The Bitter Lesson of AI: Search and Learning Scale Computation',
+    type: 'Article',
+    source: 'Rich Sutton / Incomplete Ideas',
+    url: 'http://www.incompleteideas.net/IncIdeas/BitterLesson.html',
+    cap: 'Why general methods leveraging computation beat human-crafted heuristics',
+  },
+  {
+    id: 'e-8',
+    year: '2024',
+    title: 'State of Open Source AI & Local First Software Architecture',
+    type: 'Report',
+    source: 'Local-First Labs',
+    url: 'https://localfirstweb.dev/',
+    cap: 'CRDT synchronizations, offline data ownership, and edge latency',
+  },
 ];
 
-// ----------------------------------------------------------------------------
-// HELPER: Generate clean minimalist SVG preview cards for non-video items
-// ----------------------------------------------------------------------------
+// Helper to create pure SVG graphic specimens
 export function generateSvgPreview(item: EssayItem): string {
   const typeBadgeColor =
     item.type === 'Report' ? '#3b82f6' : item.type === 'Video' ? '#ef4444' : item.type === 'Article' ? '#10b981' : '#d2fd78';
@@ -224,24 +306,19 @@ export function generateSvgPreview(item: EssayItem): string {
     </defs>
     <rect width="600" height="400" fill="url(#grid)" opacity="0.8" />
     
-    <!-- Top Monospace Bar -->
-    <text x="36" y="52" fill="#71717a" font-family="monospace" font-size="14" letter-spacing="1">INDEX // ${item.year} // ${item.source}</text>
+    <text x="36" y="52" fill="#71717a" font-family="monospace" font-size="14" letter-spacing="1">ARCHIVE // ${item.year} // ${item.source}</text>
     
-    <!-- Category Pill -->
     <rect x="36" y="85" width="90" height="26" rx="4" fill="${typeBadgeColor}" />
     <text x="81" y="102" fill="${typeTextColor}" font-family="monospace" font-weight="bold" font-size="12" text-anchor="middle" letter-spacing="0.5">${item.type.toUpperCase()}</text>
     
-    <!-- Title -->
     <text x="36" y="170" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="22" width="520">
       <tspan x="36" dy="0">${item.title.length > 36 ? item.title.slice(0, 36) + '...' : item.title}</tspan>
     </text>
     
-    <!-- Caption / Note -->
     <text x="36" y="220" fill="#a1a1aa" font-family="sans-serif" font-size="14">
       <tspan x="36" dy="0">${item.cap || item.source}</tspan>
     </text>
     
-    <!-- Bottom Specimen Bar -->
     <line x1="36" y1="330" x2="564" y2="330" stroke="#27272a" stroke-width="1" />
     <text x="36" y="360" fill="#52525b" font-family="monospace" font-size="12">VANSH READING ARCHIVE • SWISS MINIMALISM</text>
     <text x="564" y="360" fill="#d2fd78" font-family="monospace" font-size="12" text-anchor="end">OPEN LINK ↗</text>
@@ -251,16 +328,12 @@ export function generateSvgPreview(item: EssayItem): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-// ----------------------------------------------------------------------------
-// HELPER: Resolve Image Preview (Auto YouTube Thumbnail + Clean SVG fallback)
-// ----------------------------------------------------------------------------
 export function getEssayPreviewImage(item: EssayItem): string | null {
   if (item.img && !item.img.includes('images.unsplash.com')) {
     return item.img;
   }
   if (!item.url) return generateSvgPreview(item);
 
-  // Detect YouTube formats: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
   const ytMatch = item.url.match(
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/
   );
@@ -272,10 +345,10 @@ export function getEssayPreviewImage(item: EssayItem): string | null {
 }
 
 // ----------------------------------------------------------------------------
-// LOCAL STORAGE & TELEGRAM SYNC STORAGE KEYS (v2 Clean Reset)
+// LOCAL STORAGE & TELEGRAM SYNC STORAGE KEYS (v3 Clean Reset)
 // ----------------------------------------------------------------------------
-const BOOKS_STORAGE_KEY = 'vansh_portfolio_bookshelf_v2';
-const ESSAYS_STORAGE_KEY = 'vansh_portfolio_essays_v2';
+const BOOKS_STORAGE_KEY = 'vansh_portfolio_bookshelf_v3';
+const ESSAYS_STORAGE_KEY = 'vansh_portfolio_essays_v3';
 
 export function loadBooks(): BookItem[] {
   try {

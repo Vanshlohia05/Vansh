@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { playClickSound } from '../utils/sound';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
+interface KingCursorProps {
+  disabled?: boolean;
+}
+
 interface StrikeParticle {
   id: number;
   x: number;
@@ -41,19 +42,13 @@ interface Strike {
   rays: StrikeRay[];
 }
 
-// ─────────────────────────────────────────────
-// Pixel Art King Sprite Geometry
-// Source image: 1024x1024 px
-// Spear tip in source: pixel (25, 10)
-// Render size: 46x46 px (compact & agile cursor)
-// ─────────────────────────────────────────────
 const KING_W = 46;
 const KING_H = 46;
 const TIP_X = Math.round((25 / 1024) * KING_W); // 1px
 const TIP_Y = Math.round((10 / 1024) * KING_H); // 0px
 
-export const KingCursor: React.FC = () => {
-  const [isMobile, setIsMobile] = useState<boolean>(true); // default true to avoid flash on mobile
+export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
+  const [isMobile, setIsMobile] = useState<boolean>(true);
   const mousePosRef = useRef({ x: -200, y: -200 });
   const [cursorPos, setCursorPos] = useState({ x: -200, y: -200 });
   const [isVisible, setIsVisible] = useState(false);
@@ -67,7 +62,7 @@ export const KingCursor: React.FC = () => {
   const wispIdCounter = useRef(0);
   const rafId = useRef<number | undefined>(undefined);
 
-  // 1. Mobile Detection: disable completely on mobile phones/touch devices
+  // 1. Mobile Detection
   useEffect(() => {
     const checkMobile = () => {
       const isTouch =
@@ -84,7 +79,7 @@ export const KingCursor: React.FC = () => {
 
   // 2. Mouse tracking for desktop
   useEffect(() => {
-    if (isMobile) return;
+    if (isMobile || disabled) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       mousePosRef.current = { x: e.clientX, y: e.clientY };
@@ -118,24 +113,21 @@ export const KingCursor: React.FC = () => {
       document.removeEventListener('mouseenter', handleMouseEnter);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [isMobile, isVisible]);
+  }, [isMobile, disabled, isVisible]);
 
   // 3. Spear Strike & Word Blue Light Emission on Click
   const handleStrike = useCallback(
     (e: MouseEvent) => {
-      if (isMobile) return;
+      if (isMobile || disabled) return;
 
       const cx = e.clientX;
       const cy = e.clientY;
 
-      // Pixel thrust animation
       setIsThrusting(true);
       setTimeout(() => setIsThrusting(false), 120);
 
-      // Play metallic spear strike sound
       playClickSound('spear');
 
-      // ── Word Blue Light Glow ───────────────────────────
       const textSelectors = 'h1, h2, h3, h4, p, span, a, button, td, th, li, code';
       const elements = document.querySelectorAll<HTMLElement>(textSelectors);
       const newWisps: BlueWisp[] = [];
@@ -146,13 +138,11 @@ export const KingCursor: React.FC = () => {
         const elCy = rect.top + rect.height / 2;
         const dist = Math.hypot(elCx - cx, elCy - cy);
 
-        // Strike radius: 180px
         if (dist < 180) {
           el.classList.remove('king-struck');
-          void el.offsetWidth; // restart animation
+          void el.offsetWidth;
           el.classList.add('king-struck');
 
-          // Rising blue light embers
           const wispCount = Math.min(4, Math.max(1, Math.floor(rect.width / 50)));
           for (let i = 0; i < wispCount; i++) {
             newWisps.push({
@@ -176,7 +166,6 @@ export const KingCursor: React.FC = () => {
         }, 1100);
       }
 
-      // ── Spear Strike Impact Burst at exact spear point ──
       const sid = ++strikeIdCounter.current;
       const rays: StrikeRay[] = Array.from({ length: 6 }, (_, i) => ({
         id: i,
@@ -189,7 +178,6 @@ export const KingCursor: React.FC = () => {
       setStrikes((prev) => [...prev, { id: sid, x: cx, y: cy, born: Date.now(), rays }]);
       setTimeout(() => setStrikes((prev) => prev.filter((s) => s.id !== sid)), 500);
 
-      // ── Pixel Spark Particles ──────────────────────────
       const particleColors = ['#93c5fd', '#38bdf8', '#60a5fa', '#2563eb', '#ffffff'];
       const pCount = 12 + Math.floor(Math.random() * 6);
       const newParticles: StrikeParticle[] = Array.from({ length: pCount }, () => {
@@ -213,14 +201,14 @@ export const KingCursor: React.FC = () => {
         setParticles((prev) => prev.filter((p) => !newParticles.find((np) => np.id === p.id)));
       }, 650);
     },
-    [isMobile]
+    [isMobile, disabled]
   );
 
   useEffect(() => {
-    if (isMobile) return;
+    if (isMobile || disabled) return;
     window.addEventListener('click', handleStrike);
     return () => window.removeEventListener('click', handleStrike);
-  }, [handleStrike, isMobile]);
+  }, [handleStrike, isMobile, disabled]);
 
   // 4. Particle and Wisp physics loop
   useEffect(() => {
@@ -262,19 +250,16 @@ export const KingCursor: React.FC = () => {
     return () => cancelAnimationFrame(id);
   }, [particles, wisps]);
 
-  // If on mobile device or touch screen: render nothing!
-  if (isMobile) {
+  if (isMobile || disabled) {
     return null;
   }
 
-  // Spear tip alignment
   const thrustOffset = isThrusting ? -5 : 0;
   const kingLeft = cursorPos.x - TIP_X + thrustOffset;
   const kingTop = cursorPos.y - TIP_Y + thrustOffset;
 
   return (
     <>
-      {/* ── Pixel Art Indian King with Spear Cursor ─────── */}
       <div
         style={{
           position: 'fixed',
@@ -304,12 +289,11 @@ export const KingCursor: React.FC = () => {
             height: '100%',
             objectFit: 'contain',
             objectPosition: 'top left',
-            imageRendering: 'pixelated', // authentic retro pixel art crispness
+            imageRendering: 'pixelated',
             userSelect: 'none',
             pointerEvents: 'none',
           }}
         />
-        {/* Subtle glowing beacon at the spear tip */}
         <div
           style={{
             position: 'absolute',
@@ -317,7 +301,7 @@ export const KingCursor: React.FC = () => {
             top: TIP_Y - 2,
             width: 4,
             height: 4,
-            borderRadius: '1px', // pixel square
+            borderRadius: '1px',
             backgroundColor: '#ffffff',
             boxShadow: '0 0 6px #38bdf8, 0 0 10px #2563eb',
             animation: 'tipPulse 1.8s infinite ease-in-out',
@@ -325,7 +309,6 @@ export const KingCursor: React.FC = () => {
         />
       </div>
 
-      {/* ── Spear Strike Shockwave at (cx, cy) ──────────── */}
       {strikes.map((s) => (
         <div
           key={s.id}
@@ -337,7 +320,6 @@ export const KingCursor: React.FC = () => {
             zIndex: 999998,
           }}
         >
-          {/* Pixelated shockwave ring */}
           <div
             style={{
               position: 'absolute',
@@ -351,8 +333,6 @@ export const KingCursor: React.FC = () => {
               animation: 'kingStrikeRing 0.45s ease-out forwards',
             }}
           />
-
-          {/* Piercing white-blue core impact spark */}
           <div
             style={{
               position: 'absolute',
@@ -366,8 +346,6 @@ export const KingCursor: React.FC = () => {
               animation: 'kingStrikeCore 0.3s ease-out forwards',
             }}
           />
-
-          {/* Spark rays */}
           {s.rays.map((ray) => (
             <div
               key={ray.id}
@@ -387,7 +365,6 @@ export const KingCursor: React.FC = () => {
         </div>
       ))}
 
-      {/* ── Pixel Particles ────────────────────────────── */}
       {particles.map((p) => (
         <div
           key={p.id}
@@ -397,7 +374,7 @@ export const KingCursor: React.FC = () => {
             top: p.y - p.size / 2,
             width: p.size,
             height: p.size,
-            borderRadius: '1px', // pixel square particle
+            borderRadius: '1px',
             backgroundColor: p.color,
             boxShadow: `0 0 4px ${p.color}, 0 0 8px rgba(56,189,248,${p.opacity})`,
             opacity: p.opacity,
@@ -407,7 +384,6 @@ export const KingCursor: React.FC = () => {
         />
       ))}
 
-      {/* ── Blue Wisps rising from struck words ────────── */}
       {wisps.map((w) => (
         <div
           key={w.id}

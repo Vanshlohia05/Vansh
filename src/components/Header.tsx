@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, ArrowUpRight, Compass, X } from 'lucide-react';
+import { Volume2, VolumeX, ArrowUpRight, Compass, X, Shuffle } from 'lucide-react';
 import { playClickSound, toggleSound, isSoundEnabled } from '../utils/sound';
 
 export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook';
@@ -19,8 +19,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
-  galleryMode,
-  setGalleryMode,
   onShuffle,
   homeSlideInfo,
   guestbookCount,
@@ -64,11 +62,11 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="fixed top-0 left-0 w-full z-40 bg-white/95 backdrop-blur-md border-b border-neutral-100 transition-all duration-300">
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-6 gap-y-2 px-4 py-3 items-baseline text-sub font-normal">
         
-        {/* Col 1 & 2: Logo with urfd-style hover effect */}
+        {/* Col 1 & 2: Logo */}
         <div className="col-span-1 md:col-span-1 lg:col-span-2 flex items-center">
           <button
             onClick={() => handleTabClick('story')}
-            className="group relative inline-block text-left focus:outline-none"
+            className="group relative inline-block text-left focus:outline-none cursor-pointer"
           >
             <span className="block font-medium tracking-tight text-black transition-opacity duration-300 group-hover:opacity-0">
               vansh
@@ -136,41 +134,19 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {activeTab === 'stuff' && (
-            <div className="flex items-center gap-3 text-micro">
+            <div className="flex items-center gap-2 text-micro">
               {onShuffle && (
                 <button
                   onClick={() => {
                     playClickSound('pop');
                     onShuffle();
                   }}
-                  className="hover:text-black font-medium transition-colors flex items-center gap-1"
+                  className="hover:text-black font-medium transition-colors flex items-center gap-1 bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded text-neutral-700 cursor-pointer font-mono"
+                  title="Shuffle Library"
                 >
+                  <Shuffle size={10} />
                   <span>Shuffle</span>
-                  <span className="text-[10px] text-neutral-400">↺</span>
                 </button>
-              )}
-              {setGalleryMode && (
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => {
-                      playClickSound('tick');
-                      setGalleryMode('gallery');
-                    }}
-                    className={`op-link ${galleryMode === 'gallery' ? 'active' : ''}`}
-                  >
-                    Gal
-                  </button>
-                  <span className="text-neutral-300">/</span>
-                  <button
-                    onClick={() => {
-                      playClickSound('tick');
-                      setGalleryMode('index');
-                    }}
-                    className={`op-link ${galleryMode === 'index' ? 'active' : ''}`}
-                  >
-                    Idx
-                  </button>
-                </div>
               )}
             </div>
           )}
@@ -192,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
                     playClickSound('high');
                     onOpenSignGuestbook();
                   }}
-                  className="bg-black text-white px-1.5 py-0.5 rounded text-[10px] hover:bg-neutral-800 transition-colors"
+                  className="bg-black text-white px-1.5 py-0.5 rounded text-[10px] hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
                   + Sign
                 </button>
@@ -207,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={handleSoundToggle}
             title={soundOn ? 'Tactile Audio On' : 'Tactile Audio Muted'}
-            className="text-neutral-400 hover:text-black transition-colors p-1"
+            className="text-neutral-400 hover:text-black transition-colors p-1 cursor-pointer"
           >
             {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
           </button>
@@ -218,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
               playClickSound('paper');
               setAboutOpen(!aboutOpen);
             }}
-            className="flex items-center gap-1 hover:text-black text-neutral-700 transition-colors"
+            className="flex items-center gap-1 hover:text-black text-neutral-700 transition-colors cursor-pointer"
           >
             <span>About</span>
             <span className="font-mono text-micro text-neutral-400">
@@ -229,7 +205,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-neutral-600 hover:text-black p-1"
+            className="md:hidden text-neutral-600 hover:text-black p-1 cursor-pointer"
           >
             {mobileMenuOpen ? <X size={16} /> : <Compass size={16} />}
           </button>
@@ -246,7 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               onClick={() => handleTabClick('story')}
-              className={`text-left py-1.5 px-2 rounded text-sub ${
+              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
                 activeTab === 'story' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
@@ -254,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => handleTabClick('home')}
-              className={`text-left py-1.5 px-2 rounded text-sub ${
+              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
                 activeTab === 'home' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
@@ -262,7 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => handleTabClick('writings')}
-              className={`text-left py-1.5 px-2 rounded text-sub ${
+              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
                 activeTab === 'writings' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
@@ -270,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => handleTabClick('stuff')}
-              className={`text-left py-1.5 px-2 rounded text-sub ${
+              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
                 activeTab === 'stuff' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
@@ -278,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => handleTabClick('guestbook')}
-              className={`text-left py-1.5 px-2 rounded text-sub ${
+              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
                 activeTab === 'guestbook' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
@@ -288,7 +264,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       )}
 
-      {/* Expanded About Accordion (Signature urfd .about .internal) */}
+      {/* Expanded About Accordion */}
       {aboutOpen && (
         <div className="border-t border-neutral-100 bg-neutral-50/80 px-4 py-5 transition-all duration-300">
           <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-sub">
@@ -320,7 +296,7 @@ export const Header: React.FC<HeaderProps> = ({
               <ul className="space-y-1.5">
                 <li>
                   <a
-                    href="https://github.com"
+                    href="https://github.com/Vanshlohia05/Vansh"
                     target="_blank"
                     rel="noreferrer"
                     className="ul-link text-black inline-flex items-center gap-1 hover:text-neutral-600"

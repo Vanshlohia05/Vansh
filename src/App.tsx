@@ -8,7 +8,7 @@ import { GuestbookView } from './components/GuestbookView';
 import { ProjectModal } from './components/ProjectModal';
 import { ArticleModal } from './components/ArticleModal';
 import { KingCursor } from './components/KingCursor';
-import { STUFF_ITEMS, StuffItem } from './data/stuff';
+import { StuffItem } from './data/stuff';
 import { Artwork } from './data/homeArtworks';
 import { Article } from './data/writings';
 import {
@@ -16,18 +16,17 @@ import {
   loadGuestbookEntries,
   saveGuestbookEntries,
 } from './data/guestbook';
-import { playClickSound, toggleSound } from './utils/sound';
+import { toggleSound } from './utils/sound';
 
 export const App: React.FC = () => {
   // Navigation state (synced with window hash)
   const [activeTab, setActiveTabState] = useState<NavTab>('story');
-  const [galleryMode, setGalleryMode] = useState<'gallery' | 'index'>('gallery');
-  const [shuffledItems, setShuffledItems] = useState<StuffItem[]>(STUFF_ITEMS);
   const [homeSlideInfo, setHomeSlideInfo] = useState<{ current: number; total: number; title: string }>({
     current: 1,
     total: 4,
     title: 'Morning Brew',
   });
+  const [shelfShuffleCount, setShelfShuffleCount] = useState<number>(0);
 
   // Guestbook State
   const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntry[]>([]);
@@ -71,14 +70,8 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Shuffle Stuff Items (Fisher-Yates)
   const handleShuffle = () => {
-    const items = [...shuffledItems];
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
-    }
-    setShuffledItems(items);
+    setShelfShuffleCount((prev) => prev + 1);
   };
 
   // Guestbook Handlers
@@ -110,7 +103,6 @@ export const App: React.FC = () => {
   // Global hotkeys (1: Story, 2: Home/CV, 3: Writings, 4: Stuff, 5: Guestbook, s, m)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         return;
       }
@@ -137,16 +129,14 @@ export const App: React.FC = () => {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-white text-black selection:bg-[#d2fd78] selection:text-black flex flex-col justify-between">
-      {/* Indian King Cursor with Spear Strike and Blue Word Light */}
-      <KingCursor />
+    <div className="min-h-screen bg-white text-black selection:bg-[#d2fd78] selection:text-black flex flex-col justify-between font-sans">
+      {/* Indian King Cursor with Spear Strike (Disabled on Stuff/Reading page per user requirement) */}
+      <KingCursor disabled={activeTab === 'stuff'} />
 
       {/* Top Fixed Masthead Header */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        galleryMode={galleryMode}
-        setGalleryMode={setGalleryMode}
         onShuffle={handleShuffle}
         homeSlideInfo={homeSlideInfo}
         guestbookCount={guestbookEntries.length}
@@ -188,11 +178,7 @@ export const App: React.FC = () => {
 
         {activeTab === 'stuff' && (
           <StuffView
-            galleryMode={galleryMode}
-            setGalleryMode={setGalleryMode}
-            shuffledItems={shuffledItems}
-            onShuffle={handleShuffle}
-            onSelectItem={(item) => setSelectedProject(item)}
+            externalShuffleTrigger={shelfShuffleCount}
             onNavigateToWritings={() => setActiveTab('writings')}
             onNavigateToGuestbook={() => setActiveTab('guestbook')}
             onNavigateToStory={() => setActiveTab('story')}

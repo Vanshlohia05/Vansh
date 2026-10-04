@@ -9,15 +9,38 @@ import {
   saveEssays,
 } from '../data/reading';
 import { playClickSound } from '../utils/sound';
-import { ArrowUpRight, BookOpen, FileText, Send, X, Check, ExternalLink } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BookOpen,
+  FileText,
+  Send,
+  X,
+  Check,
+  Shuffle,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+} from 'lucide-react';
 
-export const ReadingSection: React.FC = () => {
-  // Books & Essays state (with localStorage fallback & Telegram sync support)
+interface ReadingSectionProps {
+  externalShuffleTrigger?: number; // Prop to trigger shuffle from top header
+}
+
+export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleTrigger }) => {
+  // Books & Essays state
   const [books, setBooks] = useState<BookItem[]>([]);
   const [essays, setEssays] = useState<EssayItem[]>([]);
   const [selectedBook, setSelectedBook] = useState<BookItem | null>(null);
 
-  // Floating hover preview state for Essays (Part 2)
+  // Essays category filtering & sorting
+  const [selectedEssayCategory, setSelectedEssayCategory] = useState<string>('All');
+
+  // Shelf horizontal scrolling ref
+  const shelfScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Floating hover preview state for Essays
   const [hoveredEssay, setHoveredEssay] = useState<EssayItem | null>(null);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [canHover, setCanHover] = useState(false);
@@ -38,7 +61,6 @@ export const ReadingSection: React.FC = () => {
     setBooks(loadBooks());
     setEssays(loadEssays());
 
-    // Check pointer hover capability
     const hoverQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
     setCanHover(hoverQuery.matches);
 
@@ -50,11 +72,70 @@ export const ReadingSection: React.FC = () => {
     return () => hoverQuery.removeEventListener('change', handleQueryChange);
   }, []);
 
-  // 2. Smooth Lerp Animation for Floating Hover Card (runs only while hovered)
+  // Update shelf scroll indicators
+  const checkShelfScroll = useCallback(() => {
+    if (!shelfScrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = shelfScrollRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  }, []);
+
+  useEffect(() => {
+    const el = shelfScrollRef.current;
+    if (!el) return;
+    checkShelfScroll();
+    el.addEventListener('scroll', checkShelfScroll, { passive: true });
+    window.addEventListener('resize', checkShelfScroll);
+    return () => {
+      el.removeEventListener('scroll', checkShelfScroll);
+      window.removeEventListener('resize', checkShelfScroll);
+    };
+  }, [books, checkShelfScroll]);
+
+  // Scroll shelf left/right
+  const scrollShelf = (direction: 'left' | 'right') => {
+    if (!shelfScrollRef.current) return;
+    playClickSound('tick');
+    const scrollAmount = direction === 'left' ? -320 : 320;
+    shelfScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
+  // 2. Shuffle Handlers
+  const handleShuffleBooks = useCallback(() => {
+    playClickSound('pop');
+    setBooks((prev) => {
+      const items = [...prev];
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    });
+  }, []);
+
+  const handleShuffleEssays = useCallback(() => {
+    playClickSound('pop');
+    setEssays((prev) => {
+      const items = [...prev];
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    });
+  }, []);
+
+  // Sync external header shuffle trigger
+  useEffect(() => {
+    if (externalShuffleTrigger && externalShuffleTrigger > 0) {
+      handleShuffleBooks();
+    }
+  }, [externalShuffleTrigger, handleShuffleBooks]);
+
+  // 3. Smooth Lerp Animation for Floating Hover Card (Part 2)
   const updateCursorLerp = useCallback(() => {
     if (!previewVisible) return;
 
-    // Linear interpolation: current + (target - current) * factor
     const factor = 0.16;
     const dx = mouseTargetRef.current.x - mouseCurrentRef.current.x;
     const dy = mouseTargetRef.current.y - mouseCurrentRef.current.y;
@@ -62,7 +143,6 @@ export const ReadingSection: React.FC = () => {
     mouseCurrentRef.current.x += dx * factor;
     mouseCurrentRef.current.y += dy * factor;
 
-    // Viewport clamping (keep card within screen bounds)
     const cardWidth = 300;
     const cardHeight = 200;
     const padding = 20;
@@ -70,19 +150,15 @@ export const ReadingSection: React.FC = () => {
     let posX = mouseCurrentRef.current.x + 20;
     let posY = mouseCurrentRef.current.y - cardHeight / 2;
 
-    // Flip to left if card overflows right
     if (posX + cardWidth > window.innerWidth - padding) {
       posX = mouseCurrentRef.current.x - cardWidth - 20;
     }
-    // Clamp vertical
     if (posY < padding) posY = padding;
     if (posY + cardHeight > window.innerHeight - padding) {
       posY = window.innerHeight - cardHeight - padding;
     }
 
     setPreviewPos({ x: posX, y: posY });
-
-    // Continue frame loop only while card is active
     rafRef.current = requestAnimationFrame(updateCursorLerp);
   }, [previewVisible]);
 
@@ -126,17 +202,20 @@ export const ReadingSection: React.FC = () => {
     setPreviewVisible(false);
   };
 
-  // 3. Book Selection Toggle
+  // 4. Book Selection with Realistic Shelf Slide Sound & Elevation Animation
   const handleBookClick = (book: BookItem) => {
-    playClickSound('paper');
     if (selectedBook?.id === book.id) {
+      // Push book back into shelf
+      playClickSound('book-push');
       setSelectedBook(null);
     } else {
+      // Pull book out of shelf sound
+      playClickSound('book-slide');
       setSelectedBook(book);
     }
   };
 
-  // 4. Telegram Webhook Payload Processor
+  // 5. Telegram Webhook Payload Processor
   const handleProcessTelegramPayload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rawPayloadInput.trim()) return;
@@ -191,33 +270,51 @@ export const ReadingSection: React.FC = () => {
     }
   };
 
+  // Filtered essays
+  const essayCategories = ['All', 'Essay', 'Report', 'Article', 'Video'];
+  const filteredEssays = essays.filter((item) => {
+    if (selectedEssayCategory === 'All') return true;
+    return item.type.toLowerCase() === selectedEssayCategory.toLowerCase();
+  });
+
   return (
     <div
       onMouseMove={handleMouseMove}
       className="w-full font-sans select-text"
     >
       
-      {/* ── Header & Telegram Live Sync Badge ─────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 mb-6 pb-4 border-b border-neutral-100">
+      {/* ── Page 4 Header & Telegram Live Sync Badge ─────────────── */}
+      <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4 mb-8 pb-4 border-b border-neutral-100">
         <div>
           <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-2 tracking-wide">
-            <span>READING ARCHIVE</span>
+            <span>PAGE 4</span>
             <span>•</span>
-            <span>BOOKSHELF & ESSAYS</span>
+            <span>READING ARCHIVE & BOOKSHELF</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black flex items-center gap-2.5">
-            <span>Bookshelf & Reading</span>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-black flex items-center gap-3">
+            <span>Bookshelf & Writings</span>
             <span className="text-micro font-mono text-neutral-400 font-normal">
               ({books.length} books, {essays.length} essays)
             </span>
-          </h2>
+          </h1>
           <p className="text-sub text-neutral-500 mt-1 max-w-xl">
-            A curated library of foundational literature, physics lectures, system theory, and design essays.
+            An infinite, tactile bookshelf of foundational readings, system theory, and computational design essays.
           </p>
         </div>
 
-        {/* Telegram Live Sync Status Pill */}
-        <div className="flex items-center gap-2">
+        {/* Action Controls & Telegram Status */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Shuffle Entire Library Button */}
+          <button
+            onClick={handleShuffleBooks}
+            title="Randomize shelf order"
+            className="flex items-center gap-1.5 px-3 py-1 rounded text-micro font-mono bg-neutral-100 hover:bg-neutral-200 text-black transition-colors cursor-pointer border border-neutral-200 font-medium"
+          >
+            <Shuffle size={12} />
+            <span>Shuffle Shelf</span>
+          </button>
+
+          {/* Telegram Live Sync Status */}
           <button
             onClick={() => {
               playClickSound('tick');
@@ -227,122 +324,161 @@ export const ReadingSection: React.FC = () => {
             className="flex items-center gap-1.5 px-2.5 py-1 rounded text-micro font-mono bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer border border-neutral-200/60"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Telegram Webhook: Active</span>
+            <span>Telegram Sync</span>
             <Send size={10} className="text-neutral-400 ml-0.5" />
           </button>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          PART 1: BOOKS (2.5D Animated Tactile Bookshelf)
+          PART 1: BOOKS (2.5D Animated Shelf with Pull-Out Sound & Scroll)
           ═══════════════════════════════════════════════════════════════ */}
-      <div className="mb-14">
+      <div className="mb-16">
         <div className="flex items-baseline justify-between gap-2 mb-4 border-b border-neutral-100 pb-2">
-          <h3 className="text-sm font-semibold tracking-tight text-black flex items-center gap-2">
-            <BookOpen size={14} className="text-neutral-700" />
-            <span>Books</span>
+          <div className="flex items-center gap-2">
+            <BookOpen size={15} className="text-neutral-800" />
+            <h2 className="text-sm font-bold tracking-tight text-black">
+              Books
+            </h2>
             <span className="text-micro font-mono text-neutral-400 font-normal">
               ({books.length} books)
             </span>
-          </h3>
-          <span className="text-micro font-mono text-neutral-400 hidden sm:inline">
-            Click any spine to inspect personal notes & links
-          </span>
-        </div>
-
-        {/* Shelf Frame (Horizontally Scrollable on Mobile) */}
-        <div className="relative pt-6 pb-2 overflow-x-auto no-scrollbar">
-          <div className="min-w-[660px] flex items-end justify-start gap-2.5 px-4 h-[260px]">
-            {books.map((book, idx) => {
-              const isSelected = selectedBook?.id === book.id;
-
-              return (
-                <button
-                  key={book.id}
-                  onClick={() => handleBookClick(book)}
-                  aria-pressed={isSelected}
-                  title={`${book.title} by ${book.author} (${book.year})`}
-                  style={{
-                    height: `${book.h}px`,
-                    width: `${book.w}px`,
-                    backgroundColor: book.c,
-                    color: book.fg,
-                    animationDelay: `${idx * 60}ms`,
-                  }}
-                  className={`relative group rounded-t-xs transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between items-center py-3 px-1 border border-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-black book-spine ${
-                    isSelected
-                      ? '-translate-y-5 shadow-2xl ring-2 ring-black scale-[1.02] z-20'
-                      : 'hover:-translate-y-3.5 hover:rotate-[-1.5deg] hover:shadow-xl z-10'
-                  }`}
-                >
-                  {/* 2D-to-3D Illusion Shading Overlays */}
-                  <div
-                    className="absolute inset-0 rounded-t-xs pointer-events-none"
-                    style={{
-                      background:
-                        'linear-gradient(90deg, rgba(0,0,0,0.24) 0%, rgba(255,255,255,0.18) 7%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.02) 80%, rgba(0,0,0,0.22) 100%)',
-                    }}
-                  />
-
-                  {/* Spine Top Bevel */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/25 rounded-t-xs pointer-events-none" />
-
-                  {/* Top Year Tag */}
-                  <span
-                    className="text-[9px] font-mono tracking-tighter opacity-80 shrink-0 select-none"
-                    style={{ color: book.fg }}
-                  >
-                    {book.year}
-                  </span>
-
-                  {/* Spine Title (Vertical Writing Mode) */}
-                  <span
-                    className="text-xs font-medium tracking-tight whitespace-nowrap overflow-hidden select-none px-0.5 leading-none"
-                    style={{
-                      writingMode: 'vertical-rl',
-                      textOrientation: 'mixed',
-                      transform: 'rotate(180deg)',
-                      color: book.fg,
-                      maxHeight: `${book.h - 55}px`,
-                    }}
-                  >
-                    {book.title}
-                  </span>
-
-                  {/* Bottom Author Tag */}
-                  <span
-                    className="text-[9px] font-mono tracking-tighter opacity-80 truncate max-w-[90%] select-none shrink-0"
-                    style={{ color: book.fg }}
-                  >
-                    {book.author.split(' ').pop()}
-                  </span>
-                </button>
-              );
-            })}
           </div>
 
-          {/* Minimalist 2.5D Shelf Plank */}
-          <div className="w-full h-3 bg-neutral-900 rounded-xs shadow-md border-t border-white/20 relative">
+          {/* Left/Right Scroll Controls for 100+ Books */}
+          <div className="flex items-center gap-1">
+            <span className="text-micro font-mono text-neutral-400 hidden sm:inline mr-2">
+              Scroll horizontally for more books • Click spine to draw out
+            </span>
+            <button
+              onClick={() => scrollShelf('left')}
+              disabled={!canScrollLeft}
+              title="Scroll left"
+              className={`p-1 rounded border border-neutral-200 transition-colors ${
+                canScrollLeft
+                  ? 'text-black hover:bg-neutral-100 cursor-pointer'
+                  : 'text-neutral-300 opacity-40 cursor-not-allowed'
+              }`}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={() => scrollShelf('right')}
+              disabled={!canScrollRight}
+              title="Scroll right"
+              className={`p-1 rounded border border-neutral-200 transition-colors ${
+                canScrollRight
+                  ? 'text-black hover:bg-neutral-100 cursor-pointer'
+                  : 'text-neutral-300 opacity-40 cursor-not-allowed'
+              }`}
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Shelf Frame (Smooth touch scroll & scalable for 100+ books) */}
+        <div className="relative pt-8 pb-3">
+          <div
+            ref={shelfScrollRef}
+            className="w-full overflow-x-auto scroll-smooth pb-4 no-scrollbar"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="inline-flex items-end justify-start gap-2.5 px-3 min-w-max h-[270px]">
+              {books.map((book, idx) => {
+                const isSelected = selectedBook?.id === book.id;
+
+                return (
+                  <button
+                    key={book.id}
+                    onClick={() => handleBookClick(book)}
+                    aria-pressed={isSelected}
+                    title={`${book.title} by ${book.author} (${book.year})`}
+                    style={{
+                      height: `${book.h}px`,
+                      width: `${book.w}px`,
+                      backgroundColor: book.c,
+                      color: book.fg,
+                      animationDelay: `${idx * 40}ms`,
+                    }}
+                    className={`relative group rounded-t-xs transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between items-center py-3 px-1 border border-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-black book-spine shrink-0 select-none ${
+                      isSelected
+                        ? '-translate-y-7 shadow-2xl ring-2 ring-black scale-[1.04] z-30'
+                        : 'hover:-translate-y-4 hover:rotate-[-1.5deg] hover:shadow-xl z-10'
+                    }`}
+                  >
+                    {/* 2D-to-3D Illusion Shading Overlays */}
+                    <div
+                      className="absolute inset-0 rounded-t-xs pointer-events-none"
+                      style={{
+                        background:
+                          'linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(255,255,255,0.18) 7%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.02) 80%, rgba(0,0,0,0.26) 100%)',
+                      }}
+                    />
+
+                    {/* Spine Top Bevel */}
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/25 rounded-t-xs pointer-events-none" />
+
+                    {/* Top Year Tag */}
+                    <span
+                      className="text-[9px] font-mono tracking-tighter opacity-80 shrink-0 select-none"
+                      style={{ color: book.fg }}
+                    >
+                      {book.year}
+                    </span>
+
+                    {/* Spine Title (Vertical Writing Mode) */}
+                    <span
+                      className="text-xs font-medium tracking-tight whitespace-nowrap overflow-hidden select-none px-0.5 leading-none"
+                      style={{
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'mixed',
+                        transform: 'rotate(180deg)',
+                        color: book.fg,
+                        maxHeight: `${book.h - 55}px`,
+                      }}
+                    >
+                      {book.title}
+                    </span>
+
+                    {/* Bottom Author Tag */}
+                    <span
+                      className="text-[9px] font-mono tracking-tighter opacity-80 truncate max-w-[90%] select-none shrink-0"
+                      style={{ color: book.fg }}
+                    >
+                      {book.author.split(' ').pop()}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Solid 2.5D Wooden Shelf Base Plank */}
+          <div className="w-full h-3.5 bg-neutral-900 rounded-xs shadow-md border-t border-white/20 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 opacity-90 rounded-xs" />
           </div>
         </div>
 
-        {/* Selected Book Detail Card (Appears smoothly BELOW shelf) */}
+        {/* Selected Book Detail Card (Appears smoothly BELOW shelf when drawn out) */}
         {selectedBook ? (
           <div className="mt-4 p-5 bg-neutral-50 border border-neutral-200/90 rounded-lg shadow-sm animate-fadeIn relative">
             <button
-              onClick={() => setSelectedBook(null)}
-              className="absolute top-4 right-4 text-neutral-400 hover:text-black transition-colors p-1"
-              title="Close book notes"
+              onClick={() => {
+                playClickSound('book-push');
+                setSelectedBook(null);
+              }}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-black transition-colors p-1 cursor-pointer"
+              title="Put book back into shelf"
             >
-              <X size={14} />
+              <X size={15} />
             </button>
 
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1.5 pr-6">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-base font-bold text-black">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1.5 pr-8">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h3 className="text-base font-bold text-black">
                   {selectedBook.title}
-                </h4>
+                </h3>
                 {selectedBook.link && (
                   <a
                     href={selectedBook.link}
@@ -350,7 +486,7 @@ export const ReadingSection: React.FC = () => {
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold border-b border-blue-600 hover:text-blue-800 transition-colors pb-0.5"
                   >
-                    <span>Amazon Kindle ↗</span>
+                    <span>View on Amazon India ↗</span>
                   </a>
                 )}
               </div>
@@ -365,47 +501,91 @@ export const ReadingSection: React.FC = () => {
 
             <div className="mt-3 text-micro font-mono text-neutral-400 flex items-center justify-between">
               <span>Personal library collection</span>
-              <span>Click spine again to close</span>
+              <span>Click spine again to put back on shelf</span>
             </div>
           </div>
         ) : (
           <div className="mt-2 text-center py-2 text-micro font-mono text-neutral-400">
-            [ Select any book spine above to reveal notes & impressions ]
+            [ Click on any book spine to pull it out and reveal reading notes ]
           </div>
         )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          PART 2: ESSAYS & REPORTS (Index list with Hover Preview)
+          PART 2: ESSAYS & REPORTS (Numbered Table with Category Filters)
           ═══════════════════════════════════════════════════════════════ */}
-      <div className="mb-14">
-        <div className="flex items-baseline justify-between gap-2 mb-4 border-b border-neutral-100 pb-2">
-          <h3 className="text-sm font-semibold tracking-tight text-black flex items-center gap-2">
-            <FileText size={14} className="text-neutral-700" />
-            <span>Essays & Reports</span>
-            <span className="text-micro font-mono text-neutral-400 font-normal">
-              ({essays.length} items)
-            </span>
-          </h3>
-          <span className="text-micro font-mono text-neutral-400 hidden sm:inline">
-            Hover to preview • Click to open source
-          </span>
+      <div>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 border-b border-neutral-100 pb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <FileText size={15} className="text-neutral-800" />
+              <h2 className="text-sm font-bold tracking-tight text-black">
+                Essays & Reports
+              </h2>
+              <span className="text-micro font-mono text-neutral-400 font-normal">
+                ({filteredEssays.length} items)
+              </span>
+            </div>
+            <p className="text-micro text-neutral-400 font-mono mt-0.5">
+              Hover to preview • Click row to open source in new tab
+            </p>
+          </div>
+
+          {/* Category Filter Chips & Shuffle for Essays */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded text-micro font-mono">
+              {essayCategories.map((cat) => {
+                const count =
+                  cat === 'All'
+                    ? essays.length
+                    : essays.filter((e) => e.type.toLowerCase() === cat.toLowerCase()).length;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      playClickSound('tick');
+                      setSelectedEssayCategory(cat);
+                    }}
+                    className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                      selectedEssayCategory === cat
+                        ? 'bg-black text-white font-medium shadow-xs'
+                        : 'text-neutral-500 hover:text-black'
+                    }`}
+                  >
+                    <span>{cat}</span>
+                    <span className="text-[10px] opacity-70 ml-1">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Shuffle Essays Button */}
+            <button
+              onClick={handleShuffleEssays}
+              title="Shuffle Essays"
+              className="flex items-center gap-1 px-2 py-1 rounded text-micro font-mono bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer border border-neutral-200/60"
+            >
+              <Shuffle size={10} />
+              <span>Shuffle</span>
+            </button>
+          </div>
         </div>
 
-        {/* Index Table Grid */}
+        {/* Index Table Grid with Numbering Column */}
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left text-sub border-collapse">
             <thead>
               <tr className="border-b border-neutral-900 text-micro text-neutral-400 font-mono uppercase tracking-wider">
-                <th className="py-2.5 pr-4 font-normal w-16">Year</th>
+                <th className="py-2.5 pr-2 font-normal w-12 text-center">No.</th>
+                <th className="py-2.5 px-3 font-normal w-16">Year</th>
                 <th className="py-2.5 px-3 font-normal">Title</th>
-                <th className="py-2.5 px-3 font-normal hidden sm:table-cell w-24">Type</th>
-                <th className="py-2.5 px-3 font-normal hidden md:table-cell w-48">Source</th>
+                <th className="py-2.5 px-3 font-normal hidden sm:table-cell w-24">Category</th>
+                <th className="py-2.5 px-3 font-normal hidden md:table-cell w-44">Source</th>
                 <th className="py-2.5 pl-3 font-normal text-right w-20">Link</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 font-normal">
-              {essays.map((item) => (
+              {filteredEssays.map((item, idx) => (
                 <tr
                   key={item.id}
                   onMouseEnter={(e) => handleEssayMouseEnter(item, e)}
@@ -413,7 +593,19 @@ export const ReadingSection: React.FC = () => {
                   onClick={() => playClickSound('paper')}
                   className="hover:bg-neutral-50/90 transition-colors group cursor-pointer"
                 >
-                  <td className="py-3 pr-4 font-mono text-micro text-neutral-400">
+                  {/* Numbering */}
+                  <td className="py-3 pr-2 font-mono text-micro text-neutral-400 text-center">
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-inherit"
+                    >
+                      {String(idx + 1).padStart(2, '0')}
+                    </a>
+                  </td>
+                  {/* Year */}
+                  <td className="py-3 px-3 font-mono text-micro text-neutral-400">
                     <a
                       href={item.url}
                       target="_blank"
@@ -423,7 +615,8 @@ export const ReadingSection: React.FC = () => {
                       {item.year}
                     </a>
                   </td>
-                  <td className="py-3 px-3 font-medium text-black group-hover:text-neutral-700">
+                  {/* Title */}
+                  <td className="py-3 px-3 font-medium text-black group-hover:text-blue-600 transition-colors">
                     <a
                       href={item.url}
                       target="_blank"
@@ -433,6 +626,7 @@ export const ReadingSection: React.FC = () => {
                       {item.title}
                     </a>
                   </td>
+                  {/* Category Badge */}
                   <td className="py-3 px-3 text-neutral-500 text-micro hidden sm:table-cell">
                     <a
                       href={item.url}
@@ -440,12 +634,13 @@ export const ReadingSection: React.FC = () => {
                       rel="noopener noreferrer"
                       className="block text-inherit"
                     >
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-neutral-100 text-[10px] font-mono">
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-neutral-100 text-[10px] font-mono text-neutral-700">
                         {item.type}
                       </span>
                     </a>
                   </td>
-                  <td className="py-3 px-3 text-neutral-400 text-micro font-mono truncate max-w-[200px] hidden md:table-cell">
+                  {/* Source */}
+                  <td className="py-3 px-3 text-neutral-400 text-micro font-mono truncate max-w-[180px] hidden md:table-cell">
                     <a
                       href={item.url}
                       target="_blank"
@@ -455,6 +650,7 @@ export const ReadingSection: React.FC = () => {
                       {item.source}
                     </a>
                   </td>
+                  {/* Read Link */}
                   <td className="py-3 pl-3 text-right">
                     <a
                       href={item.url}
@@ -521,7 +717,7 @@ export const ReadingSection: React.FC = () => {
               </div>
               <button
                 onClick={() => setTelegramModalOpen(false)}
-                className="text-neutral-400 hover:text-black p-1"
+                className="text-neutral-400 hover:text-black p-1 cursor-pointer"
               >
                 <X size={15} />
               </button>
@@ -531,7 +727,6 @@ export const ReadingSection: React.FC = () => {
               When you send a book or link to your Telegram Bot, the serverless webhook pushes it directly to this bookshelf & essays archive in real time.
             </p>
 
-            {/* Live Webhook Simulator / Test Form */}
             <form onSubmit={handleProcessTelegramPayload} className="space-y-3 pt-2">
               <label className="block text-micro font-mono text-neutral-500">
                 Push Test Item (JSON Webhook Payload):
@@ -580,7 +775,7 @@ export const ReadingSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setTelegramModalOpen(false)}
-                    className="px-3 py-1 text-micro text-neutral-500 hover:text-black"
+                    className="px-3 py-1 text-micro text-neutral-500 hover:text-black cursor-pointer"
                   >
                     Close
                   </button>
