@@ -130,8 +130,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-black selection:bg-[#d2fd78] selection:text-black flex flex-col justify-between font-sans">
-      {/* Indian King Cursor with Spear Strike (Disabled on Stuff/Reading page per user requirement) */}
-      <KingCursor disabled={activeTab === 'stuff'} />
+      {/* Spear Cursor: active everywhere, click shockwave animation disabled on stuff page only */}
+      <KingCursor disableClickAnimation={activeTab === 'stuff'} />
 
       {/* Top Fixed Masthead Header */}
       <Header

@@ -3,6 +3,7 @@ import { playClickSound } from '../utils/sound';
 
 interface KingCursorProps {
   disabled?: boolean;
+  disableClickAnimation?: boolean;
 }
 
 interface StrikeParticle {
@@ -47,7 +48,10 @@ const KING_H = 46;
 const TIP_X = Math.round((25 / 1024) * KING_W); // 1px
 const TIP_Y = Math.round((10 / 1024) * KING_H); // 0px
 
-export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
+export const KingCursor: React.FC<KingCursorProps> = ({
+  disabled = false,
+  disableClickAnimation = false,
+}) => {
   const [isMobile, setIsMobile] = useState<boolean>(true);
   const mousePosRef = useRef({ x: -200, y: -200 });
   const [cursorPos, setCursorPos] = useState({ x: -200, y: -200 });
@@ -115,10 +119,10 @@ export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
     };
   }, [isMobile, disabled, isVisible]);
 
-  // 3. Spear Strike & Word Blue Light Emission on Click
+  // 3. Spear Strike & Word Blue Light Emission on Click (Skipped when disableClickAnimation is true)
   const handleStrike = useCallback(
     (e: MouseEvent) => {
-      if (isMobile || disabled) return;
+      if (isMobile || disabled || disableClickAnimation) return;
 
       const cx = e.clientX;
       const cy = e.clientY;
@@ -201,14 +205,14 @@ export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
         setParticles((prev) => prev.filter((p) => !newParticles.find((np) => np.id === p.id)));
       }, 650);
     },
-    [isMobile, disabled]
+    [isMobile, disabled, disableClickAnimation]
   );
 
   useEffect(() => {
-    if (isMobile || disabled) return;
+    if (isMobile || disabled || disableClickAnimation) return;
     window.addEventListener('click', handleStrike);
     return () => window.removeEventListener('click', handleStrike);
-  }, [handleStrike, isMobile, disabled]);
+  }, [handleStrike, isMobile, disabled, disableClickAnimation]);
 
   // 4. Particle and Wisp physics loop
   useEffect(() => {
@@ -260,6 +264,7 @@ export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
 
   return (
     <>
+      {/* ── Pixel Art Indian King with Spear Cursor ─────── */}
       <div
         style={{
           position: 'fixed',
@@ -309,6 +314,7 @@ export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
         />
       </div>
 
+      {/* ── Spear Strike Shockwaves (only rendered when click animations enabled) ── */}
       {strikes.map((s) => (
         <div
           key={s.id}
@@ -365,6 +371,7 @@ export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
         </div>
       ))}
 
+      {/* ── Pixel Particles ────────────────────────────── */}
       {particles.map((p) => (
         <div
           key={p.id}
@@ -384,6 +391,7 @@ export const KingCursor: React.FC<KingCursorProps> = ({ disabled = false }) => {
         />
       ))}
 
+      {/* ── Blue Wisps ─────────────────────────────────── */}
       {wisps.map((w) => (
         <div
           key={w.id}
