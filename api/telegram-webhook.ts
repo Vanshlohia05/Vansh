@@ -60,7 +60,14 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const update = req.body;
+    let update = req.body;
+    if (typeof update === 'string') {
+      try {
+        update = JSON.parse(update);
+      } catch {
+        update = {};
+      }
+    }
     const message = update?.message;
 
     if (!message) {
