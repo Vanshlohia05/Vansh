@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { STUFF_ITEMS, StuffItem } from '../data/stuff';
+import { ReadingSection } from './ReadingSection';
 import { playClickSound } from '../utils/sound';
 import { ArrowUpRight, Shuffle, LayoutGrid, List, ArrowDown } from 'lucide-react';
 
@@ -325,6 +326,9 @@ export const StuffView: React.FC<StuffViewProps> = ({
           )}
         </div>
       )}
+
+      {/* ── Reading Section: Bookshelf & Essays / Reports ───── */}
+      <ReadingSection />
 
       {/* ── Bottom Page Continuation Bar ────────────────────── */}
       <div className="mt-16 pt-8 border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
