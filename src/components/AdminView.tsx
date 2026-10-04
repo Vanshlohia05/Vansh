@@ -182,7 +182,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     }
   };
 
-  // 2. Handle Login Submission to Backend (Zero password in frontend)
+  // 2. Handle Login Submission to Backend (Zero password in frontend, 100% Supabase & Serverless verified)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passcodeInput.trim()) return;
@@ -191,31 +191,50 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     setAuthError('');
 
     try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', passcode: passcodeInput }),
-      });
+      // 1. Try serverless backend verification first
+      let authenticated = false;
+      let sessionToken = '';
 
-      const data = await res.json();
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', passcode: passcodeInput }),
+        });
 
-      if (res.ok && data.success && data.token) {
-        sessionStorage.setItem('vansh_admin_token', data.token);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.token) {
+            authenticated = true;
+            sessionToken = data.token;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('API route fallback to direct Supabase RPC:', apiErr);
+      }
+
+      // 2. Direct Supabase Postgres RPC verification
+      if (!authenticated) {
+        const { data: isValid, error: rpcError } = await supabase.rpc('verify_admin_passcode', {
+          entered_passcode: passcodeInput.trim(),
+        });
+
+        if (!rpcError && isValid === true) {
+          authenticated = true;
+          sessionToken = `supabase_verified_${Date.now()}`;
+        }
+      }
+
+      if (authenticated) {
+        sessionStorage.setItem('vansh_admin_token', sessionToken);
         setIsAuthenticated(true);
         playClickSound('high');
       } else {
-        setAuthError(data.error || 'Invalid passcode');
+        setAuthError('Access denied: Invalid secret passcode.');
         playClickSound('pop');
       }
-    } catch (err) {
-      // Fallback for offline local dev verification
-      if (passcodeInput.trim().length >= 4) {
-        sessionStorage.setItem('vansh_admin_token', 'local_dev_token');
-        setIsAuthenticated(true);
-        playClickSound('high');
-      } else {
-        setAuthError('Connection failed or invalid passcode');
-      }
+    } catch (err: any) {
+      setAuthError('Authentication verification failed.');
     } finally {
       setIsVerifying(false);
     }

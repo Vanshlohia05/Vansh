@@ -1,8 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
-// Secret key configured securely in Vercel Environment Variables (process.env.ADMIN_SECRET_KEY)
-// Default fallback secret for local dev if not configured in environment
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://euzkujcpumwlyhpokkjp.supabase.co';
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1emt1amNwdW13bHlocG9ra2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMTA0MTAsImV4cCI6MjEwNjY4NjQxMH0.zwTra2QeTA3OiJ7J7x63pHm_0lPwl59bgKMwrP1iK1M';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const SERVER_SECRET = process.env.ADMIN_SECRET_KEY || 'vansh_portfolio_master_secret_2026';
 const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -86,7 +93,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { action, passcode, token } = req.body || {};
+    const { action, passcode, token, newPasscode } = req.body || {};
 
     // 1. Verify existing session token
     if (action === 'verify') {
@@ -97,17 +104,33 @@ export default async function handler(req: any, res: any) {
       return res.status(401).json({ valid: false, error: 'Session expired or invalid' });
     }
 
-    // 2. Login with Master Passcode
+    // 2. Login with Master Passcode (Verified in Supabase Backend)
     if (action === 'login') {
       if (!passcode || typeof passcode !== 'string') {
         return res.status(400).json({ success: false, error: 'Passcode required' });
       }
 
-      // Secure backend verification against environment secret
-      const isMatch = timingSafeCompare(passcode.trim(), SERVER_SECRET.trim());
+      let isMatch = false;
+
+      // Primary check: Supabase PostgreSQL bcrypt RPC
+      try {
+        const { data, error } = await supabase.rpc('verify_admin_passcode', {
+          entered_passcode: passcode.trim(),
+        });
+        if (!error && data === true) {
+          isMatch = true;
+        }
+      } catch (dbErr) {
+        console.warn('Supabase auth RPC error:', dbErr);
+      }
+
+      // Secondary fallback check for server environment secret
+      if (!isMatch) {
+        isMatch = timingSafeCompare(passcode.trim(), SERVER_SECRET.trim());
+      }
 
       if (!isMatch) {
-        // Subtle artificial delay to prevent brute-force timing attacks
+        // Delay to prevent brute-force timing attacks
         await new Promise((resolve) => setTimeout(resolve, 300));
         return res.status(401).json({ success: false, error: 'Invalid secret passcode' });
       }
@@ -121,9 +144,30 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    // 3. Update Master Passcode in Supabase
+    if (action === 'update_passcode') {
+      if (!token || !verifySessionToken(token)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      if (!newPasscode || typeof newPasscode !== 'string' || newPasscode.trim().length < 4) {
+        return res.status(400).json({ error: 'Passcode must be at least 4 characters long' });
+      }
+
+      const { error } = await supabase.rpc('set_admin_passcode', {
+        new_passcode: newPasscode.trim(),
+      });
+
+      if (error) {
+        return res.status(500).json({ error: 'Failed to update passcode in Supabase database' });
+      }
+
+      return res.status(200).json({ success: true, message: 'Passcode successfully updated in Supabase' });
+    }
+
     return res.status(400).json({ error: 'Unknown auth action' });
   } catch (err: any) {
     console.error('Auth API Error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
