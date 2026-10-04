@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { playClickSound } from '../utils/sound';
-import { Mail, Phone, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase, HeartHandshake, Droplets } from 'lucide-react';
 
 interface HomeViewProps {
   onNavigateToWritings?: () => void;
@@ -17,38 +17,29 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   const isNavigatingRef = useRef(false);
   const touchStartY = useRef<number | null>(null);
+  const mountTimeRef = useRef<number>(Date.now());
 
   const triggerScrollToWritings = useCallback(() => {
     if (isNavigatingRef.current) return;
+    if (Date.now() - mountTimeRef.current < 700) return; // Prevent momentum bleed-through
     isNavigatingRef.current = true;
     playClickSound('high');
     onNavigateToWritings?.();
     setTimeout(() => {
       isNavigatingRef.current = false;
-    }, 1000);
+    }, 1200);
   }, [onNavigateToWritings]);
 
-  const triggerScrollToStory = useCallback(() => {
-    if (isNavigatingRef.current) return;
-    isNavigatingRef.current = true;
-    playClickSound('tick');
-    onNavigateToStory?.();
-    setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 1000);
-  }, [onNavigateToStory]);
-
-  // Scroll / Wheel / Touch listener for seamless page switching
+  // Scroll Down only — No scroll up navigation
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      if (Date.now() - mountTimeRef.current < 700) return;
       const scrollPos = window.innerHeight + window.scrollY;
-      const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
-      const isTop = window.scrollY <= 10;
+      const isBottom = scrollPos >= document.documentElement.scrollHeight - 20;
 
-      if (e.deltaY > 35 && isBottom) {
+      // Only navigate forward when at the true bottom of the page
+      if (e.deltaY > 45 && isBottom) {
         triggerScrollToWritings();
-      } else if (e.deltaY < -35 && isTop) {
-        triggerScrollToStory();
       }
     };
 
@@ -57,16 +48,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (Date.now() - mountTimeRef.current < 700) return;
       if (touchStartY.current !== null) {
         const delta = touchStartY.current - e.changedTouches[0].clientY;
         const scrollPos = window.innerHeight + window.scrollY;
-        const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
-        const isTop = window.scrollY <= 10;
+        const isBottom = scrollPos >= document.documentElement.scrollHeight - 20;
 
-        if (delta > 50 && isBottom) {
+        if (delta > 60 && isBottom) {
           triggerScrollToWritings();
-        } else if (delta < -50 && isTop) {
-          triggerScrollToStory();
         }
         touchStartY.current = null;
       }
@@ -81,7 +70,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [triggerScrollToWritings, triggerScrollToStory]);
+  }, [triggerScrollToWritings]);
 
   return (
     <div className="relative w-full min-h-screen pt-20 pb-16 px-4 max-w-4xl mx-auto select-text font-sans page-transition">
@@ -239,11 +228,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* ── 4. Professional & Leadership Experience ─────────── */}
+      {/* ── 4. Work Experience (Below Projects) ─────────────── */}
       <section className="py-8 border-b border-neutral-200/80">
         <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
           <Briefcase size={14} className="text-black" />
-          <span>Professional Experience</span>
+          <span>Work Experience</span>
         </h2>
 
         <div className="space-y-6">
@@ -266,9 +255,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <li>Prepared and filed <strong>ITR-1 returns</strong> for individual clients, ensuring compliance with income tax deadlines.</li>
             </ul>
           </div>
+        </div>
+      </section>
 
+      {/* ── 5. Social Work & Community Leadership ───────────── */}
+      <section className="py-8 border-b border-neutral-200/80">
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+          <HeartHandshake size={14} className="text-black" />
+          <span>Social Work & Community Leadership</span>
+        </h2>
+
+        <div className="space-y-6">
           {/* Marwari Yuva Manch */}
-          <div className="border-l-2 border-neutral-400 pl-4">
+          <div className="border-l-2 border-black pl-4">
             <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
               <h3 className="text-sm font-bold text-black">
                 Marwari Yuva Manch (4 Years) • <span className="font-normal text-neutral-600">Joint Secretary [Apr, 2026 - Present]</span>
@@ -299,7 +298,29 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* ── 5. Education ────────────────────────────────────── */}
+      {/* ── 6. Community & Philanthropic Milestones ─────────── */}
+      <section className="py-6 border-b border-neutral-200/80 bg-neutral-50/50 p-4 rounded-lg my-2">
+        <div className="flex items-start gap-3.5">
+          <div className="p-2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0 mt-0.5">
+            <Droplets size={16} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-black">
+                Voluntary Blood Donor (2x Milestone Donor)
+              </h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-medium">
+                COMMUNITY IMPACT
+              </span>
+            </div>
+            <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+              Committed voluntary blood donor supporting emergency and hospital relief initiatives. Completed two milestone blood donations: the first upon turning <strong>18</strong> and the second on turning <strong>21</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. Education ────────────────────────────────────── */}
       <section className="py-8 border-b border-neutral-200/80">
         <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
           <GraduationCap size={14} className="text-black" />
@@ -342,7 +363,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               }}
               className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
             >
-              ← Back to Page 1: Story
+              (Story Lab)
             </button>
           )}
 

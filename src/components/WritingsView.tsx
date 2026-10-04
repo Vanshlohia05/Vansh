@@ -22,40 +22,30 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const isNavigatingRef = useRef(false);
   const touchStartY = useRef<number | null>(null);
+  const mountTimeRef = useRef<number>(Date.now());
 
   const categories = ['All', 'Design Philosophy', 'Creative Engineering', 'Aesthetics', 'Experiments'];
 
   const triggerScrollToStuff = useCallback(() => {
     if (isNavigatingRef.current) return;
+    if (Date.now() - mountTimeRef.current < 700) return; // Prevent momentum bleed-through
     isNavigatingRef.current = true;
     playClickSound('high');
     onNavigateToStuff?.();
     setTimeout(() => {
       isNavigatingRef.current = false;
-    }, 1000);
+    }, 1200);
   }, [onNavigateToStuff]);
 
-  const triggerScrollToHomeCV = useCallback(() => {
-    if (isNavigatingRef.current) return;
-    isNavigatingRef.current = true;
-    playClickSound('tick');
-    onNavigateToHomeCV?.();
-    setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 1000);
-  }, [onNavigateToHomeCV]);
-
-  // Scroll / Wheel / Touch listener for bidirectional seamless page changing
+  // Scroll Down only — No scroll up navigation
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      if (Date.now() - mountTimeRef.current < 700) return;
       const scrollPos = window.innerHeight + window.scrollY;
-      const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
-      const isTop = window.scrollY <= 10;
+      const isBottom = scrollPos >= document.documentElement.scrollHeight - 20;
 
-      if (e.deltaY > 35 && isBottom) {
+      if (e.deltaY > 45 && isBottom) {
         triggerScrollToStuff();
-      } else if (e.deltaY < -35 && isTop) {
-        triggerScrollToHomeCV();
       }
     };
 
@@ -64,16 +54,14 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (Date.now() - mountTimeRef.current < 700) return;
       if (touchStartY.current !== null) {
         const delta = touchStartY.current - e.changedTouches[0].clientY;
         const scrollPos = window.innerHeight + window.scrollY;
-        const isBottom = scrollPos >= document.documentElement.scrollHeight - 70;
-        const isTop = window.scrollY <= 10;
+        const isBottom = scrollPos >= document.documentElement.scrollHeight - 20;
 
-        if (delta > 50 && isBottom) {
+        if (delta > 60 && isBottom) {
           triggerScrollToStuff();
-        } else if (delta < -50 && isTop) {
-          triggerScrollToHomeCV();
         }
         touchStartY.current = null;
       }
@@ -88,7 +76,7 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [triggerScrollToStuff, triggerScrollToHomeCV]);
+  }, [triggerScrollToStuff]);
 
   const filteredArticles = ARTICLES.filter((article) => {
     const matchesCategory = selectedCategory === 'All' || article.category === selectedCategory;
@@ -216,7 +204,7 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
               }}
               className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
             >
-              ← Back to Page 2: Home/CV
+              (Home/CV)
             </button>
           )}
 
@@ -228,7 +216,7 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
               }}
               className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
             >
-              (Story)
+              (Story Lab)
             </button>
           )}
 

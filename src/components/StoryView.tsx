@@ -33,13 +33,13 @@ export const StoryView: React.FC<StoryViewProps> = ({
     onNavigateToHomeCV?.();
     setTimeout(() => {
       isNavigatingRef.current = false;
-    }, 1000);
+    }, 1200);
   }, [onNavigateToHomeCV]);
 
   // Automatic Scroll Down -> Navigate to Home/CV page
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY > 25) {
+      if (e.deltaY > 40) {
         triggerScrollToHomeCV();
       }
     };
@@ -51,7 +51,7 @@ export const StoryView: React.FC<StoryViewProps> = ({
     const handleTouchEnd = (e: TouchEvent) => {
       if (touchStartY.current !== null) {
         const delta = touchStartY.current - e.changedTouches[0].clientY;
-        if (delta > 40) {
+        if (delta > 50) {
           triggerScrollToHomeCV();
         }
         touchStartY.current = null;

@@ -38,51 +38,6 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
 
   const avatarOptions = ['✦', '⚡', '☕', '🚀', '🖤', '🎨', '🏮', '🍀', '✨', '👾'];
 
-  const triggerScrollToStuff = useCallback(() => {
-    if (isNavigatingRef.current) return;
-    isNavigatingRef.current = true;
-    playClickSound('tick');
-    onNavigateToStuff?.();
-    setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 1000);
-  }, [onNavigateToStuff]);
-
-  // Scroll / Wheel / Touch listener to navigate back up to Stuff
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      const isTop = window.scrollY <= 10;
-      if (e.deltaY < -35 && isTop) {
-        triggerScrollToStuff();
-      }
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (touchStartY.current !== null) {
-        const delta = touchStartY.current - e.changedTouches[0].clientY;
-        const isTop = window.scrollY <= 10;
-        if (delta < -50 && isTop) {
-          triggerScrollToStuff();
-        }
-        touchStartY.current = null;
-      }
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: true });
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [triggerScrollToStuff]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !message.trim()) return;
@@ -371,10 +326,9 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
                 playClickSound('tick');
                 onNavigateToStuff();
               }}
-              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500 flex items-center gap-1"
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
             >
-              <ArrowUp size={11} />
-              <span>Scroll up / Back to Page 4: Stuff</span>
+              ← Back to Page 4: Stuff
             </button>
           )}
 
