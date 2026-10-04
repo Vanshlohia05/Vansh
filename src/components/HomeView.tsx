@@ -1,30 +1,22 @@
-import React, { useCallback, useEffect, useRef } from 'react';
-import { StickmanHero } from './StickmanHero';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { playClickSound } from '../utils/sound';
-import { ArrowDown } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase } from 'lucide-react';
 
 interface HomeViewProps {
-  onSlideChange?: (current: number, total: number, title: string) => void;
-  onNavigateToStuff?: () => void;
   onNavigateToWritings?: () => void;
+  onNavigateToStory?: () => void;
+  onNavigateToStuff?: () => void;
   onNavigateToGuestbook?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
-  onSlideChange,
-  onNavigateToStuff,
   onNavigateToWritings,
+  onNavigateToStory,
+  onNavigateToStuff,
   onNavigateToGuestbook,
 }) => {
   const isNavigatingRef = useRef(false);
   const touchStartY = useRef<number | null>(null);
-
-  const handleActivityChange = useCallback(
-    (title: string, step: number) => {
-      onSlideChange?.(step, 4, title);
-    },
-    [onSlideChange]
-  );
 
   const triggerScrollToWritings = useCallback(() => {
     if (isNavigatingRef.current) return;
@@ -36,16 +28,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
     }, 1000);
   }, [onNavigateToWritings]);
 
-  // Automatic Scroll Down -> Navigate to Writings page
+  // Scroll / Wheel / Touch listener to navigate from Page 2 (CV) to Page 3 (Writings)
   useEffect(() => {
-    // 1. Mouse Wheel scroll down listener
     const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY > 25) {
+      // Check if user is scrolled near bottom of page before transitioning
+      const scrollPos = window.innerHeight + window.scrollY;
+      const threshold = document.documentElement.scrollHeight - 60;
+      if (e.deltaY > 30 && scrollPos >= threshold) {
         triggerScrollToWritings();
       }
     };
 
-    // 2. Touch swipe up (scroll down) listener for mobile/trackpad
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY;
     };
@@ -53,61 +46,259 @@ export const HomeView: React.FC<HomeViewProps> = ({
     const handleTouchEnd = (e: TouchEvent) => {
       if (touchStartY.current !== null) {
         const delta = touchStartY.current - e.changedTouches[0].clientY;
-        if (delta > 40) {
+        const scrollPos = window.innerHeight + window.scrollY;
+        const threshold = document.documentElement.scrollHeight - 60;
+        if (delta > 50 && scrollPos >= threshold) {
           triggerScrollToWritings();
         }
         touchStartY.current = null;
       }
     };
 
-    // 3. ArrowDown / PageDown key listener
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-        triggerScrollToWritings();
-      }
-    };
-
     window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
-    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [triggerScrollToWritings]);
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-80px)] flex flex-col justify-between pt-16 pb-8 select-none px-4">
-      {/* Top Narrative Introduction */}
-      <div className="max-w-4xl mx-auto w-full pt-2 pb-1 flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-2 border-b border-black/10">
-        <div>
-          <h1 className="text-base font-semibold tracking-tight text-black">
-            Vansh Lohia <span className="font-normal text-neutral-400 font-mono text-xs">/ Creative Engineering Lab</span>
-          </h1>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Real-time articulated physics simulation • 60 FPS Verlet Kinematics & Interactive Story
+    <div className="relative w-full min-h-screen pt-20 pb-16 px-4 max-w-4xl mx-auto select-text font-sans">
+      
+      {/* ── Page Header / Intro Banner ─────────────────────── */}
+      <section className="border-b border-neutral-200/80 pb-8 pt-4">
+        <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-3 tracking-wide">
+              <span>PAGE 2</span>
+              <span>•</span>
+              <span>CURRICULUM VITAE & PORTFOLIO</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-black">
+              VANSH LOHIA
+            </h1>
+            <p className="text-sm font-mono text-neutral-500 mt-1">
+              Bachelor of Business Administration • Creative Engineer • Project Lead
+            </p>
+          </div>
+
+          {/* Quick Contact Info */}
+          <div className="flex flex-col gap-1.5 text-xs font-mono text-neutral-600 bg-neutral-50 p-3.5 rounded border border-neutral-200/60">
+            <a
+              href="mailto:lohiavansh24.work@gmail.com"
+              className="flex items-center gap-2 hover:text-black transition-colors"
+            >
+              <Mail size={12} className="text-neutral-400" />
+              <span>lohiavansh24.work@gmail.com</span>
+            </a>
+            <a
+              href="tel:+919365324146"
+              className="flex items-center gap-2 hover:text-black transition-colors"
+            >
+              <Phone size={12} className="text-neutral-400" />
+              <span>+91 93653 24146</span>
+            </a>
+            <div className="flex items-center gap-2 text-neutral-500">
+              <MapPin size={12} className="text-neutral-400" />
+              <span>Sarupathar, Assam, India - 785601</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Summary */}
+        <p className="text-sm text-neutral-700 leading-relaxed mt-6 max-w-3xl">
+          A highly motivated Bachelor of Business Administration (BBA) student with over three years of experience in
+          community program coordination and event organization, gained through various volunteer leadership roles.
+          Experienced in full-lifecycle project coordination, rapid generative AI workflows, vibe coding, and digital design.
+        </p>
+      </section>
+
+      {/* ── 1. Areas of Expertise ──────────────────────────── */}
+      <section className="py-8 border-b border-neutral-200/80">
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-4 flex items-center gap-2">
+          <Award size={14} className="text-black" />
+          <span>Area of Expertise</span>
+        </h2>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[
+            { title: 'Graphic Design', desc: 'Canva & Visual Layout' },
+            { title: 'Vibe Coding', desc: 'GenAI & Fullstack Prototyping' },
+            { title: 'Project Coordination', desc: 'End-to-End Execution' },
+            { title: 'Volunteer Management', desc: 'Leadership & Community' },
+            { title: 'Team Management', desc: 'Cross-functional Collab' },
+            { title: 'Meeting Deadlines', desc: 'High-discipline Execution' },
+          ].map((skill, idx) => (
+            <div
+              key={idx}
+              className="p-3 bg-white border border-neutral-200 hover:border-black transition-all rounded group"
+            >
+              <div className="font-medium text-black text-sm group-hover:text-blue-600 transition-colors">
+                {skill.title}
+              </div>
+              <div className="text-micro font-mono text-neutral-400 mt-0.5">
+                {skill.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 2. Key Initiatives & Independent Projects ──────── */}
+      <section className="py-8 border-b border-neutral-200/80">
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+          <Rocket size={14} className="text-black" />
+          <span>Key Initiatives & Independent Projects</span>
+        </h2>
+
+        {/* SahiRasta Platform */}
+        <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded">
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-2">
+            <h3 className="text-base font-bold text-black flex items-center gap-2">
+              <span>Project Lead, SahiRasta Platform</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">
+                ACTIVE
+              </span>
+            </h3>
+            <span className="text-xs font-mono text-neutral-400">April, 2026 - Present</span>
+          </div>
+
+          <p className="text-xs text-neutral-600 mb-3 italic">
+            Dedicated educational guidance and career roadmap platform tailored for Indian students.
           </p>
+
+          <ul className="space-y-2 text-xs text-neutral-700 list-disc list-inside">
+            <li>
+              Conceptualized and developed <strong>'SahiRasta'</strong>, creating structured roadmaps and actionable career pathways.
+            </li>
+            <li>
+              Leveraged <strong>generative AI workflows</strong> for rapid prototyping, defining core product vision, user journey, and business logic.
+            </li>
+            <li>
+              Managed the end-to-end development lifecycle, taking the project from initial ideation to a functional Minimum Viable Product (MVP).
+            </li>
+          </ul>
         </div>
+      </section>
 
-        <div className="text-micro font-mono text-neutral-400 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>STATUS: ALL SYSTEMS LIVE</span>
+      {/* ── 3. Published Books & Literary Work ─────────────── */}
+      <section className="py-8 border-b border-neutral-200/80">
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+          <BookOpen size={14} className="text-black" />
+          <span>Author & Published Work</span>
+        </h2>
+
+        <div className="p-5 bg-white border border-neutral-200 rounded flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-base font-bold text-black">
+                Whispers of the Soul
+              </h3>
+              <span className="text-xs font-mono text-neutral-400">(Self-Published Book)</span>
+            </div>
+            <p className="text-xs text-neutral-600 mb-3">
+              Independently authored and published full-length title via <strong>Amazon KDP</strong>.
+            </p>
+            <p className="text-xs text-neutral-700 leading-relaxed">
+              Managed all aspects of the publishing lifecycle including creative composition, editing, graphic layout, and digital distribution—demonstrating discipline and long-term project execution.
+            </p>
+          </div>
+          <div className="text-xs font-mono text-neutral-400 whitespace-nowrap sm:text-right">
+            <span>Jan, 2024</span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Centerpiece: Stickman Physics & Rocket Animation */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center my-3 w-full">
-        <StickmanHero onActivityChange={handleActivityChange} />
-      </div>
+      {/* ── 4. Professional & Leadership Experience ─────────── */}
+      <section className="py-8 border-b border-neutral-200/80">
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+          <Briefcase size={14} className="text-black" />
+          <span>Professional Experience</span>
+        </h2>
 
-      {/* Bottom Navigation & Scroll Cue */}
-      <div className="max-w-4xl mx-auto w-full pt-3 border-t border-black/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
-        <div className="flex items-center gap-4 text-neutral-500">
-          <span className="text-black font-medium">Explore:</span>
+        <div className="space-y-6">
+          {/* Marwari Yuva Manch */}
+          <div className="border-l-2 border-black pl-4">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
+              <h3 className="text-sm font-bold text-black">
+                Marwari Yuva Manch (4 Years) • <span className="font-normal text-neutral-600">Joint Secretary [Apr, 2026 - Present]</span>
+              </h3>
+              <span className="text-xs font-mono text-neutral-400">2022 - Present</span>
+            </div>
+            <div className="text-micro font-mono text-neutral-500 mb-2">Social & Community Services & Development</div>
+            <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+              <li>Actively involved in community service projects; organized large community events for <strong>150 to 200 attendees</strong>.</li>
+              <li>Joined as a dedicated volunteer, participating in community outreach and developing strong teamwork, volunteer coordination, and leadership skills.</li>
+            </ul>
+          </div>
+
+          {/* Ashadeep NGO */}
+          <div className="border-l-2 border-neutral-300 pl-4">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
+              <h3 className="text-sm font-bold text-black">
+                Ashadeep NGO • <span className="font-normal text-neutral-600">Volunteer & Project Coordinator</span>
+              </h3>
+              <span className="text-xs font-mono text-neutral-400">Jan 2025 - Present</span>
+            </div>
+            <div className="text-micro font-mono text-neutral-500 mb-2">Mental Health Services</div>
+            <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+              <li>Gaining hands-on experience in non-profit operations, project management, and volunteer coordination.</li>
+              <li>Supporting community programs, enhancing team management, effective communication, and time management skills.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. Education ────────────────────────────────────── */}
+      <section className="py-8 border-b border-neutral-200/80">
+        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+          <GraduationCap size={14} className="text-black" />
+          <span>Education</span>
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 border border-neutral-200 rounded bg-white">
+            <div className="font-bold text-black text-sm">Manipal University Jaipur</div>
+            <div className="text-xs text-neutral-600 mt-0.5">
+              Bachelor of Business Administration (BBA)
+            </div>
+            <div className="text-micro font-mono text-neutral-400 mt-1">
+              Penultimate 2nd Year • 2024 - 2027 (Expected)
+            </div>
+            <div className="mt-3 inline-block px-2 py-0.5 rounded bg-neutral-100 text-black text-xs font-mono font-semibold">
+              3rd Sem SGPA: 8.0 • 77.6%
+            </div>
+          </div>
+
+          <div className="p-4 border border-neutral-200 rounded bg-white">
+            <div className="font-bold text-black text-sm">Amrit International School</div>
+            <div className="text-xs text-neutral-600 mt-0.5">High School</div>
+            <div className="text-micro font-mono text-neutral-400 mt-1">2022 - 2024</div>
+            <div className="mt-3 text-xs text-neutral-500 font-mono">
+              Languages: English & Hindi
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Bottom Page Continuation Bar ────────────────────── */}
+      <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
+        <div className="flex items-center gap-3">
+          {onNavigateToStory && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onNavigateToStory();
+              }}
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
+            >
+              ← Back to Page 1: Story
+            </button>
+          )}
 
           {onNavigateToStuff && (
             <button
@@ -115,21 +306,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 playClickSound('high');
                 onNavigateToStuff();
               }}
-              className="hover:text-black ul-link transition-colors cursor-pointer"
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
             >
               (Stuff & Projects)
-            </button>
-          )}
-
-          {onNavigateToWritings && (
-            <button
-              onClick={() => {
-                playClickSound('high');
-                onNavigateToWritings();
-              }}
-              className="hover:text-black ul-link transition-colors cursor-pointer"
-            >
-              (Writings & Essays)
             </button>
           )}
 
@@ -139,23 +318,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 playClickSound('high');
                 onNavigateToGuestbook();
               }}
-              className="hover:text-black ul-link transition-colors cursor-pointer"
+              className="hover:text-black ul-link transition-colors cursor-pointer text-neutral-500"
             >
-              (Sign Guestbook)
+              (Guestbook)
             </button>
           )}
         </div>
 
-        {/* Scroll Cue Button */}
+        {/* Scroll Next Page Cue */}
         <button
           onClick={triggerScrollToWritings}
-          className="flex items-center gap-1.5 text-micro text-neutral-500 hover:text-black transition-colors font-mono cursor-pointer animate-pulse"
-          title="Scroll down to automatically open Writings & Essays"
+          className="flex items-center gap-1.5 text-xs text-black font-semibold hover:text-blue-600 transition-colors cursor-pointer animate-pulse"
         >
-          <span>Scroll down for Writings</span>
-          <ArrowDown size={11} className="animate-bounce" />
+          <span>Scroll down for Page 3: Writings</span>
+          <ArrowDown size={13} className="animate-bounce" />
         </button>
       </div>
+
     </div>
   );
 };

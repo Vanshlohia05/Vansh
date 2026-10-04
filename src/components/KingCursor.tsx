@@ -65,7 +65,7 @@ export const KingCursor: React.FC = () => {
   const strikeIdCounter = useRef(0);
   const particleIdCounter = useRef(0);
   const wispIdCounter = useRef(0);
-  const rafId = useRef<number>();
+  const rafId = useRef<number | undefined>(undefined);
 
   // 1. Mobile Detection: disable completely on mobile phones/touch devices
   useEffect(() => {

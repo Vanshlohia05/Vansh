@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, ArrowUpRight, Compass, X } from 'lucide-react';
 import { playClickSound, toggleSound, isSoundEnabled } from '../utils/sound';
 
-export type NavTab = 'home' | 'writings' | 'stuff' | 'guestbook';
+export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook';
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Col 1 & 2: Logo with urfd-style hover effect */}
         <div className="col-span-1 md:col-span-1 lg:col-span-2 flex items-center">
           <button
-            onClick={() => handleTabClick('home')}
+            onClick={() => handleTabClick('story')}
             className="group relative inline-block text-left focus:outline-none"
           >
             <span className="block font-medium tracking-tight text-black transition-opacity duration-300 group-hover:opacity-0">
@@ -80,14 +80,21 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Col 3 & 4: Navigation Menu */}
-        <div className="hidden md:flex md:col-span-2 lg:col-span-2 items-center gap-1.5 flex-wrap">
-          <span className="text-neutral-400 mr-1">Stories</span>
+        <div className="hidden md:flex md:col-span-2 lg:col-span-3 items-center gap-1.5 flex-wrap">
+          <span className="text-neutral-400 mr-1">Pages</span>
           
+          <button
+            onClick={() => handleTabClick('story')}
+            className={`op-link ${activeTab === 'story' ? 'active' : ''}`}
+          >
+            Story
+          </button>
+
           <button
             onClick={() => handleTabClick('home')}
             className={`op-link ${activeTab === 'home' ? 'active' : ''}`}
           >
-            Home
+            Home/CV
           </button>
           
           <button
@@ -112,21 +119,24 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Col 5 & 6: Dynamic Contextual Action based on current page */}
-        <div className="hidden lg:flex lg:col-span-2 items-center text-neutral-500">
-          {activeTab === 'home' && homeSlideInfo && (
-            <div className="flex items-center gap-2 text-micro">
-              <span className="font-mono text-black">
-                [{String(homeSlideInfo.current).padStart(2, '0')} / {String(homeSlideInfo.total).padStart(2, '0')}]
-              </span>
-              <span className="truncate max-w-[140px] text-neutral-600">
-                {homeSlideInfo.title}
-              </span>
+        {/* Col 5: Dynamic Contextual Action based on current page */}
+        <div className="hidden lg:flex lg:col-span-1 items-center text-neutral-500">
+          {activeTab === 'story' && (
+            <div className="flex items-center gap-1.5 text-micro">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-mono text-neutral-600 truncate">Story Lab</span>
+            </div>
+          )}
+
+          {activeTab === 'home' && (
+            <div className="flex items-center gap-1.5 text-micro">
+              <span className="font-mono text-black font-medium">[02/05]</span>
+              <span className="truncate max-w-[110px] text-neutral-600">CV & Portfolio</span>
             </div>
           )}
 
           {activeTab === 'stuff' && (
-            <div className="flex items-center gap-4 text-micro">
+            <div className="flex items-center gap-3 text-micro">
               {onShuffle && (
                 <button
                   onClick={() => {
@@ -140,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
               {setGalleryMode && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => {
                       playClickSound('tick');
@@ -148,7 +158,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     className={`op-link ${galleryMode === 'gallery' ? 'active' : ''}`}
                   >
-                    Gallery
+                    Gal
                   </button>
                   <span className="text-neutral-300">/</span>
                   <button
@@ -158,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     className={`op-link ${galleryMode === 'index' ? 'active' : ''}`}
                   >
-                    Index
+                    Idx
                   </button>
                 </div>
               )}
@@ -166,15 +176,15 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {activeTab === 'writings' && (
-            <span className="text-micro text-neutral-400">
-              Essays, notes & engineering thoughts
+            <span className="text-micro text-neutral-400 truncate">
+              Essays & Notes
             </span>
           )}
 
           {activeTab === 'guestbook' && (
-            <div className="flex items-center gap-3 text-micro">
-              <span className="text-neutral-500 font-mono">
-                {guestbookCount || 0} signatures
+            <div className="flex items-center gap-2 text-micro">
+              <span className="text-neutral-500 font-mono text-[11px]">
+                {guestbookCount || 0} sigs
               </span>
               {onOpenSignGuestbook && (
                 <button
@@ -182,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({
                     playClickSound('high');
                     onOpenSignGuestbook();
                   }}
-                  className="bg-black text-white px-2 py-0.5 rounded text-[10px] hover:bg-neutral-800 transition-colors"
+                  className="bg-black text-white px-1.5 py-0.5 rounded text-[10px] hover:bg-neutral-800 transition-colors"
                 >
                   + Sign
                 </button>
@@ -233,14 +243,22 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Navigation</span>
             <span className="font-mono">{currentTime} IST</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <button
+              onClick={() => handleTabClick('story')}
+              className={`text-left py-1.5 px-2 rounded text-sub ${
+                activeTab === 'story' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              }`}
+            >
+              1. (Story)
+            </button>
             <button
               onClick={() => handleTabClick('home')}
               className={`text-left py-1.5 px-2 rounded text-sub ${
                 activeTab === 'home' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
-              (Home)
+              2. (Home/CV)
             </button>
             <button
               onClick={() => handleTabClick('writings')}
@@ -248,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({
                 activeTab === 'writings' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
-              (Writings)
+              3. (Writings)
             </button>
             <button
               onClick={() => handleTabClick('stuff')}
@@ -256,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
                 activeTab === 'stuff' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
-              (Stuff)
+              4. (Stuff)
             </button>
             <button
               onClick={() => handleTabClick('guestbook')}
@@ -264,7 +282,7 @@ export const Header: React.FC<HeaderProps> = ({
                 activeTab === 'guestbook' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
               }`}
             >
-              (Guestbook)
+              5. (Guestbook)
             </button>
           </div>
         </div>

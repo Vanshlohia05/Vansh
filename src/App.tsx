@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header, NavTab } from './components/Header';
+import { StoryView } from './components/StoryView';
 import { HomeView } from './components/HomeView';
 import { WritingsView } from './components/WritingsView';
 import { StuffView } from './components/StuffView';
@@ -19,13 +20,13 @@ import { playClickSound, toggleSound } from './utils/sound';
 
 export const App: React.FC = () => {
   // Navigation state (synced with window hash)
-  const [activeTab, setActiveTabState] = useState<NavTab>('home');
+  const [activeTab, setActiveTabState] = useState<NavTab>('story');
   const [galleryMode, setGalleryMode] = useState<'gallery' | 'index'>('gallery');
   const [shuffledItems, setShuffledItems] = useState<StuffItem[]>(STUFF_ITEMS);
   const [homeSlideInfo, setHomeSlideInfo] = useState<{ current: number; total: number; title: string }>({
     current: 1,
-    total: 7,
-    title: 'Kinetic Monolith',
+    total: 4,
+    title: 'Morning Brew',
   });
 
   // Guestbook State
@@ -45,7 +46,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as NavTab;
-      if (['home', 'writings', 'stuff', 'guestbook'].includes(hash)) {
+      if (['story', 'home', 'writings', 'stuff', 'guestbook'].includes(hash)) {
         setActiveTabState(hash);
       }
     };
@@ -106,7 +107,7 @@ export const App: React.FC = () => {
     saveGuestbookEntries(updated);
   };
 
-  // Global hotkeys (1, 2, 3, 4, s, m)
+  // Global hotkeys (1: Story, 2: Home/CV, 3: Writings, 4: Stuff, 5: Guestbook, s, m)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in an input or textarea
@@ -115,12 +116,14 @@ export const App: React.FC = () => {
       }
 
       if (e.key === '1') {
-        setActiveTab('home');
+        setActiveTab('story');
       } else if (e.key === '2') {
-        setActiveTab('writings');
+        setActiveTab('home');
       } else if (e.key === '3') {
-        setActiveTab('stuff');
+        setActiveTab('writings');
       } else if (e.key === '4') {
+        setActiveTab('stuff');
+      } else if (e.key === '5') {
         setActiveTab('guestbook');
       } else if (e.key.toLowerCase() === 's' && activeTab === 'stuff') {
         handleShuffle();
@@ -155,11 +158,20 @@ export const App: React.FC = () => {
 
       {/* Main Page Content */}
       <main className="flex-1 w-full">
+        {activeTab === 'story' && (
+          <StoryView
+            onSlideChange={handleSlideChange}
+            onNavigateToHomeCV={() => setActiveTab('home')}
+            onNavigateToWritings={() => setActiveTab('writings')}
+            onNavigateToStuff={() => setActiveTab('stuff')}
+          />
+        )}
+
         {activeTab === 'home' && (
           <HomeView
-            onSlideChange={handleSlideChange}
-            onNavigateToStuff={() => setActiveTab('stuff')}
             onNavigateToWritings={() => setActiveTab('writings')}
+            onNavigateToStory={() => setActiveTab('story')}
+            onNavigateToStuff={() => setActiveTab('stuff')}
             onNavigateToGuestbook={() => setActiveTab('guestbook')}
           />
         )}
@@ -199,7 +211,7 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="hidden md:inline">Hotkeys: [1] Home [2] Writings [3] Stuff [4] Guestbook [M] Mute</span>
+            <span className="hidden md:inline">Hotkeys: [1] Story [2] Home/CV [3] Writings [4] Stuff [5] Guestbook [M] Mute</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
