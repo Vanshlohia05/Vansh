@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   BookItem,
   EssayItem,
-  INITIAL_BOOKS,
-  INITIAL_ESSAYS,
   getEssayPreviewImage,
   loadBooks,
   saveBooks,
@@ -11,7 +9,7 @@ import {
   saveEssays,
 } from '../data/reading';
 import { playClickSound } from '../utils/sound';
-import { ArrowUpRight, BookOpen, FileText, Send, Sparkles, X, Check, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, BookOpen, FileText, Send, X, Check, ExternalLink } from 'lucide-react';
 
 export const ReadingSection: React.FC = () => {
   // Books & Essays state (with localStorage fallback & Telegram sync support)
@@ -65,7 +63,7 @@ export const ReadingSection: React.FC = () => {
     mouseCurrentRef.current.y += dy * factor;
 
     // Viewport clamping (keep card within screen bounds)
-    const cardWidth = 290;
+    const cardWidth = 300;
     const cardHeight = 200;
     const padding = 20;
 
@@ -138,7 +136,7 @@ export const ReadingSection: React.FC = () => {
     }
   };
 
-  // 4. Telegram Webhook Payload Processor (supports live test & direct JSON push)
+  // 4. Telegram Webhook Payload Processor
   const handleProcessTelegramPayload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rawPayloadInput.trim()) return;
@@ -153,16 +151,22 @@ export const ReadingSection: React.FC = () => {
           author: parsed.author || 'Unknown Author',
           year: parsed.year || String(new Date().getFullYear()),
           note: parsed.note || 'Pushed via Telegram Bot',
-          h: parsed.h || Math.floor(Math.random() * 40 + 195),
-          w: parsed.w || Math.floor(Math.random() * 12 + 34),
+          h: parsed.h || Math.floor(Math.random() * 35 + 200),
+          w: parsed.w || Math.floor(Math.random() * 10 + 36),
           c: parsed.c || '#18181b',
           fg: parsed.fg || '#ffffff',
+          link: parsed.link,
         };
         const updated = [newBook, ...books];
         setBooks(updated);
         saveBooks(updated);
         setSyncSuccessMsg(`Successfully added book: "${newBook.title}"`);
-      } else if (parsed.type === 'essay' || parsed.type === 'article' || parsed.type === 'report' || parsed.type === 'video') {
+      } else if (
+        parsed.type === 'essay' ||
+        parsed.type === 'article' ||
+        parsed.type === 'report' ||
+        parsed.type === 'video'
+      ) {
         const newEssay: EssayItem = {
           id: `tg-e-${Date.now()}`,
           title: parsed.title || 'Untitled Article',
@@ -183,32 +187,32 @@ export const ReadingSection: React.FC = () => {
       playClickSound('high');
       setTimeout(() => setSyncSuccessMsg(''), 4000);
     } catch (err) {
-      alert('Invalid JSON format. Please check syntax (example provided below).');
+      alert('Invalid JSON format. Please check syntax.');
     }
   };
 
   return (
     <div
       onMouseMove={handleMouseMove}
-      className="w-full mt-16 pt-12 border-t border-neutral-200/80 font-sans select-text"
+      className="w-full font-sans select-text"
     >
       
-      {/* ── Section Header & Telegram Live Sync Badge ─────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 mb-8">
+      {/* ── Header & Telegram Live Sync Badge ─────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 mb-6 pb-4 border-b border-neutral-100">
         <div>
           <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-2 tracking-wide">
-            <span>READING & ARCHIVE</span>
+            <span>READING ARCHIVE</span>
             <span>•</span>
-            <span>BOOKSHELF & PAPERS</span>
+            <span>BOOKSHELF & ESSAYS</span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black flex items-center gap-2.5">
-            <span>Reading</span>
+            <span>Bookshelf & Reading</span>
             <span className="text-micro font-mono text-neutral-400 font-normal">
-              ({books.length + essays.length} entries)
+              ({books.length} books, {essays.length} essays)
             </span>
           </h2>
           <p className="text-sub text-neutral-500 mt-1 max-w-xl">
-            A living repository of foundational books, longform essays, research reports, and lectures.
+            A curated library of foundational literature, physics lectures, system theory, and design essays.
           </p>
         </div>
 
@@ -242,13 +246,13 @@ export const ReadingSection: React.FC = () => {
             </span>
           </h3>
           <span className="text-micro font-mono text-neutral-400 hidden sm:inline">
-            Click a book spine to inspect notes
+            Click any spine to inspect personal notes & links
           </span>
         </div>
 
         {/* Shelf Frame (Horizontally Scrollable on Mobile) */}
         <div className="relative pt-6 pb-2 overflow-x-auto no-scrollbar">
-          <div className="min-w-[620px] flex items-end justify-start gap-2.5 px-4 h-[255px]">
+          <div className="min-w-[660px] flex items-end justify-start gap-2.5 px-4 h-[260px]">
             {books.map((book, idx) => {
               const isSelected = selectedBook?.id === book.id;
 
@@ -263,7 +267,7 @@ export const ReadingSection: React.FC = () => {
                     width: `${book.w}px`,
                     backgroundColor: book.c,
                     color: book.fg,
-                    animationDelay: `${idx * 75}ms`,
+                    animationDelay: `${idx * 60}ms`,
                   }}
                   className={`relative group rounded-t-xs transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between items-center py-3 px-1 border border-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-black book-spine ${
                     isSelected
@@ -285,7 +289,7 @@ export const ReadingSection: React.FC = () => {
 
                   {/* Top Year Tag */}
                   <span
-                    className="text-[9px] font-mono tracking-tighter opacity-75 shrink-0 select-none"
+                    className="text-[9px] font-mono tracking-tighter opacity-80 shrink-0 select-none"
                     style={{ color: book.fg }}
                   >
                     {book.year}
@@ -307,7 +311,7 @@ export const ReadingSection: React.FC = () => {
 
                   {/* Bottom Author Tag */}
                   <span
-                    className="text-[9px] font-mono tracking-tighter opacity-75 truncate max-w-[90%] select-none shrink-0"
+                    className="text-[9px] font-mono tracking-tighter opacity-80 truncate max-w-[90%] select-none shrink-0"
                     style={{ color: book.fg }}
                   >
                     {book.author.split(' ').pop()}
@@ -317,7 +321,7 @@ export const ReadingSection: React.FC = () => {
             })}
           </div>
 
-          {/* Wooden / Minimalist Flat Shelf Base (2.5D Plank) */}
+          {/* Minimalist 2.5D Shelf Plank */}
           <div className="w-full h-3 bg-neutral-900 rounded-xs shadow-md border-t border-white/20 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 opacity-90 rounded-xs" />
           </div>
@@ -335,9 +339,21 @@ export const ReadingSection: React.FC = () => {
             </button>
 
             <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1.5 pr-6">
-              <h4 className="text-base font-bold text-black">
-                {selectedBook.title}
-              </h4>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-base font-bold text-black">
+                  {selectedBook.title}
+                </h4>
+                {selectedBook.link && (
+                  <a
+                    href={selectedBook.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold border-b border-blue-600 hover:text-blue-800 transition-colors pb-0.5"
+                  >
+                    <span>Amazon Kindle ↗</span>
+                  </a>
+                )}
+              </div>
               <span className="text-xs font-mono text-neutral-500">
                 {selectedBook.author} • {selectedBook.year}
               </span>
@@ -354,7 +370,7 @@ export const ReadingSection: React.FC = () => {
           </div>
         ) : (
           <div className="mt-2 text-center py-2 text-micro font-mono text-neutral-400">
-            [ Select any book spine above to reveal notes & reading impressions ]
+            [ Select any book spine above to reveal notes & impressions ]
           </div>
         )}
       </div>
@@ -362,7 +378,7 @@ export const ReadingSection: React.FC = () => {
       {/* ═══════════════════════════════════════════════════════════════
           PART 2: ESSAYS & REPORTS (Index list with Hover Preview)
           ═══════════════════════════════════════════════════════════════ */}
-      <div>
+      <div className="mb-14">
         <div className="flex items-baseline justify-between gap-2 mb-4 border-b border-neutral-100 pb-2">
           <h3 className="text-sm font-semibold tracking-tight text-black flex items-center gap-2">
             <FileText size={14} className="text-neutral-700" />
@@ -372,7 +388,7 @@ export const ReadingSection: React.FC = () => {
             </span>
           </h3>
           <span className="text-micro font-mono text-neutral-400 hidden sm:inline">
-            Hover to preview • Click to open original source
+            Hover to preview • Click to open source
           </span>
         </div>
 
@@ -466,8 +482,8 @@ export const ReadingSection: React.FC = () => {
           style={{
             left: `${previewPos.x}px`,
             top: `${previewPos.y}px`,
-            width: '290px',
-            height: '190px',
+            width: '300px',
+            height: '200px',
           }}
         >
           {getEssayPreviewImage(hoveredEssay) && (
@@ -548,7 +564,6 @@ export const ReadingSection: React.FC = () => {
                           source: 'van-sh.dev/writings',
                           year: '2026',
                           url: 'https://github.com/Vanshlohia05/Vansh',
-                          img: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=85',
                           cap: 'Exploring software design as an editorial canvas',
                         },
                         null,

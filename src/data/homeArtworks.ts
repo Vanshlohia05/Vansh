@@ -9,6 +9,28 @@ export interface Artwork {
   caption: string;
 }
 
+function createArtworkSvg(id: string, title: string, subtitle: string, category: string, accent: string = '#d2fd78'): string {
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+    <rect width="800" height="600" fill="#0c0a09" />
+    <defs>
+      <pattern id="grid_${id}" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#292524" stroke-width="0.75" />
+      </pattern>
+    </defs>
+    <rect width="800" height="600" fill="url(#grid_${id})" opacity="0.6" />
+    <circle cx="400" cy="300" r="160" fill="none" stroke="${accent}" stroke-width="2" />
+    <circle cx="400" cy="300" r="80" fill="none" stroke="#57534e" stroke-width="1" stroke-dasharray="4,4" />
+    <line x1="100" y1="300" x2="700" y2="300" stroke="#44403c" stroke-width="1" />
+    <line x1="400" y1="100" x2="400" y2="500" stroke="#44403c" stroke-width="1" />
+    <text x="40" y="60" fill="#a8a29e" font-family="monospace" font-size="14">ARTWORK // #${id} // ${category.toUpperCase()}</text>
+    <text x="40" y="520" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="28">${title}</text>
+    <text x="40" y="555" fill="#d6d3d1" font-family="monospace" font-size="14">${subtitle}</text>
+  </svg>
+  `.trim();
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export const HOME_ARTWORKS: Artwork[] = [
   {
     id: '01',
@@ -16,7 +38,7 @@ export const HOME_ARTWORKS: Artwork[] = [
     subtitle: 'Computational Typography & Form',
     year: '2026',
     category: 'Motion Study',
-    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=85',
+    imageUrl: createArtworkSvg('01', 'Kinetic Monolith', 'Computational Typography & Form', 'Motion Study', '#d2fd78'),
     aspect: 'aspect-[4/5]',
     caption: 'Exploration of volumetric light, high-density typographic grids, and digital tension.'
   },
@@ -26,9 +48,9 @@ export const HOME_ARTWORKS: Artwork[] = [
     subtitle: 'Brutalist Concrete & Shadow',
     year: '2025',
     category: 'Spatial Design',
-    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+    imageUrl: createArtworkSvg('02', 'Quiet Architecture', 'Brutalist Concrete & Shadow', 'Spatial Design', '#38bdf8'),
     aspect: 'aspect-[3/4]',
-    caption: 'Studies of monolithic concrete structures in Kamakura. Captured on Kodak Tri-X 400.'
+    caption: 'Studies of monolithic concrete structures and geometric shadows.'
   },
   {
     id: '03',
@@ -36,7 +58,7 @@ export const HOME_ARTWORKS: Artwork[] = [
     subtitle: 'Variable Glyphs & Dynamic Kerning',
     year: '2026',
     category: 'Type Experiment',
-    imageUrl: 'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=1600&q=85',
+    imageUrl: createArtworkSvg('03', 'Fluid Typography', 'Variable Glyphs & Dynamic Kerning', 'Type Experiment', '#f43f5e'),
     aspect: 'aspect-[4/5]',
     caption: 'Generative letterforms morphing according to cursor velocity and spatial proximity.'
   },
@@ -46,38 +68,8 @@ export const HOME_ARTWORKS: Artwork[] = [
     subtitle: 'Raymarched Signed Distance Fields',
     year: '2025',
     category: 'Creative Shader',
-    imageUrl: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1600&q=85',
+    imageUrl: createArtworkSvg('04', 'Subtle Radiance', 'Raymarched Signed Distance Fields', 'Creative Shader', '#a855f7'),
     aspect: 'aspect-[1/1]',
     caption: 'Real-time GLSL fragment shader rendering soft iridescent refractive glass spheres.'
-  },
-  {
-    id: '05',
-    title: 'Tokyo Rain, 01:24 AM',
-    subtitle: 'Neon Reflections in Shinjuku',
-    year: '2024',
-    category: '35mm Film',
-    imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1600&q=85',
-    aspect: 'aspect-[16/10]',
-    caption: 'Midnight walks in rain-soaked alleys. Cinestill 800T pushed two stops.'
-  },
-  {
-    id: '06',
-    title: 'Swiss Grid Specimen 09',
-    subtitle: 'Strict Asymmetry & Functional Purity',
-    year: '2026',
-    category: 'Graphic Systems',
-    imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1600&q=85',
-    aspect: 'aspect-[4/5]',
-    caption: 'Poster system celebrating the Zurich School of Design with contemporary code-driven layout.'
-  },
-  {
-    id: '07',
-    title: 'Tactile Silicon',
-    subtitle: 'Custom Machined Input Device',
-    year: '2025',
-    category: 'Hardware',
-    imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1600&q=85',
-    aspect: 'aspect-[16/11]',
-    caption: 'Anodized 6063 aluminum, brass weight, custom PCB, and lubricated linear mechanical switches.'
   }
 ];
