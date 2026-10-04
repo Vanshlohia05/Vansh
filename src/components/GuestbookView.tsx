@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GuestbookEntry } from '../data/guestbook';
 import { playClickSound } from '../utils/sound';
 import confetti from 'canvas-confetti';
-import { Heart, Send, Sparkles, MapPin, AtSign, RotateCcw, ArrowUp } from 'lucide-react';
+import { Heart, Send, Sparkles, MapPin, AtSign, RotateCcw, ArrowUp, RefreshCw } from 'lucide-react';
 
 interface GuestbookViewProps {
   entries: GuestbookEntry[];
   onAddEntry: (entry: Omit<GuestbookEntry, 'id' | 'timestamp' | 'likes'>) => void;
   onLikeEntry: (id: string) => void;
+  onRefresh?: () => void;
   formOpen: boolean;
   setFormOpen: (open: boolean) => void;
   onNavigateToStuff?: () => void;
@@ -20,6 +21,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   entries,
   onAddEntry,
   onLikeEntry,
+  onRefresh,
   formOpen,
   setFormOpen,
   onNavigateToStuff,
@@ -33,6 +35,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   const [message, setMessage] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('✦');
   const [filterText, setFilterText] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const isNavigatingRef = useRef(false);
   const touchStartY = useRef<number | null>(null);
 
@@ -245,19 +248,38 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
         </form>
       )}
 
-      {/* Filter / Search Bar */}
+      {/* Filter / Search Bar with Live Refresh */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <span className="text-micro text-neutral-400 uppercase tracking-wider font-mono">
           Recent Signatures ({filteredEntries.length})
         </span>
 
-        <input
-          type="text"
-          placeholder="Filter messages..."
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          className="text-micro bg-neutral-50 border border-neutral-200 px-2.5 py-1 rounded w-44 focus:outline-none focus:border-black"
-        />
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={() => {
+                playClickSound('tick');
+                setIsRefreshing(true);
+                onRefresh();
+                setTimeout(() => setIsRefreshing(false), 800);
+              }}
+              title="Refresh live signatures"
+              className="p-1.5 text-neutral-400 hover:text-black transition-colors rounded hover:bg-neutral-100 cursor-pointer flex items-center gap-1 text-micro font-mono"
+            >
+              <RefreshCw size={11} className={isRefreshing ? 'animate-spin text-black' : ''} />
+              <span className="hidden sm:inline text-[10px]">Sync</span>
+            </button>
+          )}
+
+          <input
+            type="text"
+            placeholder="Filter messages..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            className="text-micro bg-neutral-50 border border-neutral-200 px-2.5 py-1 rounded w-36 sm:w-44 focus:outline-none focus:border-black"
+          />
+        </div>
       </div>
 
       {/* Guestbook Entries Stream */}

@@ -104,6 +104,28 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Whenever user switches to Guestbook or returns to tab, refresh from Supabase
+  useEffect(() => {
+    if (activeTab === 'guestbook') {
+      fetchGuestbookEntries().then((live) => {
+        if (live && live.length > 0) {
+          setGuestbookEntries(live);
+        }
+      });
+    }
+
+    const handleWindowFocus = () => {
+      fetchGuestbookEntries().then((live) => {
+        if (live && live.length > 0) {
+          setGuestbookEntries(live);
+        }
+      });
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
+  }, [activeTab]);
+
   const handleSlideChange = useCallback((current: number, total: number, title: string) => {
     setHomeSlideInfo((prev) => {
       if (prev.current === current && prev.total === total && prev.title === title) {
@@ -121,6 +143,13 @@ export const App: React.FC = () => {
 
   const handleShuffle = () => {
     setShelfShuffleCount((prev) => prev + 1);
+  };
+
+  const handleRefreshGuestbook = async () => {
+    const live = await fetchGuestbookEntries();
+    if (live && live.length > 0) {
+      setGuestbookEntries(live);
+    }
   };
 
   // Guestbook Handlers (Persisted globally to Supabase + local cache)
@@ -141,6 +170,11 @@ export const App: React.FC = () => {
     });
     // Global cloud broadcast
     await insertGuestbookEntry(newEntry);
+    // Double-check fetch to ensure server state is in sync
+    const fresh = await fetchGuestbookEntries();
+    if (fresh && fresh.length > 0) {
+      setGuestbookEntries(fresh);
+    }
   };
 
   const handleLikeGuestbookEntry = async (id: string) => {
@@ -252,6 +286,7 @@ export const App: React.FC = () => {
             entries={guestbookEntries}
             onAddEntry={handleAddGuestbookEntry}
             onLikeEntry={handleLikeGuestbookEntry}
+            onRefresh={handleRefreshGuestbook}
             formOpen={guestbookFormOpen}
             setFormOpen={setGuestbookFormOpen}
             onNavigateToStuff={() => setActiveTab('stuff')}

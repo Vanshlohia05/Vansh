@@ -135,7 +135,7 @@ export const mapEntryToRow = (entry: GuestbookEntry) => ({
 
 /**
  * Fetches all guestbook entries from Supabase, sorted by timestamp descending.
- * Saves to local cache if successful.
+ * Merges with any unsynced local entries and saves to cache.
  */
 export const fetchGuestbookEntries = async (): Promise<GuestbookEntry[]> => {
   try {
@@ -151,8 +151,12 @@ export const fetchGuestbookEntries = async (): Promise<GuestbookEntry[]> => {
 
     if (data && Array.isArray(data) && data.length > 0) {
       const liveEntries = data.map(mapRowToEntry);
-      saveGuestbookEntries(liveEntries);
-      return liveEntries;
+      // Preserve any local un-synced entries
+      const local = loadGuestbookEntries();
+      const unsyncedLocal = local.filter((l) => !liveEntries.some((le) => le.id === l.id));
+      const combined = [...liveEntries, ...unsyncedLocal];
+      saveGuestbookEntries(combined);
+      return combined;
     }
   } catch (err) {
     console.warn('Supabase guestbook network error:', err);
@@ -161,11 +165,11 @@ export const fetchGuestbookEntries = async (): Promise<GuestbookEntry[]> => {
 };
 
 /**
- * Inserts a new guestbook entry into Supabase so it's instantly available to all devices.
+ * Inserts or upserts a new guestbook entry into Supabase so it's instantly available to all devices.
  */
 export const insertGuestbookEntry = async (entry: GuestbookEntry): Promise<boolean> => {
   try {
-    const { error } = await supabase.from('guestbook').insert(mapEntryToRow(entry));
+    const { error } = await supabase.from('guestbook').upsert(mapEntryToRow(entry), { onConflict: 'id' });
     if (error) {
       console.error('Failed to insert guestbook entry into Supabase:', error);
       return false;
