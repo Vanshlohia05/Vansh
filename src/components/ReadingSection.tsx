@@ -58,8 +58,35 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
 
   // 1. Initialize data & hover capability check
   useEffect(() => {
-    setBooks(loadBooks());
-    setEssays(loadEssays());
+    // 1. Load initial cached data
+    const localB = loadBooks();
+    const localE = loadEssays();
+    setBooks(localB);
+    setEssays(localE);
+
+    // 2. Fetch live data from backend/Supabase API
+    const fetchLiveData = async () => {
+      try {
+        const res = await fetch('/api/data');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.books && Array.isArray(data.books) && data.books.length > 0) {
+            // Merge live books on top of local
+            const merged = [...data.books, ...localB.filter((lb) => !data.books.some((db: any) => db.id === lb.id || db.title.toLowerCase() === lb.title.toLowerCase()))];
+            setBooks(merged);
+            saveBooks(merged);
+          }
+          if (data.essays && Array.isArray(data.essays) && data.essays.length > 0) {
+            const merged = [...data.essays, ...localE.filter((le) => !data.essays.some((de: any) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
+            setEssays(merged);
+            saveEssays(merged);
+          }
+        }
+      } catch {
+        // Fallback gracefully to cached local data
+      }
+    };
+    fetchLiveData();
 
     const hoverQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
     setCanHover(hoverQuery.matches);

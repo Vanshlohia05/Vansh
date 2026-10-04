@@ -1,17 +1,11 @@
-/**
- * Telegram Multi-Format Bot Webhook API Handler
- * 
- * Capabilities:
- * 1. File Uploads (.md / .txt): Download markdown documents from Telegram, parse headings, and publish to Writings!
- * 2. /addbook or /book: Add books with live spine styling & notes to Bookshelf.
- * 3. /addessay or /essay: Add essays, reports, and YouTube lectures.
- * 4. /addcv or /addexperience: Update CV and work milestones.
- * 5. /list & /delete: Inspect or remove items from Telegram.
- * 6. Security: Verifies telegram sender ID against process.env.TELEGRAM_ADMIN_ID.
- */
+import { createClient } from '@supabase/supabase-js';
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const ADMIN_ID = process.env.TELEGRAM_ADMIN_ID; // Your numeric Telegram ID (e.g. 123456789)
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8980359347:AAGaK5wAforV3BqUBw7wN8CDgjQ7GoPv77Q';
+const ADMIN_ID = process.env.TELEGRAM_ADMIN_ID;
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://euzkujcpumwlyhpokkjp.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || '';
+
+const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 // Helper: Send reply back to Telegram chat
 async function sendTelegramReply(chatId: number, text: string, parseMode: string = 'Markdown') {
@@ -46,6 +40,14 @@ async function downloadTelegramFile(fileId: string): Promise<string | null> {
     console.error('Error downloading file from Telegram:', err);
     return null;
   }
+}
+
+// Helper: Strip redundant prefixes like "Title:", "Author:", "Year:", "Note:"
+function cleanField(val: string): string {
+  return val
+    .replace(/^(title|author|year|note|link|color|text|category|source|url):\s*/i, '')
+    .replace(/^["']|["']$/g, '')
+    .trim();
 }
 
 export default async function handler(req: any, res: any) {
@@ -85,7 +87,6 @@ export default async function handler(req: any, res: any) {
       if (isMarkdown) {
         const rawContent = await downloadTelegramFile(document.file_id);
         if (rawContent) {
-          // Parse title from first '# Heading' or file name
           const lines = rawContent.split('\n');
           let title = fileName.replace(/\.(md|txt)$/i, '');
           let bodyLines: string[] = [];
@@ -107,18 +108,21 @@ export default async function handler(req: any, res: any) {
             title,
             date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
             year: String(new Date().getFullYear()),
-            readTime: `${Math.max(1, Math.ceil(rawContent.split(/\s+/).length / 200))} min read`,
+            read_time: `${Math.max(1, Math.ceil(rawContent.split(/\s+/).length / 200))} min read`,
             category: 'Essays & Writings',
             excerpt,
             content: bodyLines.join('\n'),
           };
 
-          // Reply with confirmation
+          if (supabase) {
+            await supabase.from('writings').upsert(newArticle);
+          }
+
           await sendTelegramReply(
             chatId,
             `✅ *Successfully published Markdown essay to Writings!*\n\n` +
             `*Title:* ${newArticle.title}\n` +
-            `*Read Time:* ${newArticle.readTime}\n` +
+            `*Read Time:* ${newArticle.read_time}\n` +
             `*Slug:* /writings#${newArticle.slug}\n\n` +
             `_File processed: ${fileName}_`
           );
@@ -129,7 +133,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 2. /help COMMAND
+    // 2. /help or /start COMMAND
     // ─────────────────────────────────────────────────────────────
     if (text === '/help' || text === '/start') {
       const helpMessage =
@@ -137,11 +141,10 @@ export default async function handler(req: any, res: any) {
         `*Commands:*\n` +
         `📚 */addbook* - Add a book to 2.5D bookshelf\n` +
         `📑 */addessay* - Add essay, report, or video link\n` +
-        `✍️ */postwriting* - Post quick article\n` +
-        `📄 *Attach any .md or .txt file* to publish longform essays directly!\n\n` +
+        `📄 *Attach any .md or .txt file* to publish articles directly!\n\n` +
         `*Examples:*\n` +
-        `\`/addbook Title: Sapiens | Author: Harari | Year: 2011 | Note: Cognitive revolutions\`\n\n` +
-        `\`/addessay Title: AI Report | Category: Report | Year: 2025 | URL: https://arxiv.org\``;
+        `\`/addbook Sapiens | Yuval Noah Harari | 2011 | Cognitive revolutions shaped civilization\`\n\n` +
+        `\`/addessay The Bitter Lesson | https://incompleteideas.net | Article | Rich Sutton\``;
 
       await sendTelegramReply(chatId, helpMessage);
       return res.status(200).json({ ok: true });
@@ -153,7 +156,6 @@ export default async function handler(req: any, res: any) {
     if (text.startsWith('/addbook') || text.startsWith('/book')) {
       const payload = text.replace(/^\/(?:addbook|book)/, '').trim();
 
-      // Extract key-values (Key: Value or pipe separated)
       let title = 'Untitled Book';
       let author = 'Unknown Author';
       let year = String(new Date().getFullYear());
@@ -164,27 +166,27 @@ export default async function handler(req: any, res: any) {
 
       if (payload.includes('|')) {
         const parts = payload.split('|').map((p) => p.trim());
-        title = parts[0] || title;
-        author = parts[1] || author;
-        year = parts[2] || year;
-        note = parts[3] || note;
-        link = parts[4] || '';
+        if (parts[0]) title = cleanField(parts[0]);
+        if (parts[1]) author = cleanField(parts[1]);
+        if (parts[2]) year = cleanField(parts[2]);
+        if (parts[3]) note = cleanField(parts[3]);
+        if (parts[4]) link = cleanField(parts[4]);
       } else {
         const lines = payload.split('\n');
         for (const line of lines) {
           const lower = line.toLowerCase();
-          if (lower.startsWith('title:')) title = line.slice(6).trim();
-          else if (lower.startsWith('author:')) author = line.slice(7).trim();
-          else if (lower.startsWith('year:')) year = line.slice(5).trim();
-          else if (lower.startsWith('note:')) note = line.slice(5).trim();
-          else if (lower.startsWith('link:')) link = line.slice(5).trim();
-          else if (lower.startsWith('color:')) c = line.slice(6).trim();
-          else if (lower.startsWith('text:')) fg = line.slice(5).trim();
+          if (lower.startsWith('title:')) title = cleanField(line);
+          else if (lower.startsWith('author:')) author = cleanField(line);
+          else if (lower.startsWith('year:')) year = cleanField(line);
+          else if (lower.startsWith('note:')) note = cleanField(line);
+          else if (lower.startsWith('link:')) link = cleanField(line);
+          else if (lower.startsWith('color:')) c = cleanField(line);
+          else if (lower.startsWith('text:')) fg = cleanField(line);
         }
       }
 
       const newBook = {
-        id: `tg-b-${Date.now()}`,
+        id: `b-${Date.now()}`,
         title,
         author,
         year,
@@ -195,6 +197,10 @@ export default async function handler(req: any, res: any) {
         c,
         fg,
       };
+
+      if (supabase) {
+        await supabase.from('books').upsert(newBook);
+      }
 
       await sendTelegramReply(
         chatId,
@@ -216,14 +222,14 @@ export default async function handler(req: any, res: any) {
       const payload = text.replace(/^\/(?:addessay|essay|addvideo)/, '').trim();
       const parts = payload.split('|').map((p) => p.trim());
 
-      const title = parts[0] || 'Untitled Essay';
-      const url = parts[1] || 'https://github.com';
-      const type = (parts[2] || (text.startsWith('/addvideo') ? 'Video' : 'Essay')) as any;
-      const source = parts[3] || 'Web Archive';
-      const cap = parts[4] || source;
+      const title = cleanField(parts[0] || 'Untitled Essay');
+      const url = cleanField(parts[1] || 'https://github.com');
+      const type = cleanField(parts[2] || (text.startsWith('/addvideo') ? 'Video' : 'Essay'));
+      const source = cleanField(parts[3] || 'Web Archive');
+      const cap = cleanField(parts[4] || source);
 
       const newEssay = {
-        id: `tg-e-${Date.now()}`,
+        id: `e-${Date.now()}`,
         title,
         url,
         type,
@@ -231,6 +237,10 @@ export default async function handler(req: any, res: any) {
         year: String(new Date().getFullYear()),
         cap,
       };
+
+      if (supabase) {
+        await supabase.from('essays').upsert(newEssay);
+      }
 
       await sendTelegramReply(
         chatId,
@@ -244,7 +254,6 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ ok: true, action: 'add_essay', data: newEssay });
     }
 
-    // Default response for unhandled text
     await sendTelegramReply(
       chatId,
       `Received message. Type /help to see all available commands, or upload a .md file to publish an essay!`

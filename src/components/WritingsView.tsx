@@ -78,7 +78,36 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
     };
   }, [triggerScrollToStuff]);
 
-  const filteredArticles = ARTICLES.filter((article) => {
+  const [articlesList, setArticlesList] = useState<Article[]>(ARTICLES);
+
+  useEffect(() => {
+    const fetchLiveArticles = async () => {
+      try {
+        const res = await fetch('/api/data');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.writings && Array.isArray(data.writings) && data.writings.length > 0) {
+            const formattedLive: Article[] = data.writings.map((w: any) => ({
+              id: w.id,
+              slug: w.slug || `art-${w.id}`,
+              title: w.title,
+              date: w.date || 'Recent',
+              year: w.year || '2026',
+              readTime: w.read_time || w.readTime || '5 min read',
+              category: w.category || 'Essays & Notes',
+              excerpt: w.excerpt || '',
+              content: Array.isArray(w.content) ? w.content : typeof w.content === 'string' ? w.content.split('\n\n') : [''],
+            }));
+            const merged = [...formattedLive, ...ARTICLES.filter((a) => !formattedLive.some((fl) => fl.slug === a.slug || fl.title.toLowerCase() === a.title.toLowerCase()))];
+            setArticlesList(merged);
+          }
+        }
+      } catch {}
+    };
+    fetchLiveArticles();
+  }, []);
+
+  const filteredArticles = articlesList.filter((article) => {
     const matchesCategory = selectedCategory === 'All' || article.category === selectedCategory;
     const matchesSearch =
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
