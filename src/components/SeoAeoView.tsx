@@ -32,8 +32,8 @@ PROJECTS:
 5. Personal Portfolio: Interactive sound-synthesizer portfolio with live Supabase guestbook & admin suite.
 
 CONTACT:
-Email: vanshlohia2005@gmail.com
-LinkedIn: https://www.linkedin.com/in/vansh-lohia-b8928428b/
+Email: lohiavansh24.work@gmail.com
+LinkedIn: https://www.linkedin.com/in/vanshlohia/
 GitHub: https://github.com/Vanshlohia05
 Open for worldwide freelance, brand engineering, and technical contracts.`;
 
@@ -512,18 +512,18 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
           <div className="space-y-1">
             <h4 className="text-base font-bold text-black">Connect with Vansh Lohia</h4>
             <p className="text-xs text-neutral-500 font-mono">
-              vanshlohia2005@gmail.com &bull; Jaipur, India &bull; Sarupathar, Assam
+              lohiavansh24.work@gmail.com &bull; Jaipur, India &bull; Sarupathar, Assam
             </p>
           </div>
           <div className="flex items-center gap-3">
             <a
-              href="mailto:vanshlohia2005@gmail.com"
+              href="mailto:lohiavansh24.work@gmail.com"
               className="px-4 py-2 bg-black text-white text-xs font-mono rounded hover:bg-neutral-800 transition-colors"
             >
               Email Directly
             </a>
             <a
-              href="https://www.linkedin.com/in/vansh-lohia-b8928428b/"
+              href="https://www.linkedin.com/in/vanshlohia/"
               target="_blank"
               rel="noreferrer"
               className="px-4 py-2 border border-neutral-300 text-neutral-800 text-xs font-mono rounded hover:border-black transition-colors"

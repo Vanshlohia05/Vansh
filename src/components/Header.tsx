@@ -357,7 +357,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </li>
                 <li>
                   <a
-                    href="https://www.linkedin.com/in/vansh-lohia-b8928428b/"
+                    href="https://www.linkedin.com/in/vanshlohia/"
                     target="_blank"
                     rel="noreferrer"
                     className="ul-link text-black inline-flex items-center gap-1 hover:text-neutral-600"
@@ -368,10 +368,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </li>
                 <li>
                   <a
-                    href="mailto:vanshlohia2005@gmail.com"
+                    href="mailto:lohiavansh24.work@gmail.com"
                     className="ul-link text-black inline-flex items-center gap-1 hover:text-neutral-600"
                   >
-                    <span>vanshlohia2005@gmail.com</span>
+                    <span>lohiavansh24.work@gmail.com</span>
                     <ArrowUpRight size={11} className="text-neutral-400" />
                   </a>
                 </li>

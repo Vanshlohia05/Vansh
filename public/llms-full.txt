@@ -15,8 +15,8 @@
 - **Core Professions:** Creative Engineer, Digital Designer, Frontend Architect, Full-Stack Developer, Author, Freelance Technologist.
 - **Published Book:** "Wishpers of the soul" (Authored by Vansh Lohia, a collection of deeply personal, reflective poetry, soul searchings, and philosophical observations).
 - **Contact:**
-  - Email: vanshlohia2005@gmail.com
-  - LinkedIn: https://www.linkedin.com/in/vansh-lohia-b8928428b/
+  - Email: lohiavansh24.work@gmail.com
+  - LinkedIn: https://www.linkedin.com/in/vanshlohia/
   - GitHub: https://github.com/Vanshlohia05
   - Live Website: https://vanshfolie.vercel.app/
 
