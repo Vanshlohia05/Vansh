@@ -52,11 +52,6 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
   const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
 
-  // Telegram webhook panel state
-  const [telegramModalOpen, setTelegramModalOpen] = useState(false);
-  const [rawPayloadInput, setRawPayloadInput] = useState('');
-  const [syncSuccessMsg, setSyncSuccessMsg] = useState('');
-
   // 1. Initialize data & hover capability check
   useEffect(() => {
     // 1. Load initial cached data
@@ -363,61 +358,6 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     }
   };
 
-  // 5. Telegram Webhook Payload Processor
-  const handleProcessTelegramPayload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!rawPayloadInput.trim()) return;
-
-    try {
-      const parsed = JSON.parse(rawPayloadInput.trim());
-
-      if (parsed.type === 'book') {
-        const newBook: BookItem = {
-          id: `tg-b-${Date.now()}`,
-          title: parsed.title || 'Untitled Book',
-          author: parsed.author || 'Unknown Author',
-          year: parsed.year || String(new Date().getFullYear()),
-          note: parsed.note || 'Pushed via Telegram Bot',
-          h: parsed.h || Math.floor(Math.random() * 35 + 200),
-          w: parsed.w || Math.floor(Math.random() * 10 + 36),
-          c: parsed.c || '#18181b',
-          fg: parsed.fg || '#ffffff',
-          link: parsed.link,
-        };
-        const updated = [newBook, ...books];
-        setBooks(updated);
-        saveBooks(updated);
-        setSyncSuccessMsg(`Successfully added book: "${newBook.title}"`);
-      } else if (
-        parsed.type === 'essay' ||
-        parsed.type === 'article' ||
-        parsed.type === 'report' ||
-        parsed.type === 'video'
-      ) {
-        const newEssay: EssayItem = {
-          id: `tg-e-${Date.now()}`,
-          title: parsed.title || 'Untitled Article',
-          type: (parsed.type.charAt(0).toUpperCase() + parsed.type.slice(1)) as any,
-          source: parsed.source || 'Web Source',
-          year: parsed.year || String(new Date().getFullYear()),
-          url: parsed.url || '#',
-          img: parsed.img,
-          cap: parsed.cap || parsed.source,
-        };
-        const updated = [newEssay, ...essays];
-        setEssays(updated);
-        saveEssays(updated);
-        setSyncSuccessMsg(`Successfully added essay: "${newEssay.title}"`);
-      }
-
-      setRawPayloadInput('');
-      playClickSound('high');
-      setTimeout(() => setSyncSuccessMsg(''), 4000);
-    } catch (err) {
-      alert('Invalid JSON format. Please check syntax.');
-    }
-  };
-
   // Filtered essays
   const essayCategories = ['All', 'Essay', 'Report', 'Article', 'Video'];
   const filteredEssays = essays.filter((item) => {
@@ -431,7 +371,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
       className="w-full font-sans select-text"
     >
       
-      {/* ── Page 4 Header & Telegram Live Sync Badge ─────────────── */}
+      {/* ── Page 4 Header & Controls ─────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4 mb-8 pb-4 border-b border-neutral-100">
         <div>
           <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-black text-white text-[11px] font-mono mb-2 tracking-wide">
@@ -450,7 +390,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
           </p>
         </div>
 
-        {/* Action Controls & Telegram Status */}
+        {/* Action Controls */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Shuffle Entire Library Button */}
           <button
@@ -460,20 +400,6 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
           >
             <Shuffle size={12} />
             <span>Shuffle Shelf</span>
-          </button>
-
-          {/* Telegram Live Sync Status */}
-          <button
-            onClick={() => {
-              playClickSound('tick');
-              setTelegramModalOpen(true);
-            }}
-            title="Configure / Test Telegram Webhook Sync"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-micro font-mono bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer border border-neutral-200/60"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Telegram Sync</span>
-            <Send size={10} className="text-neutral-400 ml-0.5" />
           </button>
         </div>
       </div>
@@ -846,96 +772,6 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
             <span className="text-[10px] font-mono text-neutral-300 mt-1 truncate">
               {hoveredEssay.cap || hoveredEssay.source}
             </span>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          TELEGRAM WEBHOOK INTEGRATION MODAL
-          ═══════════════════════════════════════════════════════════════ */}
-      {telegramModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-neutral-200 rounded-lg max-w-lg w-full p-6 shadow-2xl space-y-4 animate-fadeIn text-sub">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Send size={15} className="text-black" />
-                <h3 className="font-bold text-black text-sm">
-                  Telegram Bot Sync & Webhook Setup
-                </h3>
-              </div>
-              <button
-                onClick={() => setTelegramModalOpen(false)}
-                className="text-neutral-400 hover:text-black p-1 cursor-pointer"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            <p className="text-xs text-neutral-600 leading-relaxed">
-              When you send a book or link to your Telegram Bot, the serverless webhook pushes it directly to this bookshelf & essays archive in real time.
-            </p>
-
-            <form onSubmit={handleProcessTelegramPayload} className="space-y-3 pt-2">
-              <label className="block text-micro font-mono text-neutral-500">
-                Push Test Item (JSON Webhook Payload):
-              </label>
-              <textarea
-                rows={4}
-                value={rawPayloadInput}
-                onChange={(e) => setRawPayloadInput(e.target.value)}
-                placeholder={`{\n  "type": "book",\n  "title": "Klara and the Sun",\n  "author": "Kazuo Ishiguro",\n  "year": "2021",\n  "note": "Profound exploration of AI consciousness, human uniqueness, and love.",\n  "c": "#1e293b",\n  "fg": "#f8fafc"\n}`}
-                className="w-full p-2.5 bg-neutral-50 border border-neutral-200 rounded font-mono text-[11px] focus:outline-none focus:border-black transition-colors"
-              />
-
-              {syncSuccessMsg && (
-                <div className="p-2 rounded bg-emerald-50 text-emerald-800 text-xs font-mono flex items-center gap-1.5 border border-emerald-200">
-                  <Check size={12} />
-                  <span>{syncSuccessMsg}</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRawPayloadInput(
-                      JSON.stringify(
-                        {
-                          type: 'essay',
-                          title: 'Why Software Needs Poetry & Aesthetics',
-                          type_label: 'Essay',
-                          source: 'van-sh.dev/writings',
-                          year: '2026',
-                          url: 'https://github.com/Vanshlohia05/Vansh',
-                          cap: 'Exploring software design as an editorial canvas',
-                        },
-                        null,
-                        2
-                      )
-                    );
-                  }}
-                  className="text-micro font-mono text-neutral-500 hover:text-black ul-link"
-                >
-                  Load Sample Essay Payload
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setTelegramModalOpen(false)}
-                    className="px-3 py-1 text-micro text-neutral-500 hover:text-black cursor-pointer"
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-black text-white px-3.5 py-1 rounded text-micro font-mono hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer"
-                  >
-                    Push to Reading Archive ↗
-                  </button>
-                </div>
-              </div>
-            </form>
           </div>
         </div>
       )}

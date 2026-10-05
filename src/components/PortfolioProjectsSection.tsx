@@ -312,7 +312,7 @@ export const PortfolioProjectsSection: React.FC<PortfolioProjectsSectionProps> =
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 text-neutral-600 hover:text-black"
                         >
-                          <Github size={12} />
+                          <GithubIcon size={12} />
                           <span>Source</span>
                         </a>
                       )}
