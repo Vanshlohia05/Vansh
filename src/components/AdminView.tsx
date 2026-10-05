@@ -149,6 +149,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     c: '#18181b',
     fg: '#ffffff',
     link: '',
+    status: 'Finished',
   });
 
   // New Essay Form State
@@ -159,6 +160,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     source: '',
     url: '',
     cap: '',
+    status: 'Finished',
   });
 
   // New Article Markdown Form State
@@ -208,9 +210,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
             c: b.c || '#1e293b',
             fg: b.fg || '#ffffff',
             link: b.link || undefined,
+            status: (b.status as any) || 'Finished',
           }));
-          const merged = [...liveBooks, ...localB.filter((lb) => !liveBooks.some((db) => db.id === lb.id || db.title.toLowerCase() === lb.title.toLowerCase()))];
-          setBooks(merged);
+          setBooks(liveBooks);
+          saveBooks(liveBooks);
         }
 
         if (essaysRes.data && Array.isArray(essaysRes.data) && essaysRes.data.length > 0) {
@@ -222,9 +225,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
             source: e.source || 'Web',
             url: e.url || '',
             cap: e.cap || e.source || 'Archive',
+            status: (e.status as any) || 'Finished',
           }));
-          const merged = [...liveEssays, ...localE.filter((le) => !liveEssays.some((de) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
-          setEssays(merged);
+          setEssays(liveEssays);
+          saveEssays(liveEssays);
         }
 
         if (projectsRes.data && Array.isArray(projectsRes.data) && projectsRes.data.length > 0) {
@@ -379,6 +383,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       c: newBook.c || '#18181b',
       fg: newBook.fg || '#ffffff',
       link: newBook.link || undefined,
+      status: (newBook.status as any) || 'Finished',
     };
 
     const updated = [bookToAdd, ...books];
@@ -394,6 +399,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       c: '#18181b',
       fg: '#ffffff',
       link: '',
+      status: 'Finished',
     });
 
     try {
@@ -408,6 +414,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         c: bookToAdd.c,
         fg: bookToAdd.fg,
         link: bookToAdd.link || null,
+        status: bookToAdd.status || 'Finished',
       });
     } catch (err) {
       console.warn('Supabase book upsert error:', err);
@@ -416,6 +423,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     playClickSound('book-slide');
     setSaveSuccessMsg(`Added "${bookToAdd.title}" to Bookshelf!`);
     setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
+  const handleToggleBookStatus = async (book: BookItem) => {
+    const nextStatus: 'On it' | 'Finished' = book.status === 'On it' ? 'Finished' : 'On it';
+    playClickSound('tick');
+    const updated = books.map((b) => (b.id === book.id ? { ...b, status: nextStatus } : b));
+    setBooks(updated);
+    saveBooks(updated);
+    try {
+      await supabase.from('books').update({ status: nextStatus }).eq('id', book.id);
+    } catch (err) {
+      console.warn('Supabase book status update error:', err);
+    }
   };
 
   const handleDeleteBook = async (id: string) => {
@@ -443,6 +463,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       source: newEssay.source || 'Web Archive',
       url: newEssay.url,
       cap: newEssay.cap || newEssay.source,
+      status: (newEssay.status as any) || 'Finished',
     };
 
     const updated = [essayToAdd, ...essays];
@@ -455,6 +476,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       source: '',
       url: '',
       cap: '',
+      status: 'Finished',
     });
 
     try {
@@ -466,6 +488,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         source: essayToAdd.source,
         url: essayToAdd.url,
         cap: essayToAdd.cap,
+        status: essayToAdd.status || 'Finished',
       });
     } catch (err) {
       console.warn('Supabase essay upsert error:', err);
@@ -474,6 +497,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     playClickSound('high');
     setSaveSuccessMsg(`Added "${essayToAdd.title}" to Essays & Reports!`);
     setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
+  const handleToggleEssayStatus = async (essay: EssayItem) => {
+    const nextStatus: 'On it' | 'Finished' = essay.status === 'On it' ? 'Finished' : 'On it';
+    playClickSound('tick');
+    const updated = essays.map((e) => (e.id === essay.id ? { ...e, status: nextStatus } : e));
+    setEssays(updated);
+    saveEssays(updated);
+    try {
+      await supabase.from('essays').update({ status: nextStatus }).eq('id', essay.id);
+    } catch (err) {
+      console.warn('Supabase essay status update error:', err);
+    }
   };
 
   const handleDeleteEssay = async (id: string) => {
@@ -1022,17 +1058,32 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
                 />
               </div>
 
-              <div>
-                <label className="block text-micro font-mono text-neutral-500 mb-1">
-                  Amazon / Purchase Link (Optional):
-                </label>
-                <input
-                  type="url"
-                  value={newBook.link || ''}
-                  onChange={(e) => setNewBook({ ...newBook, link: e.target.value })}
-                  placeholder="https://amazon.in/..."
-                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-micro"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-micro font-mono text-neutral-500 mb-1">
+                    Amazon / Purchase Link (Optional):
+                  </label>
+                  <input
+                    type="url"
+                    value={newBook.link || ''}
+                    onChange={(e) => setNewBook({ ...newBook, link: e.target.value })}
+                    placeholder="https://amazon.in/..."
+                    className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-micro"
+                  />
+                </div>
+                <div>
+                  <label className="block text-micro font-mono text-neutral-500 mb-1">
+                    Reading Status:
+                  </label>
+                  <select
+                    value={newBook.status || 'Finished'}
+                    onChange={(e) => setNewBook({ ...newBook, status: e.target.value as any })}
+                    className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-xs"
+                  >
+                    <option value="Finished">✓ Finished (Completed)</option>
+                    <option value="On it">📖 On it (Currently Reading)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="pt-2 flex justify-end">
@@ -1091,7 +1142,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
 
           </div>
 
-          {/* Existing Books List with Quick Delete */}
+          {/* Existing Books List with Quick Delete & Status */}
           <div>
             <h3 className="text-sm font-bold text-black font-mono mb-3">
               Existing Books on Shelf ({books.length})
@@ -1117,13 +1168,27 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleDeleteBook(b.id)}
-                    title="Delete book"
-                    className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleBookStatus(b)}
+                      className={`px-2 py-1 rounded text-micro font-mono border transition-colors cursor-pointer ${
+                        b.status === 'On it'
+                          ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold'
+                          : 'bg-neutral-100 text-neutral-600 border-neutral-200 hover:bg-neutral-200'
+                      }`}
+                      title="Click to toggle reading status"
+                    >
+                      {b.status === 'On it' ? '📖 On it' : '✓ Finished'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBook(b.id)}
+                      title="Delete book"
+                      className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1170,7 +1235,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
                 <label className="block text-micro font-mono text-neutral-500 mb-1">Category:</label>
                 <select
@@ -1182,6 +1247,17 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
                   <option value="Report">Report</option>
                   <option value="Article">Article</option>
                   <option value="Video">Video</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-micro font-mono text-neutral-500 mb-1">Reading Status:</label>
+                <select
+                  value={newEssay.status || 'Finished'}
+                  onChange={(e) => setNewEssay({ ...newEssay, status: e.target.value as any })}
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-xs"
+                >
+                  <option value="Finished">✓ Finished</option>
+                  <option value="On it">📖 On it (Reading)</option>
                 </select>
               </div>
               <div>
@@ -1249,6 +1325,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleEssayStatus(item)}
+                      className={`px-2 py-1 rounded text-micro font-mono border transition-colors cursor-pointer ${
+                        item.status === 'On it'
+                          ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold'
+                          : 'bg-neutral-100 text-neutral-600 border-neutral-200 hover:bg-neutral-200'
+                      }`}
+                      title="Click to toggle reading status"
+                    >
+                      {item.status === 'On it' ? '📖 On it' : '✓ Finished'}
+                    </button>
                     <a
                       href={item.url}
                       target="_blank"

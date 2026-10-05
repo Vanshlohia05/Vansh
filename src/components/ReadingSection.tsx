@@ -77,10 +77,10 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
             c: b.c || '#1e293b',
             fg: b.fg || '#ffffff',
             link: b.link || undefined,
+            status: (b.status as any) || 'Finished',
           }));
-          const merged = [...liveBooks, ...localB.filter((lb) => !liveBooks.some((db) => db.id === lb.id || db.title.toLowerCase() === lb.title.toLowerCase()))];
-          setBooks(merged);
-          saveBooks(merged);
+          setBooks(liveBooks);
+          saveBooks(liveBooks);
         }
 
         if (essaysRes.data && Array.isArray(essaysRes.data) && essaysRes.data.length > 0) {
@@ -92,10 +92,10 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
             source: e.source || 'Web',
             url: e.url || '',
             cap: e.cap || e.source || 'Archive',
+            status: (e.status as any) || 'Finished',
           }));
-          const merged = [...liveEssays, ...localE.filter((le) => !liveEssays.some((de) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
-          setEssays(merged);
-          saveEssays(merged);
+          setEssays(liveEssays);
+          saveEssays(liveEssays);
         }
       } catch (err) {
         console.warn('Supabase direct fetch fallback:', err);
@@ -123,6 +123,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
               c: b.c || '#1e293b',
               fg: b.fg || '#ffffff',
               link: b.link || undefined,
+              status: b.status || 'Finished',
             };
             setBooks((prev) => [newBook, ...prev.filter((item) => item.id !== newBook.id)]);
           } else if (payload.eventType === 'UPDATE') {
@@ -141,6 +142,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
                       c: b.c || item.c,
                       fg: b.fg || item.fg,
                       link: b.link || item.link,
+                      status: b.status || item.status || 'Finished',
                     }
                   : item
               )
@@ -166,8 +168,27 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
               source: e.source || 'Web',
               url: e.url || '',
               cap: e.cap || e.source || 'Archive',
+              status: e.status || 'Finished',
             };
             setEssays((prev) => [newEssay, ...prev.filter((item) => item.id !== newEssay.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            const e = payload.new as any;
+            setEssays((prev) =>
+              prev.map((item) =>
+                item.id === e.id
+                  ? {
+                      ...item,
+                      title: e.title,
+                      year: e.year || item.year,
+                      type: e.type || item.type,
+                      source: e.source || item.source,
+                      url: e.url || item.url,
+                      cap: e.cap || item.cap,
+                      status: e.status || item.status || 'Finished',
+                    }
+                  : item
+              )
+            );
           } else if (payload.eventType === 'DELETE') {
             if (payload.old && payload.old.id) {
               setEssays((prev) => prev.filter((item) => item.id !== payload.old.id));
@@ -447,12 +468,23 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     }
   };
 
-  // Filtered essays
+  // Filtered essays & Pagination (10 items per page)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const ESSAYS_PER_PAGE = 10;
+
   const essayCategories = ['All', 'Essay', 'Report', 'Article', 'Video'];
   const filteredEssays = essays.filter((item) => {
     if (selectedEssayCategory === 'All') return true;
     return item.type.toLowerCase() === selectedEssayCategory.toLowerCase();
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredEssays.length / ESSAYS_PER_PAGE));
+  const effectiveCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedEssays = filteredEssays.slice(
+    (effectiveCurrentPage - 1) * ESSAYS_PER_PAGE,
+    effectiveCurrentPage * ESSAYS_PER_PAGE
+  );
 
   return (
     <div
@@ -599,13 +631,21 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
                     {/* Spine Top Bevel */}
                     <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/25 rounded-t-xs pointer-events-none" />
 
-                    {/* Top Year Tag */}
-                    <span
-                      className="text-[9px] font-mono tracking-tighter opacity-80 shrink-0 select-none"
-                      style={{ color: book.fg }}
-                    >
-                      {book.year}
-                    </span>
+                    {/* Top Year Tag & Status Indicator */}
+                    <div className="flex flex-col items-center shrink-0">
+                      {book.status === 'On it' && (
+                        <span
+                          className="w-1.5 h-1.5 rounded-full bg-[#d2fd78] shadow-xs mb-0.5 animate-pulse"
+                          title="Currently Reading (On it)"
+                        />
+                      )}
+                      <span
+                        className="text-[9px] font-mono tracking-tighter opacity-80 select-none"
+                        style={{ color: book.fg }}
+                      >
+                        {book.year}
+                      </span>
+                    </div>
 
                     {/* Spine Title (Vertical Writing Mode) */}
                     <span
@@ -659,6 +699,15 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
                 <h3 className="text-base font-bold text-black">
                   {selectedBook.title}
                 </h3>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    selectedBook.status === 'On it'
+                      ? 'bg-amber-100 text-amber-900 border-amber-300'
+                      : 'bg-neutral-100 text-neutral-700 border-neutral-200'
+                  }`}
+                >
+                  {selectedBook.status === 'On it' ? '📖 Currently Reading (On it)' : '✓ Finished'}
+                </span>
                 {selectedBook.link && (
                   <a
                     href={selectedBook.link}
@@ -725,6 +774,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
                     onClick={() => {
                       playClickSound('tick');
                       setSelectedEssayCategory(cat);
+                      setCurrentPage(1);
                     }}
                     className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                       selectedEssayCategory === cat
@@ -741,7 +791,10 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
 
             {/* Shuffle Essays Button */}
             <button
-              onClick={handleShuffleEssays}
+              onClick={() => {
+                handleShuffleEssays();
+                setCurrentPage(1);
+              }}
               title="Shuffle Essays"
               className="flex items-center gap-1 px-2 py-1 rounded text-micro font-mono bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer border border-neutral-200/60"
             >
@@ -765,88 +818,166 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 font-normal">
-              {filteredEssays.map((item, idx) => (
-                <tr
-                  key={item.id}
-                  onMouseEnter={(e) => handleEssayMouseEnter(item, e)}
-                  onMouseLeave={handleEssayMouseLeave}
-                  onClick={() => playClickSound('paper')}
-                  className="hover:bg-neutral-50/90 transition-colors group cursor-pointer"
-                >
-                  {/* Numbering */}
-                  <td className="py-3 pr-2 font-mono text-micro text-neutral-400 text-center">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-inherit"
-                    >
-                      {String(idx + 1).padStart(2, '0')}
-                    </a>
-                  </td>
-                  {/* Year */}
-                  <td className="py-3 px-3 font-mono text-micro text-neutral-400">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-inherit"
-                    >
-                      {item.year}
-                    </a>
-                  </td>
-                  {/* Title */}
-                  <td className="py-3 px-3 font-medium text-black group-hover:text-blue-600 transition-colors">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-inherit"
-                    >
-                      {item.title}
-                    </a>
-                  </td>
-                  {/* Category Badge */}
-                  <td className="py-3 px-3 text-neutral-500 text-micro hidden sm:table-cell">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-inherit"
-                    >
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-neutral-100 text-[10px] font-mono text-neutral-700">
-                        {item.type}
-                      </span>
-                    </a>
-                  </td>
-                  {/* Source */}
-                  <td className="py-3 px-3 text-neutral-400 text-micro font-mono truncate max-w-[180px] hidden md:table-cell">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-inherit"
-                    >
-                      {item.source}
-                    </a>
-                  </td>
-                  {/* Read Link */}
-                  <td className="py-3 pl-3 text-right">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-micro text-neutral-400 group-hover:text-black font-mono transition-colors"
-                    >
-                      <span>Read</span>
-                      <ArrowUpRight size={11} />
-                    </a>
-                  </td>
-                </tr>
-              ))}
+              {paginatedEssays.map((item, idx) => {
+                const itemNumber = (effectiveCurrentPage - 1) * ESSAYS_PER_PAGE + idx + 1;
+
+                return (
+                  <tr
+                    key={item.id}
+                    onMouseEnter={(e) => handleEssayMouseEnter(item, e)}
+                    onMouseLeave={handleEssayMouseLeave}
+                    onClick={() => playClickSound('paper')}
+                    className="hover:bg-neutral-50/90 transition-colors group cursor-pointer"
+                  >
+                    {/* Numbering */}
+                    <td className="py-3 pr-2 font-mono text-micro text-neutral-400 text-center">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-inherit"
+                      >
+                        {String(itemNumber).padStart(2, '0')}
+                      </a>
+                    </td>
+                    {/* Year */}
+                    <td className="py-3 px-3 font-mono text-micro text-neutral-400">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-inherit"
+                      >
+                        {item.year}
+                      </a>
+                    </td>
+                    {/* Title & Status Badge */}
+                    <td className="py-3 px-3 font-medium text-black group-hover:text-blue-600 transition-colors">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-inherit"
+                        >
+                          {item.title}
+                        </a>
+                        {item.status === 'On it' && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 font-mono text-[9px] font-bold shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            <span>On it</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    {/* Category Badge */}
+                    <td className="py-3 px-3 text-neutral-500 text-micro hidden sm:table-cell">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-inherit"
+                      >
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-neutral-100 text-[10px] font-mono text-neutral-700">
+                          {item.type}
+                        </span>
+                      </a>
+                    </td>
+                    {/* Source */}
+                    <td className="py-3 px-3 text-neutral-400 text-micro font-mono truncate max-w-[180px] hidden md:table-cell">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-inherit"
+                      >
+                        {item.source}
+                      </a>
+                    </td>
+                    {/* Read Link */}
+                    <td className="py-3 pl-3 text-right">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-micro text-neutral-400 group-hover:text-black font-mono transition-colors"
+                      >
+                        <span>Read</span>
+                        <ArrowUpRight size={11} />
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar (Page 1, 2, 3...) for 10+ items */}
+        {totalPages > 1 && (
+          <div className="mt-5 pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs">
+            <span className="text-neutral-400 text-micro">
+              Showing {(effectiveCurrentPage - 1) * ESSAYS_PER_PAGE + 1}–
+              {Math.min(effectiveCurrentPage * ESSAYS_PER_PAGE, filteredEssays.length)} of {filteredEssays.length} items
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (effectiveCurrentPage > 1) {
+                    playClickSound('tick');
+                    setCurrentPage(effectiveCurrentPage - 1);
+                  }
+                }}
+                disabled={effectiveCurrentPage === 1}
+                className={`px-2.5 py-1 rounded text-micro border transition-colors ${
+                  effectiveCurrentPage === 1
+                    ? 'border-neutral-200 text-neutral-300 cursor-not-allowed'
+                    : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100 cursor-pointer'
+                }`}
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                <button
+                  key={pg}
+                  type="button"
+                  onClick={() => {
+                    playClickSound('tick');
+                    setCurrentPage(pg);
+                  }}
+                  className={`min-w-[28px] h-7 px-2 rounded text-micro transition-colors cursor-pointer border ${
+                    effectiveCurrentPage === pg
+                      ? 'bg-black text-white border-black font-bold'
+                      : 'border-neutral-200 text-neutral-600 hover:bg-neutral-100'
+                  }`}
+                >
+                  {pg}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (effectiveCurrentPage < totalPages) {
+                    playClickSound('tick');
+                    setCurrentPage(effectiveCurrentPage + 1);
+                  }
+                }}
+                disabled={effectiveCurrentPage === totalPages}
+                className={`px-2.5 py-1 rounded text-micro border transition-colors ${
+                  effectiveCurrentPage === totalPages
+                    ? 'border-neutral-200 text-neutral-300 cursor-not-allowed'
+                    : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100 cursor-pointer'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════

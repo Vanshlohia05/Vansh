@@ -222,22 +222,6 @@ export const DEFAULT_CV_ITEMS: CvItem[] = [
     displayOrder: 2,
     isVisible: true,
   },
-  {
-    id: 'cv-edu-3',
-    section: 'education',
-    title: 'Bolosing Memorial School',
-    subtitle: '10th Secondary School',
-    dateRange: 'January 2020 - April 2021',
-    location: 'Assam, India',
-    badge: 'Secondary',
-    link: '',
-    description: 'Completed 10th standard board examinations with distinction.',
-    bulletPoints: [
-      'Foundational secondary education and academic excellence.',
-    ],
-    displayOrder: 3,
-    isVisible: true,
-  },
 ];
 
 const STORAGE_KEY = 'vansh_cv_items_v1';
