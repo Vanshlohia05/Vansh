@@ -3,6 +3,7 @@ import { playClickSound } from '../utils/sound';
 import { Mail, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase, HeartHandshake, Droplets } from 'lucide-react';
 import { PortfolioProjectsSection } from './PortfolioProjectsSection';
 import { CvItem, loadCvItems, fetchCvItems, subscribeToCvChanges } from '../data/cvData';
+import { loadSetting, fetchSetting, subscribeToSetting } from '../data/siteSettings';
 
 interface HomeViewProps {
   onNavigateToWritings?: () => void;
@@ -21,13 +22,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const touchStartY = useRef<number | null>(null);
   const mountTimeRef = useRef<number>(Date.now());
   const [cvItems, setCvItems] = useState<CvItem[]>(() => loadCvItems());
+  const [showPortfolioSection, setShowPortfolioSection] = useState<boolean>(() =>
+    loadSetting<boolean>('show_portfolio_section', false)
+  );
 
-  // Load live CV items from Supabase and subscribe to realtime edits
+  // Load live CV items and site settings from Supabase and subscribe to realtime edits
   useEffect(() => {
     fetchCvItems().then((items) => {
       if (items && items.length > 0) {
         setCvItems(items);
       }
+    });
+
+    fetchSetting<boolean>('show_portfolio_section', false).then((val) => {
+      setShowPortfolioSection(val);
+    });
+
+    const unsubSetting = subscribeToSetting<boolean>('show_portfolio_section', (val) => {
+      setShowPortfolioSection(val);
     });
 
     const unsubscribe = subscribeToCvChanges(
@@ -48,6 +60,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     );
 
     return () => {
+      unsubSetting();
       unsubscribe();
     };
   }, []);
@@ -206,66 +219,83 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <span>Key Initiatives & Independent Ventures</span>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
             {cvItems
               .filter(c => c.section === 'initiatives' && c.isVisible)
-              .map((item) => (
-                <div key={item.id} className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between gap-1 mb-2">
-                      <h3 className="text-base font-bold text-black flex items-center gap-1.5">
-                        <span>{item.title}</span>
-                      </h3>
+              .map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`border-l-2 ${idx === 0 ? 'border-black' : 'border-neutral-300'} pl-4`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
+                    <h3 className="text-sm font-bold text-black flex items-center gap-2 flex-wrap">
+                      <span>{item.title}</span>
+                      {item.subtitle && (
+                        <>
+                          <span className="text-neutral-400 font-normal">•</span>
+                          <span className="font-normal text-neutral-700">{item.subtitle}</span>
+                        </>
+                      )}
                       {item.badge && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-semibold shrink-0">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-200 font-semibold">
                           {item.badge}
                         </span>
                       )}
-                    </div>
-                    {item.description && (
-                      <p className="text-xs text-neutral-600 mb-3 italic">
-                        {item.description}
-                      </p>
-                    )}
-                    {item.bulletPoints && item.bulletPoints.length > 0 && (
-                      <div className="space-y-2 mt-2">
-                        <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-                          {item.bulletPoints
-                            .filter((pt) => !pt.startsWith('Tech Stack:'))
-                            .map((pt, pIdx) => (
-                              <li key={pIdx}>{pt}</li>
-                            ))}
-                        </ul>
-                        {item.bulletPoints.find((pt) => pt.startsWith('Tech Stack:')) && (
-                          <div className="pt-2 border-t border-neutral-200/60">
-                            <span className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
-                              Tech Stack:
-                            </span>
-                            <div className="text-[11px] font-mono text-neutral-800 bg-white p-2 rounded border border-neutral-200/70 leading-relaxed">
-                              {item.bulletPoints
-                                .find((pt) => pt.startsWith('Tech Stack:'))
-                                ?.replace('Tech Stack:', '')
-                                .trim()}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    </h3>
+                    {item.dateRange && (
+                      <span className="text-xs font-mono text-neutral-400 shrink-0">
+                        {item.dateRange}
+                      </span>
                     )}
                   </div>
-                  <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400 flex items-center justify-between">
-                    <span>{[item.dateRange, item.subtitle].filter(Boolean).join(' • ')}</span>
-                    {item.link && (
+
+                  {item.location && (
+                    <div className="text-micro font-mono text-neutral-500 mb-1.5">
+                      {item.location}
+                    </div>
+                  )}
+
+                  {item.description && (
+                    <p className="text-xs text-neutral-600 mb-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
+
+                  {item.bulletPoints && item.bulletPoints.length > 0 && (
+                    <div className="space-y-1.5">
+                      <ul className="space-y-1 text-xs text-neutral-700 list-disc list-inside">
+                        {item.bulletPoints
+                          .filter((pt) => !pt.startsWith('Tech Stack:'))
+                          .map((pt, pIdx) => (
+                            <li key={pIdx}>{pt}</li>
+                          ))}
+                      </ul>
+                      {item.bulletPoints.find((pt) => pt.startsWith('Tech Stack:')) && (
+                        <div className="text-[11px] font-mono text-neutral-600 mt-1 pl-1">
+                          <span className="font-semibold text-neutral-800">Tech Stack:</span>{' '}
+                          {item.bulletPoints
+                            .find((pt) => pt.startsWith('Tech Stack:'))
+                            ?.replace('Tech Stack:', '')
+                            .trim()}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Link ONLY shown if enabled in admin */}
+                  {item.showLink && item.link && (
+                    <div className="mt-2 text-xs">
                       <a
                         href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-black font-semibold hover:underline inline-flex items-center gap-1 ml-2"
+                        className="text-blue-600 hover:underline inline-flex items-center gap-1 font-mono text-[11px]"
                       >
-                        <span>Visit</span>
-                        <ExternalLink size={11} />
+                        <span>{item.link}</span>
+                        <ExternalLink size={10} />
                       </a>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               ))}
           </div>
@@ -273,7 +303,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
       )}
 
       {/* ── 2.5 Dynamic Portfolio Projects Showcase with Video Embeds & Image Gallery ── */}
-      <PortfolioProjectsSection />
+      {showPortfolioSection && (
+        <PortfolioProjectsSection />
+      )}
 
       {/* ── 3. Published Books & Literary Work ─────────────── */}
       <section className="py-8 border-b border-neutral-200/80">

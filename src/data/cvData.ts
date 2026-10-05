@@ -21,6 +21,7 @@ export interface CvItem {
   bulletPoints?: string[];
   displayOrder: number;
   isVisible: boolean;
+  showLink?: boolean;
 }
 
 export const DEFAULT_CV_ITEMS: CvItem[] = [
@@ -259,6 +260,7 @@ export function mapRowToCvItem(row: any): CvItem {
       : [],
     displayOrder: typeof row.display_order === 'number' ? row.display_order : 0,
     isVisible: row.is_visible !== false,
+    showLink: Boolean(row.show_link),
   };
 }
 
@@ -276,6 +278,7 @@ export function mapCvItemToRow(item: CvItem) {
     bullet_points: item.bulletPoints || [],
     display_order: item.displayOrder,
     is_visible: item.isVisible,
+    show_link: Boolean(item.showLink),
   };
 }
 

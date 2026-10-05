@@ -22,6 +22,7 @@ import {
   Check,
   ArrowLeft,
   Eye,
+  EyeOff,
   Edit3,
   ExternalLink,
   ShieldCheck,
@@ -57,6 +58,11 @@ import {
   upsertCvItem,
   deleteCvItem,
 } from '../data/cvData';
+import {
+  loadSetting,
+  fetchSetting,
+  updateSetting,
+} from '../data/siteSettings';
 
 interface AdminViewProps {
   onExit: () => void;
@@ -81,6 +87,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [guestbookList, setGuestbookList] = useState<GuestbookEntry[]>([]);
   const [cvList, setCvList] = useState<CvItem[]>([]);
+  const [showPortfolioSection, setShowPortfolioSection] = useState<boolean>(() =>
+    loadSetting<boolean>('show_portfolio_section', false)
+  );
   const [editingCvId, setEditingCvId] = useState<string | null>(null);
   const [cvSectionFilter, setCvSectionFilter] = useState<string>('all');
   const [cvForm, setCvForm] = useState<{
@@ -95,6 +104,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     bulletPointsText: string;
     displayOrder: number;
     isVisible: boolean;
+    showLink: boolean;
   }>({
     section: 'initiatives',
     title: '',
@@ -107,6 +117,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     bulletPointsText: '',
     displayOrder: 1,
     isVisible: true,
+    showLink: false,
   });
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>('');
 
@@ -248,6 +259,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         } else {
           setCvList(loadCvItems());
         }
+
+        const portSetting = await fetchSetting<boolean>('show_portfolio_section', false);
+        setShowPortfolioSection(portSetting);
       } catch (err) {
         console.warn('Admin load error:', err);
       }
@@ -570,6 +584,25 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   };
 
   // CV & Career Handlers
+  const handleTogglePortfolioSectionVisibility = async () => {
+    const nextVal = !showPortfolioSection;
+    setShowPortfolioSection(nextVal);
+    playClickSound('tick');
+    await updateSetting('show_portfolio_section', nextVal);
+    setSaveSuccessMsg(nextVal ? 'Featured Portfolio Projects section is now VISIBLE on CV!' : 'Featured Portfolio Projects section is now HIDDEN from CV.');
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
+  const handleToggleCvShowLink = async (item: CvItem) => {
+    const updatedItem: CvItem = { ...item, showLink: !item.showLink };
+    const updated = cvList.map((c) => (c.id === item.id ? updatedItem : c));
+    setCvList(updated);
+    playClickSound('tick');
+    await upsertCvItem(updatedItem);
+    setSaveSuccessMsg(updatedItem.showLink ? `Link enabled on CV for "${item.title}".` : `Link hidden on CV for "${item.title}".`);
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
   const handleSaveCvItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cvForm.title.trim()) return;
@@ -592,6 +625,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       bulletPoints: bullets.length > 0 ? bullets : undefined,
       displayOrder: cvForm.displayOrder || 1,
       isVisible: cvForm.isVisible,
+      showLink: Boolean(cvForm.showLink),
     };
 
     let updated: CvItem[];
@@ -617,6 +651,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       bulletPointsText: '',
       displayOrder: updated.length + 1,
       isVisible: true,
+      showLink: false,
     });
 
     playClickSound('high');
@@ -638,6 +673,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       bulletPointsText: (item.bulletPoints || []).join('\n'),
       displayOrder: item.displayOrder || 1,
       isVisible: item.isVisible !== false,
+      showLink: Boolean(item.showLink),
     });
     window.scrollTo({ top: 300, behavior: 'smooth' });
   };
@@ -656,6 +692,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       bulletPointsText: '',
       displayOrder: cvList.length + 1,
       isVisible: true,
+      showLink: false,
     });
   };
 
@@ -1243,6 +1280,53 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       {activeTab === 'projects' && (
         <div className="space-y-10 text-xs font-sans">
           
+          {/* Global Visibility Control for Portfolio Section on CV Page */}
+          <div className="p-4 bg-white border border-neutral-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-xs uppercase tracking-wider text-black">
+                  CV Page Visibility:
+                </span>
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded ${
+                    showPortfolioSection
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-neutral-100 text-neutral-600 border border-neutral-300'
+                  }`}
+                >
+                  {showPortfolioSection ? '● UNHIDDEN (VISIBLE ON CV)' : '○ HIDDEN FROM CV PAGE'}
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-500 font-mono">
+                {showPortfolioSection
+                  ? 'The "Featured Portfolio Projects & Case Studies" section is currently visible on the public CV page.'
+                  : 'The "Featured Portfolio Projects & Case Studies" section is hidden on the CV page. You can still manage all projects here.'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleTogglePortfolioSectionVisibility}
+              className={`px-3 py-1.5 rounded font-mono text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border ${
+                showPortfolioSection
+                  ? 'bg-neutral-100 text-neutral-800 border-neutral-300 hover:bg-neutral-200'
+                  : 'bg-black text-white border-black hover:bg-neutral-800'
+              }`}
+            >
+              {showPortfolioSection ? (
+                <>
+                  <EyeOff size={13} />
+                  <span>Hide from CV Page</span>
+                </>
+              ) : (
+                <>
+                  <Eye size={13} />
+                  <span>Unhide on CV Page</span>
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Create Project Form */}
           <form onSubmit={handleAddProject} className="p-6 bg-neutral-50 border border-neutral-200 rounded-lg space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
@@ -1761,6 +1845,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
                     />
                     <span>Publicly Visible on CV</span>
                   </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer pt-4 text-xs font-mono text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={cvForm.showLink}
+                      onChange={(e) => setCvForm({ ...cvForm, showLink: e.target.checked })}
+                      className="rounded border-neutral-300 text-black focus:ring-black"
+                    />
+                    <span>Show Link on CV (Default is OFF)</span>
+                  </label>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -1888,6 +1982,20 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-neutral-100">
+                        {item.link && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCvShowLink(item)}
+                            className={`px-2 py-1 rounded text-micro font-mono transition-colors cursor-pointer border ${
+                              item.showLink
+                                ? 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 font-bold'
+                                : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200'
+                            }`}
+                            title="Toggle whether clickable link is displayed on the live CV page"
+                          >
+                            {item.showLink ? 'Link: ON' : 'Link: OFF'}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleToggleCvVisibility(item)}
