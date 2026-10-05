@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { playClickSound } from '../utils/sound';
-import { Mail, Phone, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase, HeartHandshake, Droplets, CheckCircle2, Globe, Sparkles } from 'lucide-react';
+import { Mail, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase, HeartHandshake, Droplets } from 'lucide-react';
 import { PortfolioProjectsSection } from './PortfolioProjectsSection';
+import { CvItem, loadCvItems, fetchCvItems, subscribeToCvChanges } from '../data/cvData';
 
 interface HomeViewProps {
   onNavigateToWritings?: () => void;
@@ -19,6 +20,37 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const isNavigatingRef = useRef(false);
   const touchStartY = useRef<number | null>(null);
   const mountTimeRef = useRef<number>(Date.now());
+  const [cvItems, setCvItems] = useState<CvItem[]>(() => loadCvItems());
+
+  // Load live CV items from Supabase and subscribe to realtime edits
+  useEffect(() => {
+    fetchCvItems().then((items) => {
+      if (items && items.length > 0) {
+        setCvItems(items);
+      }
+    });
+
+    const unsubscribe = subscribeToCvChanges(
+      (newItm) => {
+        setCvItems((prev) => {
+          if (prev.some((c) => c.id === newItm.id)) {
+            return prev.map((c) => (c.id === newItm.id ? newItm : c));
+          }
+          return [...prev, newItm];
+        });
+      },
+      (updItm) => {
+        setCvItems((prev) => prev.map((c) => (c.id === updItm.id ? updItm : c)));
+      },
+      (delId) => {
+        setCvItems((prev) => prev.filter((c) => c.id !== delId));
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const triggerScrollToWritings = useCallback(() => {
     if (isNavigatingRef.current) return;
@@ -97,17 +129,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="flex flex-col gap-1.5 text-xs font-mono text-neutral-600 bg-neutral-50 p-3.5 rounded border border-neutral-200/60">
             <a
               href="mailto:lohiavansh24.work@gmail.com"
-              className="flex items-center gap-2 hover:text-black transition-colors"
+              className="flex items-center gap-2 hover:text-blue-800 transition-colors text-blue-600 font-medium"
             >
-              <Mail size={12} className="text-neutral-400" />
+              <Mail size={12} className="text-blue-500" />
               <span>lohiavansh24.work@gmail.com</span>
-            </a>
-            <a
-              href="tel:+919365324146"
-              className="flex items-center gap-2 hover:text-black transition-colors"
-            >
-              <Phone size={12} className="text-neutral-400" />
-              <span>+91 93653 24146</span>
             </a>
             <a
               href="https://www.linkedin.com/in/vanshlohia/"
@@ -165,123 +190,61 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* ── 2. Key Initiatives & Independent Ventures ──────── */}
-      <section className="py-8 border-b border-neutral-200/80">
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
-          <Rocket size={14} className="text-black" />
-          <span>Key Initiatives & Independent Ventures</span>
-        </h2>
+      {cvItems.filter(c => c.section === 'initiatives' && c.isVisible).length > 0 && (
+        <section className="py-8 border-b border-neutral-200/80">
+          <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+            <Rocket size={14} className="text-black" />
+            <span>Key Initiatives & Independent Ventures</span>
+          </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 1. SahiRasta Platform */}
-          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
-            <div>
-              <div className="flex items-start justify-between gap-1 mb-2">
-                <h3 className="text-base font-bold text-black flex items-center gap-2">
-                  <span>SahiRasta Platform</span>
-                </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-semibold shrink-0">
-                  ACQUIRED / SOLD
-                </span>
-              </div>
-              <p className="text-xs text-neutral-600 mb-3 italic">
-                Educational guidance & career roadmapping platform tailored for Indian students.
-              </p>
-              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-                <li>Co-founded and engineered the entire web platform & curated roadmaps.</li>
-                <li>Leveraged GenAI workflows for rapid prototyping and actionable pathway matching.</li>
-                <li>Built, scaled user traction, and <strong>successfully sold</strong> the venture.</li>
-              </ul>
-            </div>
-            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400">
-              <span>April, 2026 • Full-Stack & GenAI</span>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {cvItems
+              .filter(c => c.section === 'initiatives' && c.isVisible)
+              .map((item) => (
+                <div key={item.id} className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-1 mb-2">
+                      <h3 className="text-base font-bold text-black flex items-center gap-1.5">
+                        <span>{item.title}</span>
+                      </h3>
+                      {item.badge && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-semibold shrink-0">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-neutral-600 mb-3 italic">
+                        {item.description}
+                      </p>
+                    )}
+                    {item.bulletPoints && item.bulletPoints.length > 0 && (
+                      <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                        {item.bulletPoints.map((pt, pIdx) => (
+                          <li key={pIdx}>{pt}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400 flex items-center justify-between">
+                    <span>{[item.dateRange, item.subtitle].filter(Boolean).join(' • ')}</span>
+                    {item.link && (
+                      <a
+                        href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-black font-semibold hover:underline inline-flex items-center gap-1 ml-2"
+                      >
+                        <span>Visit</span>
+                        <ExternalLink size={11} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
           </div>
-
-          {/* 2. DSPowerCement */}
-          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
-            <div>
-              <div className="flex items-start justify-between gap-1 mb-2">
-                <h3 className="text-base font-bold text-black">
-                  <span>DSPowerCement</span>
-                </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200 font-semibold shrink-0">
-                  CLIENT WORK
-                </span>
-              </div>
-              <p className="text-xs text-neutral-600 mb-3 font-mono">
-                dspowercement.com
-              </p>
-              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-                <li>Industrial supply-chain web architecture & digital presence.</li>
-                <li>Designed brand identity, product catalog layout, and responsive portal.</li>
-                <li>Structured distribution workflows for premier regional industrial cement operations.</li>
-              </ul>
-            </div>
-            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400">
-              <span>2026 • Brand & Web Architecture</span>
-            </div>
-          </div>
-
-          {/* 3. Xalumni */}
-          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
-            <div>
-              <div className="flex items-start justify-between gap-1 mb-2">
-                <h3 className="text-base font-bold text-black flex items-center gap-1.5">
-                  <span>Xalumni Platform</span>
-                </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold shrink-0">
-                  LIVE
-                </span>
-              </div>
-              <p className="text-xs text-neutral-600 mb-3 font-mono">
-                Xalumni.web.app
-              </p>
-              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-                <li>High-engagement alumni community networking & mentorship platform.</li>
-                <li>Real-time graduate directories, event matchmaking, and career guidance.</li>
-                <li>Engineered with modern responsive UI and tactile interaction feedback.</li>
-              </ul>
-            </div>
-            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400 flex items-center justify-between">
-              <span>2025 - Present • Community Platform</span>
-              <a
-                href="https://xalumni.web.app"
-                target="_blank"
-                rel="noreferrer"
-                className="text-black font-semibold hover:underline inline-flex items-center gap-1"
-              >
-                <span>Visit</span>
-                <ExternalLink size={11} />
-              </a>
-            </div>
-          </div>
-
-          {/* 4. Awwrange */}
-          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
-            <div>
-              <div className="flex items-start justify-between gap-1 mb-2">
-                <h3 className="text-base font-bold text-black flex items-center gap-1.5">
-                  <span>Awwrange Studio</span>
-                </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200 font-semibold shrink-0">
-                  ACTIVE LAB
-                </span>
-              </div>
-              <p className="text-xs text-neutral-600 mb-3 font-mono">
-                awwrange
-              </p>
-              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-                <li>Creative engineering lab, vibe-coded web experiments, and visual design.</li>
-                <li>Explorations in tactile web physical software, shaders, and computational aesthetics.</li>
-                <li>Directing digital aesthetic identities for boutique internet products.</li>
-              </ul>
-            </div>
-            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400">
-              <span>2026 • Creative Engineering & Design</span>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 2.5 Dynamic Portfolio Projects Showcase with Video Embeds & Image Gallery ── */}
       <PortfolioProjectsSection />
@@ -320,129 +283,164 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* ── 4. Work Experience (Below Projects) ─────────────── */}
-      <section className="py-8 border-b border-neutral-200/80">
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
-          <Briefcase size={14} className="text-black" />
-          <span>Work Experience</span>
-        </h2>
+      {/* ── 4. Work Experience ─────────────── */}
+      {cvItems.filter(c => c.section === 'experience' && c.isVisible).length > 0 && (
+        <section className="py-8 border-b border-neutral-200/80">
+          <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+            <Briefcase size={14} className="text-black" />
+            <span>Work Experience</span>
+          </h2>
 
-        <div className="space-y-6">
-          {/* Agarwalla & Associates - CMA Firm */}
-          <div className="border-l-2 border-black pl-4">
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
-              <h3 className="text-sm font-bold text-black">
-                Agarwalla & Associates (CMA Firm) • <span className="font-normal text-neutral-700">Accounts & Tax Intern</span>
-              </h3>
-              <span className="text-xs font-mono text-neutral-400">Jul 2026 - Sep 2026 (3 mos)</span>
-            </div>
-            <div className="text-micro font-mono text-neutral-500 mb-2">Sarupathar, Assam, India · On-site · Accounting & Taxation</div>
-            <p className="text-xs text-neutral-600 mb-2">
-              Worked in a professional accounting and tax practice, gaining hands-on exposure to accounting, taxation, government registrations, and compliance-related work.
-            </p>
-            <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-              <li>Completed <strong>Udyam registrations</strong>, enabling client businesses to access MSME scheme benefits.</li>
-              <li>Processed <strong>GeM registrations</strong>, facilitating client access to the government procurement marketplace.</li>
-              <li>Maintained <strong>Tally records</strong> across client accounts, supporting accurate bookkeeping and ledger upkeep.</li>
-              <li>Prepared and filed <strong>ITR-1 returns</strong> for individual clients, ensuring compliance with income tax deadlines.</li>
-            </ul>
+          <div className="space-y-6">
+            {cvItems
+              .filter(c => c.section === 'experience' && c.isVisible)
+              .map((exp) => (
+                <div key={exp.id} className="border-l-2 border-black pl-4">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
+                    <h3 className="text-sm font-bold text-black">
+                      {exp.title} {exp.subtitle && <>• <span className="font-normal text-neutral-700">{exp.subtitle}</span></>}
+                    </h3>
+                    {exp.dateRange && <span className="text-xs font-mono text-neutral-400">{exp.dateRange}</span>}
+                  </div>
+                  {exp.location && <div className="text-micro font-mono text-neutral-500 mb-2">{exp.location}</div>}
+                  {exp.description && (
+                    <p className="text-xs text-neutral-600 mb-2">
+                      {exp.description}
+                    </p>
+                  )}
+                  {exp.bulletPoints && exp.bulletPoints.length > 0 && (
+                    <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                      {exp.bulletPoints.map((pt, pIdx) => (
+                        <li key={pIdx}>{pt}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {exp.link && (
+                    <div className="mt-2 text-xs">
+                      <a
+                        href={exp.link.startsWith('http') ? exp.link : `https://${exp.link}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline inline-flex items-center gap-1 font-mono text-[11px]"
+                      >
+                        <span>{exp.link}</span>
+                        <ExternalLink size={10} />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 5. Social Work & Community Leadership ───────────── */}
-      <section className="py-8 border-b border-neutral-200/80">
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
-          <HeartHandshake size={14} className="text-black" />
-          <span>Social Work & Community Leadership</span>
-        </h2>
+      {cvItems.filter(c => c.section === 'leadership' && c.isVisible).length > 0 && (
+        <section className="py-8 border-b border-neutral-200/80">
+          <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+            <HeartHandshake size={14} className="text-black" />
+            <span>Social Work & Community Leadership</span>
+          </h2>
 
-        <div className="space-y-6">
-          {/* Marwari Yuva Manch */}
-          <div className="border-l-2 border-black pl-4">
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
-              <h3 className="text-sm font-bold text-black">
-                Marwari Yuva Manch (4 Years) • <span className="font-normal text-neutral-600">Joint Secretary [Apr, 2026 - Present]</span>
-              </h3>
-              <span className="text-xs font-mono text-neutral-400">2022 - Present</span>
-            </div>
-            <div className="text-micro font-mono text-neutral-500 mb-2">Social & Community Services & Development</div>
-            <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-              <li>Actively involved in community service projects; organized large community events for <strong>150 to 200 attendees</strong>.</li>
-              <li>Joined as a dedicated volunteer, participating in community outreach and developing strong teamwork, volunteer coordination, and leadership skills.</li>
-            </ul>
+          <div className="space-y-6">
+            {cvItems
+              .filter(c => c.section === 'leadership' && c.isVisible)
+              .map((lead, idx) => (
+                <div key={lead.id} className={`border-l-2 ${idx === 0 ? 'border-black' : 'border-neutral-300'} pl-4`}>
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
+                    <h3 className="text-sm font-bold text-black">
+                      {lead.title} {lead.subtitle && <>• <span className="font-normal text-neutral-600">{lead.subtitle}</span></>}
+                    </h3>
+                    {lead.dateRange && <span className="text-xs font-mono text-neutral-400">{lead.dateRange}</span>}
+                  </div>
+                  {lead.location && <div className="text-micro font-mono text-neutral-500 mb-2">{lead.location}</div>}
+                  {lead.description && (
+                    <p className="text-xs text-neutral-600 mb-2">
+                      {lead.description}
+                    </p>
+                  )}
+                  {lead.bulletPoints && lead.bulletPoints.length > 0 && (
+                    <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                      {lead.bulletPoints.map((pt, pIdx) => (
+                        <li key={pIdx}>{pt}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
           </div>
-
-          {/* Ashadeep NGO */}
-          <div className="border-l-2 border-neutral-300 pl-4">
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
-              <h3 className="text-sm font-bold text-black">
-                Ashadeep NGO • <span className="font-normal text-neutral-600">Volunteer & Project Coordinator</span>
-              </h3>
-              <span className="text-xs font-mono text-neutral-400">Jan 2025 - Present</span>
-            </div>
-            <div className="text-micro font-mono text-neutral-500 mb-2">Mental Health Services</div>
-            <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-              <li>Gaining hands-on experience in non-profit operations, project management, and volunteer coordination.</li>
-              <li>Supporting community programs, enhancing team management, effective communication, and time management skills.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 6. Community & Philanthropic Milestones ─────────── */}
-      <section className="py-6 border-b border-neutral-200/80 bg-neutral-50/50 p-4 rounded-lg my-2">
-        <div className="flex items-start gap-3.5">
-          <div className="p-2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0 mt-0.5">
-            <Droplets size={16} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-black">
-                Voluntary Blood Donor (2x Milestone Donor)
-              </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-medium">
-                COMMUNITY IMPACT
-              </span>
+      {cvItems
+        .filter(c => c.section === 'milestones' && c.isVisible)
+        .map((m) => (
+          <section key={m.id} className="py-6 border-b border-neutral-200/80 bg-neutral-50/50 p-4 rounded-lg my-2">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2 rounded-full bg-rose-50 text-rose-600 border border-rose-200 shrink-0 mt-0.5">
+                <Droplets size={16} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-black">
+                    {m.title}
+                  </h3>
+                  {m.badge && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-medium">
+                      {m.badge}
+                    </span>
+                  )}
+                </div>
+                {m.description && (
+                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                    {m.description}
+                  </p>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-              Committed voluntary blood donor supporting emergency and hospital relief initiatives. Completed two milestone blood donations: the first upon turning <strong>18</strong> and the second on turning <strong>21</strong>.
-            </p>
-          </div>
-        </div>
-      </section>
+          </section>
+        ))}
 
       {/* ── 7. Education ────────────────────────────────────── */}
-      <section className="py-8 border-b border-neutral-200/80">
-        <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
-          <GraduationCap size={14} className="text-black" />
-          <span>Education</span>
-        </h2>
+      {cvItems.filter(c => c.section === 'education' && c.isVisible).length > 0 && (
+        <section className="py-8 border-b border-neutral-200/80">
+          <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
+            <GraduationCap size={14} className="text-black" />
+            <span>Education</span>
+          </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 border border-neutral-200 rounded bg-white">
-            <div className="font-bold text-black text-sm">Manipal University Jaipur</div>
-            <div className="text-xs text-neutral-600 mt-0.5">
-              Bachelor of Business Administration (BBA)
-            </div>
-            <div className="text-micro font-mono text-neutral-400 mt-1">
-              Penultimate 2nd Year • 2024 - 2027 (Expected)
-            </div>
-            <div className="mt-3 inline-block px-2 py-0.5 rounded bg-neutral-100 text-black text-xs font-mono font-semibold">
-              3rd Sem SGPA: 8.0 • 77.6%
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {cvItems
+              .filter(c => c.section === 'education' && c.isVisible)
+              .map((edu) => (
+                <div key={edu.id} className="p-4 border border-neutral-200 rounded bg-white">
+                  <div className="font-bold text-black text-sm">{edu.title}</div>
+                  {edu.subtitle && (
+                    <div className="text-xs text-neutral-600 mt-0.5">
+                      {edu.subtitle}
+                    </div>
+                  )}
+                  {edu.dateRange && (
+                    <div className="text-micro font-mono text-neutral-400 mt-1">
+                      {edu.dateRange}
+                    </div>
+                  )}
+                  {edu.badge && (
+                    <div className="mt-3 inline-block px-2 py-0.5 rounded bg-neutral-100 text-black text-xs font-mono font-semibold">
+                      {edu.badge}
+                    </div>
+                  )}
+                  {edu.description && (
+                    <div className="mt-3 text-xs text-neutral-500 font-mono">
+                      {edu.description}
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
-
-          <div className="p-4 border border-neutral-200 rounded bg-white">
-            <div className="font-bold text-black text-sm">Amrit International School</div>
-            <div className="text-xs text-neutral-600 mt-0.5">High School</div>
-            <div className="text-micro font-mono text-neutral-400 mt-1">2022 - 2024</div>
-            <div className="mt-3 text-xs text-neutral-500 font-mono">
-              Languages: English & Hindi
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Bottom Page Continuation Bar ────────────────────── */}
       <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">

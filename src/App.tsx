@@ -313,7 +313,7 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="hidden md:inline">Hotkeys: [1] Story [2] Home/CV [3] Writings [4] Stuff [5] Guestbook [Shift+A] Admin [M] Mute</span>
+            <span className="hidden md:inline">Hotkeys: [1] Story [2] Home/CV [3] Writings [4] Stuff [5] Guestbook [M] Mute</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>

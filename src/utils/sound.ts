@@ -161,3 +161,98 @@ export const playClickSound = (type: 'tick' | 'high' | 'pop' | 'paper' | 'spear'
     // Ignore audio context autoplay restrictions gracefully
   }
 };
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * INDIAN CLASSICAL SYMPHONY AUDIO SYNTHESIZER (Raag Bhoopali / Mohanam)
+ * 100% Copyright-free traditional Indian classical pentatonic raga:
+ * Sa (C4), Re (D4), Ga (E4), Pa (G4), Dha (A4), Sa' (C5), Re' (D5), Ga' (E5)
+ * Deeply familiar to Indian ears, evoking peace, nostalgia, warmth, and smiles.
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+export const INDIAN_SYMPHONY_NOTES = [
+  261.63, // Sa  (C4)
+  293.66, // Re  (D4)
+  329.63, // Ga  (E4)
+  392.00, // Pa  (G4)
+  440.00, // Dha (A4)
+  523.25, // Sa' (C5)
+  587.33, // Re' (D5)
+  659.25, // Ga' (E5)
+  587.33, // Re' (D5)
+  523.25, // Sa' (C5)
+  440.00, // Dha (A4)
+  392.00, // Pa  (G4)
+  329.63, // Ga  (E4)
+  392.00, // Pa  (G4)
+  293.66, // Re  (D4)
+  261.63, // Sa  (C4)
+];
+
+export const playIndianSymphonyNote = (noteIndex: number, volume: number = 0.08) => {
+  if (!soundEnabled) return;
+  try {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!audioCtx) {
+      audioCtx = new AudioContextClass();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    const now = audioCtx.currentTime;
+    const safeIdx = Math.max(0, Math.min(INDIAN_SYMPHONY_NOTES.length - 1, Math.floor(noteIndex)));
+    const freq = INDIAN_SYMPHONY_NOTES[safeIdx];
+
+    // Primary gentle flute / sitar resonance (Sine fundamental)
+    const osc1 = audioCtx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(freq, now);
+
+    // Warm wooden overtone (Triangle octave/fifth harmonic)
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(freq * 1.5, now);
+
+    // Soft low-pass filter to eliminate harshness
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1900, now);
+    filter.Q.value = 1.2;
+
+    // Acoustic gain envelope: fast warm attack, rich chime sustain, organic decay
+    const gainNode = audioCtx.createGain();
+    const peakVol = Math.max(0.01, Math.min(0.2, volume));
+    gainNode.gain.setValueAtTime(0.001, now);
+    gainNode.gain.linearRampToValueAtTime(peakVol, now + 0.018);
+    gainNode.gain.exponentialRampToValueAtTime(peakVol * 0.45, now + 0.12);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+
+    // Subtle pan movement based on note index for spatial immersion
+    const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+    if (panner) {
+      const panVal = ((safeIdx / (INDIAN_SYMPHONY_NOTES.length - 1)) * 1.4) - 0.7;
+      panner.pan.setValueAtTime(panVal, now);
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(panner);
+      panner.connect(audioCtx.destination);
+    } else {
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+    }
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.4);
+    osc2.stop(now + 0.4);
+  } catch {
+    // Graceful fallback
+  }
+};
+

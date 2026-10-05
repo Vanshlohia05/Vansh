@@ -9,18 +9,15 @@ import {
   saveEssays,
 } from '../data/reading';
 import { supabase } from '../utils/supabase';
-import { playClickSound } from '../utils/sound';
+import { playClickSound, playIndianSymphonyNote, INDIAN_SYMPHONY_NOTES } from '../utils/sound';
 import {
   ArrowUpRight,
   BookOpen,
   FileText,
-  Send,
   X,
-  Check,
   Shuffle,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
 } from 'lucide-react';
 
 interface ReadingSectionProps {
@@ -202,26 +199,117 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   }, []);
 
-  // Tactile scroll sound listener for Phone & PC
-  const lastScrollSoundPos = useRef<number>(0);
-  const lastScrollSoundTime = useRef<number>(0);
+  // Indian Classical Symphony Note Tracking (Phone touch & PC scroll)
+  const lastPlayedSymphonyNoteRef = useRef<number>(-1);
+  const lastNoteTimeRef = useRef<number>(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
+  const autoScrollRafRef = useRef<number | null>(null);
 
+  const stopAutoscroll = useCallback(() => {
+    setIsAutoScrolling(false);
+    if (autoScrollRafRef.current) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
+  }, []);
+
+  // Scroll listener: dividing the symphony notes across the scrollable length of the shelf
   const handleShelfScrollWithSound = useCallback(() => {
     checkShelfScroll();
     const el = shelfScrollRef.current;
     if (!el) return;
 
-    const currentPos = el.scrollLeft;
-    const now = Date.now();
-    const delta = Math.abs(currentPos - lastScrollSoundPos.current);
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll > 15) {
+      const progress = Math.max(0, Math.min(1, el.scrollLeft / maxScroll));
+      const noteIdx = Math.min(
+        INDIAN_SYMPHONY_NOTES.length - 1,
+        Math.floor(progress * INDIAN_SYMPHONY_NOTES.length)
+      );
 
-    // Play subtle mechanical tick every 35px scrolled, throttled to 55ms
-    if (delta > 35 && now - lastScrollSoundTime.current > 55) {
-      playClickSound('tick');
-      lastScrollSoundPos.current = currentPos;
-      lastScrollSoundTime.current = now;
+      const now = Date.now();
+      if (noteIdx !== lastPlayedSymphonyNoteRef.current && now - lastNoteTimeRef.current > 45) {
+        playIndianSymphonyNote(noteIdx, 0.08);
+        lastPlayedSymphonyNoteRef.current = noteIdx;
+        lastNoteTimeRef.current = now;
+      }
     }
   }, [checkShelfScroll]);
+
+  // Autoscroll with music emoji: glides across shelf while playing the complete symphony
+  const toggleAutoscroll = () => {
+    if (isAutoScrolling) {
+      stopAutoscroll();
+      return;
+    }
+
+    const el = shelfScrollRef.current;
+    if (!el) return;
+
+    setIsAutoScrolling(true);
+    playClickSound('high');
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return;
+
+    // If near the end, rewind to beginning
+    if (el.scrollLeft >= maxScroll - 30) {
+      el.scrollLeft = 0;
+    }
+
+    const startPos = el.scrollLeft;
+    const distance = maxScroll - startPos;
+    // ~10 seconds for a gentle, melodic traversal across all books
+    const duration = Math.max(5000, (distance / maxScroll) * 11000);
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+
+      el.scrollLeft = startPos + distance * progress;
+
+      if (progress < 1) {
+        autoScrollRafRef.current = requestAnimationFrame(step);
+      } else {
+        stopAutoscroll();
+      }
+    };
+
+    autoScrollRafRef.current = requestAnimationFrame(step);
+  };
+
+  // Hover over individual book spine on PC plays corresponding symphony note
+  const handleBookMouseEnter = (idx: number) => {
+    if (!canHover) return;
+    const total = Math.max(1, books.length - 1);
+    const noteIdx = Math.min(
+      INDIAN_SYMPHONY_NOTES.length - 1,
+      Math.floor((idx / total) * INDIAN_SYMPHONY_NOTES.length)
+    );
+    playIndianSymphonyNote(noteIdx, 0.09);
+    lastPlayedSymphonyNoteRef.current = noteIdx;
+  };
+
+  // Hover-edge autoscroll on PC: gliding gently when listening while hovering near edges
+  const handleShelfHoverMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isAutoScrolling || !canHover || !shelfScrollRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+
+    if (x > width * 0.85) {
+      shelfScrollRef.current.scrollBy({ left: 7, behavior: 'auto' });
+    } else if (x < width * 0.15) {
+      shelfScrollRef.current.scrollBy({ left: -7, behavior: 'auto' });
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const el = shelfScrollRef.current;
@@ -238,6 +326,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
   // Scroll shelf left/right
   const scrollShelf = (direction: 'left' | 'right') => {
     if (!shelfScrollRef.current) return;
+    stopAutoscroll();
     playClickSound('tick');
     const scrollAmount = direction === 'left' ? -320 : 320;
     shelfScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
@@ -391,7 +480,20 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Autoscroll with Indian Classical Symphony */}
+          <button
+            onClick={toggleAutoscroll}
+            title="Autoscroll bookshelf with Indian symphony melody"
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-micro font-mono transition-all cursor-pointer border ${
+              isAutoScrolling
+                ? 'bg-black text-[#d2fd78] border-black font-semibold shadow-xs scale-105'
+                : 'bg-neutral-100 hover:bg-neutral-200 text-black border-neutral-200 font-medium'
+            }`}
+          >
+            <span>{isAutoScrolling ? 'Stop Symphony' : 'Autoscroll 🎶'}</span>
+          </button>
+
           {/* Shuffle Entire Library Button */}
           <button
             onClick={handleShuffleBooks}
@@ -422,7 +524,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
           {/* Left/Right Scroll Controls for 100+ Books */}
           <div className="flex items-center gap-1">
             <span className="text-micro font-mono text-neutral-400 hidden sm:inline mr-2">
-              Scroll horizontally for more books • Click spine to draw out
+              Hover across shelf for symphony • Click spine to draw out
             </span>
             <button
               onClick={() => scrollShelf('left')}
@@ -452,7 +554,10 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
         </div>
 
         {/* Shelf Frame (Smooth touch scroll & scalable for 100+ books) */}
-        <div className="relative pt-8 pb-3">
+        <div
+          onMouseMove={handleShelfHoverMove}
+          className="relative pt-8 pb-3"
+        >
           <div
             ref={shelfScrollRef}
             className="w-full overflow-x-auto scroll-smooth pb-4 no-scrollbar"
@@ -466,6 +571,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
                   <button
                     key={book.id}
                     onClick={() => handleBookClick(book)}
+                    onMouseEnter={() => handleBookMouseEnter(idx)}
                     aria-pressed={isSelected}
                     title={`${book.title} by ${book.author} (${book.year})`}
                     style={{

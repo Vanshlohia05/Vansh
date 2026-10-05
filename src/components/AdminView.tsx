@@ -49,12 +49,20 @@ import {
   savePortfolioProjects,
   mapRowToProject,
 } from '../data/portfolioProjects';
+import {
+  CvItem,
+  CvSectionType,
+  loadCvItems,
+  fetchCvItems,
+  upsertCvItem,
+  deleteCvItem,
+} from '../data/cvData';
 
 interface AdminViewProps {
   onExit: () => void;
 }
 
-type AdminTab = 'books' | 'essays' | 'projects' | 'guestbook' | 'writings' | 'telegram';
+type AdminTab = 'books' | 'essays' | 'projects' | 'guestbook' | 'writings' | 'telegram' | 'cv';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   // Authentication State (Session token from backend)
@@ -72,6 +80,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [guestbookList, setGuestbookList] = useState<GuestbookEntry[]>([]);
+  const [cvList, setCvList] = useState<CvItem[]>([]);
+  const [editingCvId, setEditingCvId] = useState<string | null>(null);
+  const [cvSectionFilter, setCvSectionFilter] = useState<string>('all');
+  const [cvForm, setCvForm] = useState<{
+    section: CvSectionType;
+    title: string;
+    subtitle: string;
+    dateRange: string;
+    location: string;
+    badge: string;
+    link: string;
+    description: string;
+    bulletPointsText: string;
+    displayOrder: number;
+    isVisible: boolean;
+  }>({
+    section: 'initiatives',
+    title: '',
+    subtitle: '',
+    dateRange: '',
+    location: '',
+    badge: '',
+    link: '',
+    description: '',
+    bulletPointsText: '',
+    displayOrder: 1,
+    isVisible: true,
+  });
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>('');
 
   // New Project Form State
@@ -204,6 +240,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
 
         if (guestbookRes.data && Array.isArray(guestbookRes.data)) {
           setGuestbookList(guestbookRes.data.map(mapRowToEntry));
+        }
+
+        const liveCv = await fetchCvItems();
+        if (liveCv && liveCv.length > 0) {
+          setCvList(liveCv);
+        } else {
+          setCvList(loadCvItems());
         }
       } catch (err) {
         console.warn('Admin load error:', err);
@@ -526,6 +569,112 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     setTimeout(() => setSaveSuccessMsg(''), 3500);
   };
 
+  // CV & Career Handlers
+  const handleSaveCvItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cvForm.title.trim()) return;
+
+    const bullets = cvForm.bulletPointsText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const itemToSave: CvItem = {
+      id: editingCvId || `cv-${Date.now()}`,
+      section: cvForm.section,
+      title: cvForm.title.trim(),
+      subtitle: cvForm.subtitle.trim() || undefined,
+      dateRange: cvForm.dateRange.trim() || undefined,
+      location: cvForm.location.trim() || undefined,
+      badge: cvForm.badge.trim() || undefined,
+      link: cvForm.link.trim() || undefined,
+      description: cvForm.description.trim() || undefined,
+      bulletPoints: bullets.length > 0 ? bullets : undefined,
+      displayOrder: cvForm.displayOrder || 1,
+      isVisible: cvForm.isVisible,
+    };
+
+    let updated: CvItem[];
+    if (editingCvId) {
+      updated = cvList.map((c) => (c.id === editingCvId ? itemToSave : c));
+    } else {
+      updated = [...cvList, itemToSave];
+    }
+    setCvList(updated);
+
+    await upsertCvItem(itemToSave);
+
+    setEditingCvId(null);
+    setCvForm({
+      section: 'initiatives',
+      title: '',
+      subtitle: '',
+      dateRange: '',
+      location: '',
+      badge: '',
+      link: '',
+      description: '',
+      bulletPointsText: '',
+      displayOrder: updated.length + 1,
+      isVisible: true,
+    });
+
+    playClickSound('high');
+    setSaveSuccessMsg(editingCvId ? `Updated "${itemToSave.title}" in CV!` : `Added "${itemToSave.title}" to CV!`);
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
+  const handleEditCvItem = (item: CvItem) => {
+    setEditingCvId(item.id);
+    setCvForm({
+      section: item.section,
+      title: item.title,
+      subtitle: item.subtitle || '',
+      dateRange: item.dateRange || '',
+      location: item.location || '',
+      badge: item.badge || '',
+      link: item.link || '',
+      description: item.description || '',
+      bulletPointsText: (item.bulletPoints || []).join('\n'),
+      displayOrder: item.displayOrder || 1,
+      isVisible: item.isVisible !== false,
+    });
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
+
+  const handleCancelCvEdit = () => {
+    setEditingCvId(null);
+    setCvForm({
+      section: 'initiatives',
+      title: '',
+      subtitle: '',
+      dateRange: '',
+      location: '',
+      badge: '',
+      link: '',
+      description: '',
+      bulletPointsText: '',
+      displayOrder: cvList.length + 1,
+      isVisible: true,
+    });
+  };
+
+  const handleDeleteCvItem = async (id: string) => {
+    playClickSound('pop');
+    const updated = cvList.filter((c) => c.id !== id);
+    setCvList(updated);
+    await deleteCvItem(id);
+    setSaveSuccessMsg('Item removed from CV.');
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
+  const handleToggleCvVisibility = async (item: CvItem) => {
+    const updatedItem: CvItem = { ...item, isVisible: !item.isVisible };
+    const updated = cvList.map((c) => (c.id === item.id ? updatedItem : c));
+    setCvList(updated);
+    await upsertCvItem(updatedItem);
+  };
+
   // ─────────────────────────────────────────────────────────────
   // RENDER: LOCK SCREEN (When unauthenticated)
   // ─────────────────────────────────────────────────────────────
@@ -703,6 +852,21 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         >
           <Sparkles size={13} />
           <span>Guestbook ({guestbookList.length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            playClickSound('tick');
+            setActiveTab('cv');
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all cursor-pointer ${
+            activeTab === 'cv'
+              ? 'bg-black text-white font-semibold'
+              : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
+          }`}
+        >
+          <Briefcase size={13} />
+          <span>CV & Career ({cvList.length})</span>
         </button>
 
         <button
@@ -1397,6 +1561,368 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          TAB: CV & CAREER MANAGER
+          ═══════════════════════════════════════════════════════════════ */}
+      {activeTab === 'cv' && (
+        <div className="space-y-10 text-xs font-sans">
+          
+          {/* Top Intro & Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
+            <div>
+              <h2 className="text-sm font-bold text-black font-mono flex items-center gap-2">
+                <Briefcase size={15} />
+                <span>Full CV & Career Content Management</span>
+              </h2>
+              <p className="text-neutral-600 mt-1">
+                Add, update, or remove initiatives, work experience, community leadership, milestones, and education entries. Changes sync immediately to Supabase and the live CV.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded bg-black text-white font-mono text-[11px]">
+                {cvList.length} Total Items
+              </span>
+            </div>
+          </div>
+
+          {/* Add / Edit CV Item Form */}
+          <div className="p-6 bg-white border border-neutral-200 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between mb-4 border-b border-neutral-200 pb-3">
+              <h3 className="font-bold text-sm text-black font-mono flex items-center gap-2">
+                <Plus size={14} className={editingCvId ? 'text-blue-600' : 'text-black'} />
+                <span>{editingCvId ? 'Edit CV Item' : 'Add New CV Item'}</span>
+              </h3>
+              {editingCvId && (
+                <button
+                  type="button"
+                  onClick={handleCancelCvEdit}
+                  className="px-2.5 py-1 text-xs font-mono text-neutral-500 hover:text-black hover:bg-neutral-100 rounded transition-colors"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handleSaveCvItem} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    CV Section:
+                  </label>
+                  <select
+                    value={cvForm.section}
+                    onChange={(e) =>
+                      setCvForm({ ...cvForm, section: e.target.value as CvSectionType })
+                    }
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono"
+                  >
+                    <option value="initiatives">Initiatives & Ventures</option>
+                    <option value="experience">Work Experience</option>
+                    <option value="leadership">Social Leadership</option>
+                    <option value="milestones">Milestones & Philanthropy</option>
+                    <option value="education">Education</option>
+                    <option value="expertise">Areas of Expertise</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    Title / Organization / Venture: *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={cvForm.title}
+                    onChange={(e) => setCvForm({ ...cvForm, title: e.target.value })}
+                    placeholder="e.g. SahiRasta Platform / Agarwalla & Associates"
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    Subtitle / Role / Position:
+                  </label>
+                  <input
+                    type="text"
+                    value={cvForm.subtitle}
+                    onChange={(e) => setCvForm({ ...cvForm, subtitle: e.target.value })}
+                    placeholder="e.g. Co-Founder / Accounts & Tax Intern"
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    Dates / Period:
+                  </label>
+                  <input
+                    type="text"
+                    value={cvForm.dateRange}
+                    onChange={(e) => setCvForm({ ...cvForm, dateRange: e.target.value })}
+                    placeholder="e.g. April 2026 / Jul 2026 - Sep 2026"
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    Location:
+                  </label>
+                  <input
+                    type="text"
+                    value={cvForm.location}
+                    onChange={(e) => setCvForm({ ...cvForm, location: e.target.value })}
+                    placeholder="e.g. Sarupathar, Assam, India · On-site"
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    Status Badge:
+                  </label>
+                  <input
+                    type="text"
+                    value={cvForm.badge}
+                    onChange={(e) => setCvForm({ ...cvForm, badge: e.target.value })}
+                    placeholder="e.g. ACQUIRED / SOLD, LIVE, CLIENT WORK"
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                    External Link / URL:
+                  </label>
+                  <input
+                    type="text"
+                    value={cvForm.link}
+                    onChange={(e) => setCvForm({ ...cvForm, link: e.target.value })}
+                    placeholder="e.g. https://xalumni.web.app"
+                    className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                  Description / Overview:
+                </label>
+                <textarea
+                  rows={2}
+                  value={cvForm.description}
+                  onChange={(e) => setCvForm({ ...cvForm, description: e.target.value })}
+                  placeholder="Summary of the role, venture, or academic achievements..."
+                  className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black"
+                />
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                  Bullet Points (One per line):
+                </label>
+                <textarea
+                  rows={4}
+                  value={cvForm.bulletPointsText}
+                  onChange={(e) => setCvForm({ ...cvForm, bulletPointsText: e.target.value })}
+                  placeholder="Co-founded and engineered the entire web platform & curated roadmaps.&#10;Leveraged GenAI workflows for rapid prototyping.&#10;Built, scaled user traction, and successfully sold the venture."
+                  className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono text-[11px]"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <label className="block text-micro uppercase text-neutral-400 font-mono mb-1">
+                      Display Order:
+                    </label>
+                    <input
+                      type="number"
+                      value={cvForm.displayOrder}
+                      onChange={(e) =>
+                        setCvForm({ ...cvForm, displayOrder: parseInt(e.target.value) || 1 })
+                      }
+                      className="w-24 p-2 bg-neutral-50 border border-neutral-300 rounded text-xs text-black focus:outline-none focus:border-black font-mono"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer pt-4 text-xs font-mono text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={cvForm.isVisible}
+                      onChange={(e) => setCvForm({ ...cvForm, isVisible: e.target.checked })}
+                      className="rounded border-neutral-300 text-black focus:ring-black"
+                    />
+                    <span>Publicly Visible on CV</span>
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {editingCvId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelCvEdit}
+                      className="px-4 py-2 border border-neutral-300 rounded font-mono text-xs hover:bg-neutral-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-black text-white hover:bg-neutral-800 transition-colors rounded font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check size={13} />
+                    <span>{editingCvId ? 'Update CV Item' : 'Save to Live CV'}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Section Filter Tabs */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-neutral-200 text-xs font-mono">
+              <span className="text-neutral-400 font-semibold mr-1">FILTER:</span>
+              {[
+                { id: 'all', label: 'All Items' },
+                { id: 'initiatives', label: 'Initiatives & Ventures' },
+                { id: 'experience', label: 'Work Experience' },
+                { id: 'leadership', label: 'Leadership' },
+                { id: 'milestones', label: 'Milestones' },
+                { id: 'education', label: 'Education' },
+                { id: 'expertise', label: 'Expertise' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setCvSectionFilter(tab.id)}
+                  className={`px-2.5 py-1 rounded transition-colors whitespace-nowrap cursor-pointer ${
+                    cvSectionFilter === tab.id
+                      ? 'bg-neutral-900 text-white font-bold'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* CV Items List */}
+            <div className="grid grid-cols-1 gap-3">
+              {cvList
+                .filter((item) => cvSectionFilter === 'all' || item.section === cvSectionFilter)
+                .length === 0 ? (
+                <div className="p-8 text-center text-neutral-400 font-mono bg-neutral-50 rounded border border-neutral-200">
+                  No items in this section. Add one above!
+                </div>
+              ) : (
+                cvList
+                  .filter((item) => cvSectionFilter === 'all' || item.section === cvSectionFilter)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-4 bg-white border rounded-lg transition-all flex flex-col md:flex-row md:items-start justify-between gap-4 ${
+                        editingCvId === item.id
+                          ? 'border-blue-500 bg-blue-50/20 ring-1 ring-blue-500'
+                          : 'border-neutral-200 hover:border-neutral-300'
+                      }`}
+                    >
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 font-mono text-[10px] uppercase font-bold tracking-wider">
+                            {item.section}
+                          </span>
+                          <span className="font-bold text-black text-sm">
+                            {item.title}
+                          </span>
+                          {item.subtitle && (
+                            <span className="text-neutral-600 text-xs">
+                              • {item.subtitle}
+                            </span>
+                          )}
+                          {item.badge && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-semibold">
+                              {item.badge}
+                            </span>
+                          )}
+                          {!item.isVisible && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-200 text-neutral-600">
+                              HIDDEN
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3 text-neutral-400 font-mono text-micro flex-wrap">
+                          {item.dateRange && <span>📅 {item.dateRange}</span>}
+                          {item.location && <span>📍 {item.location}</span>}
+                          <span>Order: #{item.displayOrder}</span>
+                          {item.link && (
+                            <a
+                              href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              <span>{item.link}</span>
+                              <ExternalLink size={10} />
+                            </a>
+                          )}
+                        </div>
+
+                        {item.description && (
+                          <p className="text-xs text-neutral-700 leading-relaxed pt-1">
+                            {item.description}
+                          </p>
+                        )}
+
+                        {item.bulletPoints && item.bulletPoints.length > 0 && (
+                          <div className="text-micro text-neutral-500 font-mono pt-1">
+                            {item.bulletPoints.length} bullet point(s) configured
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-neutral-100">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCvVisibility(item)}
+                          className={`px-2 py-1 rounded text-micro font-mono transition-colors cursor-pointer border ${
+                            item.isVisible
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200'
+                          }`}
+                          title="Toggle visibility on live site"
+                        >
+                          {item.isVisible ? 'Live' : 'Hidden'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditCvItem(item)}
+                          className="p-1.5 text-neutral-600 hover:text-black hover:bg-neutral-100 rounded transition-colors cursor-pointer"
+                          title="Edit CV Item"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCvItem(item.id)}
+                          className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                          title="Delete CV Item"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+
         </div>
       )}
 
