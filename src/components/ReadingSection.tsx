@@ -111,6 +111,80 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     };
     fetchLiveData();
 
+    // 3. Realtime Supabase live listener for newly added books & essays
+    const channel = supabase
+      .channel('reading-section-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'books' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const b = payload.new as any;
+            const newBook: BookItem = {
+              id: b.id,
+              title: b.title,
+              author: b.author,
+              year: b.year || '2026',
+              note: b.note || '',
+              h: b.h || 220,
+              w: b.w || 40,
+              c: b.c || '#1e293b',
+              fg: b.fg || '#ffffff',
+              link: b.link || undefined,
+            };
+            setBooks((prev) => [newBook, ...prev.filter((item) => item.id !== newBook.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            const b = payload.new as any;
+            setBooks((prev) =>
+              prev.map((item) =>
+                item.id === b.id
+                  ? {
+                      ...item,
+                      title: b.title,
+                      author: b.author,
+                      year: b.year || item.year,
+                      note: b.note || item.note,
+                      h: b.h || item.h,
+                      w: b.w || item.w,
+                      c: b.c || item.c,
+                      fg: b.fg || item.fg,
+                      link: b.link || item.link,
+                    }
+                  : item
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            if (payload.old && payload.old.id) {
+              setBooks((prev) => prev.filter((item) => item.id !== payload.old.id));
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'essays' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const e = payload.new as any;
+            const newEssay: EssayItem = {
+              id: e.id,
+              title: e.title,
+              year: e.year || '2026',
+              type: e.type || 'Essay',
+              source: e.source || 'Web',
+              url: e.url || '',
+              cap: e.cap || e.source || 'Archive',
+            };
+            setEssays((prev) => [newEssay, ...prev.filter((item) => item.id !== newEssay.id)]);
+          } else if (payload.eventType === 'DELETE') {
+            if (payload.old && payload.old.id) {
+              setEssays((prev) => prev.filter((item) => item.id !== payload.old.id));
+            }
+          }
+        }
+      )
+      .subscribe();
+
     const hoverQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
     setCanHover(hoverQuery.matches);
 
@@ -119,7 +193,10 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     };
 
     hoverQuery.addEventListener('change', handleQueryChange);
-    return () => hoverQuery.removeEventListener('change', handleQueryChange);
+    return () => {
+      hoverQuery.removeEventListener('change', handleQueryChange);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Update shelf scroll indicators
@@ -130,17 +207,38 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   }, []);
 
+  // Tactile scroll sound listener for Phone & PC
+  const lastScrollSoundPos = useRef<number>(0);
+  const lastScrollSoundTime = useRef<number>(0);
+
+  const handleShelfScrollWithSound = useCallback(() => {
+    checkShelfScroll();
+    const el = shelfScrollRef.current;
+    if (!el) return;
+
+    const currentPos = el.scrollLeft;
+    const now = Date.now();
+    const delta = Math.abs(currentPos - lastScrollSoundPos.current);
+
+    // Play subtle mechanical tick every 35px scrolled, throttled to 55ms
+    if (delta > 35 && now - lastScrollSoundTime.current > 55) {
+      playClickSound('tick');
+      lastScrollSoundPos.current = currentPos;
+      lastScrollSoundTime.current = now;
+    }
+  }, [checkShelfScroll]);
+
   useEffect(() => {
     const el = shelfScrollRef.current;
     if (!el) return;
     checkShelfScroll();
-    el.addEventListener('scroll', checkShelfScroll, { passive: true });
+    el.addEventListener('scroll', handleShelfScrollWithSound, { passive: true });
     window.addEventListener('resize', checkShelfScroll);
     return () => {
-      el.removeEventListener('scroll', checkShelfScroll);
+      el.removeEventListener('scroll', handleShelfScrollWithSound);
       window.removeEventListener('resize', checkShelfScroll);
     };
-  }, [books, checkShelfScroll]);
+  }, [books, checkShelfScroll, handleShelfScrollWithSound]);
 
   // Scroll shelf left/right
   const scrollShelf = (direction: 'left' | 'right') => {

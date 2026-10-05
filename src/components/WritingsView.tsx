@@ -105,6 +105,39 @@ export const WritingsView: React.FC<WritingsViewProps> = ({
       }
     };
     fetchLiveArticles();
+
+    const channel = supabase
+      .channel('writings-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'writings' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const w = payload.new as any;
+            const newArt: Article = {
+              id: w.id,
+              slug: w.slug || `art-${w.id}`,
+              title: w.title,
+              date: w.date || 'Recent',
+              year: w.year || '2026',
+              readTime: w.read_time || w.readTime || '5 min read',
+              category: w.category || 'Essays & Notes',
+              excerpt: w.excerpt || '',
+              content: Array.isArray(w.content) ? w.content : typeof w.content === 'string' ? w.content.split('\n\n') : [''],
+            };
+            setArticlesList((prev) => [newArt, ...prev.filter((a) => a.id !== newArt.id)]);
+          } else if (payload.eventType === 'DELETE') {
+            if (payload.old && payload.old.id) {
+              setArticlesList((prev) => prev.filter((a) => a.id !== payload.old.id));
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filteredArticles = articlesList.filter((article) => {

@@ -27,18 +27,34 @@ import {
   ShieldCheck,
   RefreshCw,
   Sparkles,
+  Layers,
+  Video,
+  Image as ImageIcon,
 } from 'lucide-react';
+
+const GithubIcon: React.FC<{ size?: number; className?: string }> = ({ size = 14, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+    <path d="M9 18c-4.51 2-5-2-7-2" />
+  </svg>
+);
 import {
   GuestbookEntry,
   deleteGuestbookEntry,
   mapRowToEntry,
 } from '../data/guestbook';
+import {
+  PortfolioProject,
+  loadPortfolioProjects,
+  savePortfolioProjects,
+  mapRowToProject,
+} from '../data/portfolioProjects';
 
 interface AdminViewProps {
   onExit: () => void;
 }
 
-type AdminTab = 'books' | 'essays' | 'guestbook' | 'writings' | 'telegram';
+type AdminTab = 'books' | 'essays' | 'projects' | 'guestbook' | 'writings' | 'telegram';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   // Authentication State (Session token from backend)
@@ -53,9 +69,27 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   // Data Collections
   const [books, setBooks] = useState<BookItem[]>([]);
   const [essays, setEssays] = useState<EssayItem[]>([]);
+  const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [guestbookList, setGuestbookList] = useState<GuestbookEntry[]>([]);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>('');
+
+  // New Project Form State
+  const [newProject, setNewProject] = useState<Partial<PortfolioProject>>({
+    title: '',
+    tagline: '',
+    category: 'Full-Stack & GenAI',
+    year: String(new Date().getFullYear()),
+    status: 'Live',
+    description: '',
+    techStack: [],
+    liveUrl: '',
+    githubUrl: '',
+    videoUrl: '',
+    imageUrl: '',
+    featured: true,
+  });
+  const [techStackInput, setTechStackInput] = useState<string>('React, TypeScript, TailwindCSS');
 
   // New Book Form State
   const [newBook, setNewBook] = useState<Partial<BookItem>>({
@@ -99,17 +133,20 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
   useEffect(() => {
     const localB = loadBooks();
     const localE = loadEssays();
+    const localP = loadPortfolioProjects();
     setBooks(localB);
     setEssays(localE);
+    setProjects(localP);
     setArticles(ARTICLES);
 
     const loadLive = async () => {
       try {
-        const [booksRes, essaysRes, writingsRes, guestbookRes] = await Promise.all([
+        const [booksRes, essaysRes, writingsRes, guestbookRes, projectsRes] = await Promise.all([
           supabase.from('books').select('*').order('created_at', { ascending: false }),
           supabase.from('essays').select('*').order('created_at', { ascending: false }),
           supabase.from('writings').select('*').order('created_at', { ascending: false }),
           supabase.from('guestbook').select('*').order('timestamp', { ascending: false }),
+          supabase.from('portfolio_projects').select('*').order('display_order', { ascending: true }),
         ]);
 
         if (booksRes.data && Array.isArray(booksRes.data) && booksRes.data.length > 0) {
@@ -141,6 +178,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
           }));
           const merged = [...liveEssays, ...localE.filter((le) => !liveEssays.some((de) => de.id === le.id || de.title.toLowerCase() === le.title.toLowerCase()))];
           setEssays(merged);
+        }
+
+        if (projectsRes.data && Array.isArray(projectsRes.data) && projectsRes.data.length > 0) {
+          const liveProjects = projectsRes.data.map(mapRowToProject);
+          setProjects(liveProjects);
+          savePortfolioProjects(liveProjects);
         }
 
         if (writingsRes.data && Array.isArray(writingsRes.data) && writingsRes.data.length > 0) {
@@ -388,6 +431,92 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     }
   };
 
+  // Portfolio Project Handlers
+  const handleAddProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProject.title) return;
+
+    const stack = techStackInput
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const projectToAdd: PortfolioProject = {
+      id: `p-${Date.now()}`,
+      title: newProject.title.trim(),
+      tagline: newProject.tagline?.trim() || '',
+      category: newProject.category || 'Full-Stack & GenAI',
+      year: newProject.year || String(new Date().getFullYear()),
+      status: newProject.status || 'Live',
+      description: newProject.description?.trim() || 'A featured digital product and engineering case study.',
+      techStack: stack.length > 0 ? stack : ['React', 'TypeScript', 'TailwindCSS'],
+      liveUrl: newProject.liveUrl?.trim() || undefined,
+      githubUrl: newProject.githubUrl?.trim() || undefined,
+      videoUrl: newProject.videoUrl?.trim() || undefined,
+      imageUrl: newProject.imageUrl?.trim() || undefined,
+      featured: newProject.featured ?? true,
+      displayOrder: projects.length + 1,
+    };
+
+    const updated = [projectToAdd, ...projects];
+    setProjects(updated);
+    savePortfolioProjects(updated);
+    setNewProject({
+      title: '',
+      tagline: '',
+      category: 'Full-Stack & GenAI',
+      year: String(new Date().getFullYear()),
+      status: 'Live',
+      description: '',
+      techStack: [],
+      liveUrl: '',
+      githubUrl: '',
+      videoUrl: '',
+      imageUrl: '',
+      featured: true,
+    });
+    setTechStackInput('React, TypeScript, TailwindCSS');
+
+    try {
+      await supabase.from('portfolio_projects').upsert({
+        id: projectToAdd.id,
+        title: projectToAdd.title,
+        tagline: projectToAdd.tagline,
+        category: projectToAdd.category,
+        year: projectToAdd.year,
+        status: projectToAdd.status,
+        description: projectToAdd.description,
+        tech_stack: projectToAdd.techStack,
+        live_url: projectToAdd.liveUrl || null,
+        github_url: projectToAdd.githubUrl || null,
+        video_url: projectToAdd.videoUrl || null,
+        image_url: projectToAdd.imageUrl || null,
+        featured: projectToAdd.featured,
+        display_order: projectToAdd.displayOrder,
+      });
+    } catch (err) {
+      console.warn('Supabase portfolio project upsert error:', err);
+    }
+
+    playClickSound('high');
+    setSaveSuccessMsg(`Added "${projectToAdd.title}" to Portfolio Projects!`);
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    playClickSound('pop');
+    const updated = projects.filter((p) => p.id !== id);
+    setProjects(updated);
+    savePortfolioProjects(updated);
+    try {
+      await supabase.from('portfolio_projects').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Supabase project delete error:', err);
+    }
+    setSaveSuccessMsg('Project removed from portfolio.');
+    setTimeout(() => setSaveSuccessMsg(''), 3500);
+  };
+
   const handleDeleteGuestbook = async (id: string) => {
     playClickSound('pop');
     const updated = guestbookList.filter((g) => g.id !== id);
@@ -544,6 +673,21 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         >
           <FileText size={13} />
           <span>Essays & Reports ({essays.length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            playClickSound('tick');
+            setActiveTab('projects');
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all cursor-pointer ${
+            activeTab === 'projects'
+              ? 'bg-black text-white font-semibold'
+              : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
+          }`}
+        >
+          <Layers size={13} />
+          <span>Portfolio Projects ({projects.length})</span>
         </button>
 
         <button
@@ -930,8 +1074,263 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          TAB 3: GUESTBOOK MODERATOR
+          TAB: PORTFOLIO PROJECTS CRUD MANAGER
           ═══════════════════════════════════════════════════════════════ */}
+      {activeTab === 'projects' && (
+        <div className="space-y-10 text-xs font-sans">
+          
+          {/* Create Project Form */}
+          <form onSubmit={handleAddProject} className="p-6 bg-neutral-50 border border-neutral-200 rounded-lg space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+              <h2 className="text-sm font-bold text-black font-mono flex items-center gap-2">
+                <Layers size={15} />
+                <span>Add New Portfolio Project / Case Study</span>
+              </h2>
+              <span className="text-micro font-mono text-neutral-400">
+                Synced dynamically with Supabase
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Project Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newProject.title}
+                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                  placeholder="e.g. SahiRasta, HyperCanvas..."
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Tagline / Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={newProject.tagline}
+                  onChange={(e) => setNewProject({ ...newProject, tagline: e.target.value })}
+                  placeholder="Brief 1-sentence value proposition..."
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Category
+                </label>
+                <select
+                  value={newProject.category}
+                  onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none"
+                >
+                  <option value="Full-Stack & GenAI">Full-Stack & GenAI</option>
+                  <option value="Brand & Web Architecture">Brand & Web Architecture</option>
+                  <option value="Community & Web App">Community & Web App</option>
+                  <option value="Creative Engineering">Creative Engineering</option>
+                  <option value="Mobile Application">Mobile Application</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Status
+                </label>
+                <select
+                  value={newProject.status}
+                  onChange={(e) => setNewProject({ ...newProject, status: e.target.value })}
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none"
+                >
+                  <option value="Live">Live</option>
+                  <option value="Acquired / Sold">Acquired / Sold</option>
+                  <option value="Client Case Study">Client Case Study</option>
+                  <option value="Active Lab">Active Lab</option>
+                  <option value="In Development">In Development</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Live Project URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={newProject.liveUrl}
+                  onChange={(e) => setNewProject({ ...newProject, liveUrl: e.target.value })}
+                  placeholder="https://example.com"
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  GitHub Repository (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={newProject.githubUrl}
+                  onChange={(e) => setNewProject({ ...newProject, githubUrl: e.target.value })}
+                  placeholder="https://github.com/..."
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Video Demo Embed URL (YouTube/Loom/Vimeo)
+                </label>
+                <input
+                  type="url"
+                  value={newProject.videoUrl}
+                  onChange={(e) => setNewProject({ ...newProject, videoUrl: e.target.value })}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-[11px]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Thumbnail / Banner Image URL
+                </label>
+                <input
+                  type="url"
+                  value={newProject.imageUrl}
+                  onChange={(e) => setNewProject({ ...newProject, imageUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                  Tech Stack (Comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={techStackInput}
+                  onChange={(e) => setTechStackInput(e.target.value)}
+                  placeholder="React, TypeScript, TailwindCSS, Node.js, Supabase..."
+                  className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none font-mono text-[11px]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-micro uppercase text-neutral-500 mb-1 font-mono">
+                Description & Case Study Narrative
+              </label>
+              <textarea
+                rows={3}
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                placeholder="Comprehensive breakdown of what was built, engineering challenges, architecture decisions, and business impact..."
+                className="w-full p-2 bg-white border border-neutral-200 rounded focus:border-black focus:outline-none leading-relaxed"
+              />
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="submit"
+                className="bg-black text-white px-4 py-2 rounded text-xs font-mono hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer"
+              >
+                + Add Portfolio Project ↗
+              </button>
+            </div>
+          </form>
+
+          {/* Existing Projects List */}
+          <div>
+            <div className="flex items-center justify-between mb-3 font-mono">
+              <h3 className="text-sm font-bold text-black">
+                Existing Portfolio Projects ({projects.length})
+              </h3>
+              <span className="text-neutral-400 text-micro">
+                Displayed dynamically in CV & Showcase
+              </span>
+            </div>
+
+            <div className="divide-y divide-neutral-200 border border-neutral-200 rounded-lg bg-white overflow-hidden text-xs">
+              {projects.length === 0 ? (
+                <div className="p-8 text-center text-neutral-400 font-mono">
+                  No projects added yet. Add your first project above!
+                </div>
+              ) : (
+                projects.map((p, i) => (
+                  <div key={p.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-neutral-50 transition-colors">
+                    <div className="flex items-start sm:items-center gap-3">
+                      <span className="font-mono text-neutral-400 w-6">[{String(i + 1).padStart(2, '0')}]</span>
+                      {p.imageUrl && (
+                        <img src={p.imageUrl} alt={p.title} className="w-10 h-10 rounded object-cover border border-neutral-200 shrink-0" />
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <span className="font-bold text-black">{p.title}</span>
+                          <span className="px-1.5 py-0.2 rounded bg-neutral-100 font-mono text-[10px] text-neutral-700">
+                            {p.status}
+                          </span>
+                          <span className="text-neutral-400 font-mono text-[10px]">
+                            {p.category} • {p.year}
+                          </span>
+                        </div>
+                        <div className="text-neutral-500 text-[11px] line-clamp-1">
+                          {p.tagline}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      {p.videoUrl && (
+                        <span className="flex items-center gap-1 text-[10px] font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                          <Video size={11} />
+                          <span>Video</span>
+                        </span>
+                      )}
+                      {p.liveUrl && (
+                        <a
+                          href={p.liveUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 text-neutral-400 hover:text-black transition-colors"
+                          title="Open live project"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                      {p.githubUrl && (
+                        <a
+                          href={p.githubUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 text-neutral-400 hover:text-black transition-colors"
+                          title="Open GitHub"
+                        >
+                          <GithubIcon size={13} />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleDeleteProject(p.id)}
+                        title="Delete project"
+                        className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+      )}
       {activeTab === 'guestbook' && (
         <div className="space-y-6 text-xs font-sans">
           <div className="flex items-center justify-between border-b border-neutral-200 pb-3">

@@ -36,15 +36,17 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
   const [selectedAvatar, setSelectedAvatar] = useState('✦');
   const [filterText, setFilterText] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isNavigatingRef = useRef(false);
   const touchStartY = useRef<number | null>(null);
 
   const avatarOptions = ['✦', '⚡', '☕', '🚀', '🖤', '🎨', '🏮', '🍀', '✨', '👾'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !message.trim()) return;
+    if (!name.trim() || !message.trim() || isSubmitting) return;
 
+    setIsSubmitting(true);
     playClickSound('high');
 
     // Trigger celebratory Diwali cracker fireworks
@@ -73,10 +75,10 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
     }, 180);
 
     onAddEntry({
-      name: name.trim(),
-      handle: handle.trim() ? (handle.startsWith('@') ? handle.trim() : `@${handle.trim()}`) : undefined,
-      location: location.trim() || 'Internet Explorer',
-      message: message.trim(),
+      name: name.trim().slice(0, 50),
+      handle: handle.trim() ? (handle.startsWith('@') ? handle.trim().slice(0, 40) : `@${handle.trim().slice(0, 39)}`) : undefined,
+      location: location.trim().slice(0, 60) || 'Internet Explorer',
+      message: message.trim().slice(0, 500),
       date: new Date().toLocaleDateString('en-US', {
         month: 'short',
         day: '2-digit',
@@ -92,6 +94,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
     setLocation('');
     setMessage('');
     setFormOpen(false);
+    setIsSubmitting(false);
   };
 
   const filteredEntries = entries.filter(
@@ -162,12 +165,18 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-micro text-neutral-500 mb-1">
-                Name <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-micro text-neutral-500">
+                  Name <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[10px] font-mono text-neutral-400">
+                  {name.length}/50
+                </span>
+              </div>
               <input
                 type="text"
                 required
+                maxLength={50}
                 placeholder="e.g. Sarthak or Anonymous"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -183,6 +192,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
                 <AtSign size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
+                  maxLength={100}
                   placeholder="@handle or site"
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
@@ -199,6 +209,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
                 <MapPin size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
+                  maxLength={60}
                   placeholder="e.g. New Delhi, India"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
@@ -236,12 +247,18 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
 
           {/* Message Area */}
           <div>
-            <label className="block text-micro text-neutral-500 mb-1">
-              Message <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-micro text-neutral-500">
+                Message <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[10px] font-mono text-neutral-400">
+                {message.length}/500
+              </span>
+            </div>
             <textarea
               required
               rows={3}
+              maxLength={500}
               placeholder="Write your greeting, feedback, or thoughts here..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -259,10 +276,11 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-black text-white hover:bg-neutral-800 transition-colors px-4 py-1.5 rounded text-sub font-medium flex items-center gap-1.5 shadow cursor-pointer"
+              disabled={isSubmitting}
+              className="bg-black text-white hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors px-4 py-1.5 rounded text-sub font-medium flex items-center gap-1.5 shadow cursor-pointer"
             >
               <Send size={12} />
-              <span>Post Signature</span>
+              <span>{isSubmitting ? 'Posting...' : 'Post Signature'}</span>
             </button>
           </div>
         </form>

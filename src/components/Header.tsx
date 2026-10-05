@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, ArrowUpRight, Compass, X, Shuffle, Shield } from 'lucide-react';
+import { Volume2, VolumeX, ArrowUpRight, X, Shuffle, Shield } from 'lucide-react';
 import { playClickSound, toggleSound, isSoundEnabled } from '../utils/sound';
 
 export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook' | 'admin';
@@ -218,19 +218,37 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          {/* Mobile menu button */}
+          {/* Dynamic 3-Line Animated Burger Button for Mobile */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-neutral-600 hover:text-black p-1 cursor-pointer"
+            onClick={() => {
+              playClickSound('tick');
+              setMobileMenuOpen(!mobileMenuOpen);
+            }}
+            aria-label="Toggle Navigation Menu"
+            className="md:hidden flex flex-col justify-center items-center w-8 h-8 p-1.5 gap-1 text-neutral-800 hover:text-black focus:outline-none cursor-pointer"
           >
-            {mobileMenuOpen ? <X size={16} /> : <Compass size={16} />}
+            <span
+              className={`h-0.5 w-5 bg-current rounded-full transition-all duration-300 origin-center ${
+                mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''
+              }`}
+            />
+            <span
+              className={`h-0.5 w-5 bg-current rounded-full transition-all duration-300 ${
+                mobileMenuOpen ? 'opacity-0 scale-x-0' : 'opacity-100 scale-x-100'
+              }`}
+            />
+            <span
+              className={`h-0.5 w-5 bg-current rounded-full transition-all duration-300 origin-center ${
+                mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''
+              }`}
+            />
           </button>
         </div>
       </div>
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-neutral-100 px-4 py-3 bg-white/95 flex flex-col gap-2.5">
+        <div className="md:hidden border-t border-neutral-100 px-4 py-3 bg-white/95 backdrop-blur-md flex flex-col gap-2.5 animate-fadeIn">
           <div className="flex items-center justify-between text-micro text-neutral-400 uppercase tracking-wider mb-1">
             <span>Navigation</span>
             <span className="font-mono">{currentTime} IST</span>
@@ -238,51 +256,43 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               onClick={() => handleTabClick('story')}
-              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
-                activeTab === 'story' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              className={`text-left py-1.5 px-2.5 rounded text-sub cursor-pointer transition-colors ${
+                activeTab === 'story' ? 'bg-black text-white font-medium shadow-sm' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
               }`}
             >
-              1. (Story)
+              1. Story
             </button>
             <button
               onClick={() => handleTabClick('home')}
-              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
-                activeTab === 'home' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              className={`text-left py-1.5 px-2.5 rounded text-sub cursor-pointer transition-colors ${
+                activeTab === 'home' ? 'bg-black text-white font-medium shadow-sm' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
               }`}
             >
-              2. (Home/CV)
+              2. Home/CV
             </button>
             <button
               onClick={() => handleTabClick('writings')}
-              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
-                activeTab === 'writings' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              className={`text-left py-1.5 px-2.5 rounded text-sub cursor-pointer transition-colors ${
+                activeTab === 'writings' ? 'bg-black text-white font-medium shadow-sm' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
               }`}
             >
-              3. (Writings)
+              3. Writings
             </button>
             <button
               onClick={() => handleTabClick('stuff')}
-              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
-                activeTab === 'stuff' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              className={`text-left py-1.5 px-2.5 rounded text-sub cursor-pointer transition-colors ${
+                activeTab === 'stuff' ? 'bg-black text-white font-medium shadow-sm' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
               }`}
             >
-              4. (Stuff)
+              4. Stuff
             </button>
             <button
               onClick={() => handleTabClick('guestbook')}
-              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
-                activeTab === 'guestbook' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
+              className={`text-left py-1.5 px-2.5 rounded text-sub cursor-pointer transition-colors ${
+                activeTab === 'guestbook' ? 'bg-black text-white font-medium shadow-sm' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
               }`}
             >
-              5. (Guestbook)
-            </button>
-            <button
-              onClick={() => handleTabClick('admin')}
-              className={`text-left py-1.5 px-2 rounded text-sub cursor-pointer ${
-                activeTab === 'admin' ? 'bg-neutral-100 font-medium' : 'text-neutral-600'
-              }`}
-            >
-              🔒 (Admin)
+              5. Guestbook
             </button>
           </div>
         </div>

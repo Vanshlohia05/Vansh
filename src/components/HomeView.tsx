@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { playClickSound } from '../utils/sound';
-import { Mail, Phone, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase, HeartHandshake, Droplets } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowDown, ExternalLink, BookOpen, Rocket, Award, GraduationCap, Briefcase, HeartHandshake, Droplets, CheckCircle2, Globe, Sparkles } from 'lucide-react';
+import { PortfolioProjectsSection } from './PortfolioProjectsSection';
 
 interface HomeViewProps {
   onNavigateToWritings?: () => void;
@@ -163,42 +164,127 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* ── 2. Key Initiatives & Independent Projects ──────── */}
+      {/* ── 2. Key Initiatives & Independent Ventures ──────── */}
       <section className="py-8 border-b border-neutral-200/80">
         <h2 className="text-xs font-mono font-semibold uppercase tracking-widest text-neutral-400 mb-5 flex items-center gap-2">
           <Rocket size={14} className="text-black" />
-          <span>Key Initiatives & Independent Projects</span>
+          <span>Key Initiatives & Independent Ventures</span>
         </h2>
 
-        {/* SahiRasta Platform */}
-        <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-2">
-            <h3 className="text-base font-bold text-black flex items-center gap-2">
-              <span>Project Lead, SahiRasta Platform</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">
-                ACTIVE
-              </span>
-            </h3>
-            <span className="text-xs font-mono text-neutral-400">April, 2026 - Present</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 1. SahiRasta Platform */}
+          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between gap-1 mb-2">
+                <h3 className="text-base font-bold text-black flex items-center gap-2">
+                  <span>SahiRasta Platform</span>
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-semibold shrink-0">
+                  ACQUIRED / SOLD
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 mb-3 italic">
+                Educational guidance & career roadmapping platform tailored for Indian students.
+              </p>
+              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                <li>Co-founded and engineered the entire web platform & curated roadmaps.</li>
+                <li>Leveraged GenAI workflows for rapid prototyping and actionable pathway matching.</li>
+                <li>Built, scaled user traction, and <strong>successfully sold</strong> the venture.</li>
+              </ul>
+            </div>
+            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400">
+              <span>April, 2026 • Full-Stack & GenAI</span>
+            </div>
           </div>
 
-          <p className="text-xs text-neutral-600 mb-3 italic">
-            Dedicated educational guidance and career roadmap platform tailored for Indian students.
-          </p>
+          {/* 2. DSPowerCement */}
+          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between gap-1 mb-2">
+                <h3 className="text-base font-bold text-black">
+                  <span>DSPowerCement</span>
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200 font-semibold shrink-0">
+                  CLIENT WORK
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 mb-3 font-mono">
+                dspowercement.com
+              </p>
+              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                <li>Industrial supply-chain web architecture & digital presence.</li>
+                <li>Designed brand identity, product catalog layout, and responsive portal.</li>
+                <li>Structured distribution workflows for premier regional industrial cement operations.</li>
+              </ul>
+            </div>
+            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400">
+              <span>2026 • Brand & Web Architecture</span>
+            </div>
+          </div>
 
-          <ul className="space-y-2 text-xs text-neutral-700 list-disc list-inside">
-            <li>
-              Conceptualized and developed <strong>'SahiRasta'</strong>, creating structured roadmaps and actionable career pathways.
-            </li>
-            <li>
-              Leveraged <strong>generative AI workflows</strong> for rapid prototyping, defining core product vision, user journey, and business logic.
-            </li>
-            <li>
-              Managed the end-to-end development lifecycle, taking the project from initial ideation to a functional Minimum Viable Product (MVP).
-            </li>
-          </ul>
+          {/* 3. Xalumni */}
+          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between gap-1 mb-2">
+                <h3 className="text-base font-bold text-black flex items-center gap-1.5">
+                  <span>Xalumni Platform</span>
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold shrink-0">
+                  LIVE
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 mb-3 font-mono">
+                Xalumni.web.app
+              </p>
+              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                <li>High-engagement alumni community networking & mentorship platform.</li>
+                <li>Real-time graduate directories, event matchmaking, and career guidance.</li>
+                <li>Engineered with modern responsive UI and tactile interaction feedback.</li>
+              </ul>
+            </div>
+            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400 flex items-center justify-between">
+              <span>2025 - Present • Community Platform</span>
+              <a
+                href="https://xalumni.web.app"
+                target="_blank"
+                rel="noreferrer"
+                className="text-black font-semibold hover:underline inline-flex items-center gap-1"
+              >
+                <span>Visit</span>
+                <ExternalLink size={11} />
+              </a>
+            </div>
+          </div>
+
+          {/* 4. Awwrange */}
+          <div className="p-5 bg-neutral-50/70 border border-neutral-200 rounded flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between gap-1 mb-2">
+                <h3 className="text-base font-bold text-black flex items-center gap-1.5">
+                  <span>Awwrange Studio</span>
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200 font-semibold shrink-0">
+                  ACTIVE LAB
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 mb-3 font-mono">
+                awwrange
+              </p>
+              <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                <li>Creative engineering lab, vibe-coded web experiments, and visual design.</li>
+                <li>Explorations in tactile web physical software, shaders, and computational aesthetics.</li>
+                <li>Directing digital aesthetic identities for boutique internet products.</li>
+              </ul>
+            </div>
+            <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400">
+              <span>2026 • Creative Engineering & Design</span>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* ── 2.5 Dynamic Portfolio Projects Showcase with Video Embeds & Image Gallery ── */}
+      <PortfolioProjectsSection />
 
       {/* ── 3. Published Books & Literary Work ─────────────── */}
       <section className="py-8 border-b border-neutral-200/80">

@@ -150,10 +150,12 @@ export default async function handler(req: any, res: any) {
         `*Commands:*\n` +
         `📚 */addbook* - Add a book to 2.5D bookshelf\n` +
         `📑 */addessay* - Add essay, report, or video link\n` +
+        `🚀 */addproject* - Add completed portfolio project\n` +
         `📄 *Attach any .md or .txt file* to publish articles directly!\n\n` +
         `*Examples:*\n` +
         `\`/addbook Sapiens | Yuval Noah Harari | 2011 | Cognitive revolutions shaped civilization\`\n\n` +
-        `\`/addessay The Bitter Lesson | https://incompleteideas.net | Article | Rich Sutton\``;
+        `\`/addessay The Bitter Lesson | https://incompleteideas.net | Article | Rich Sutton\`\n\n` +
+        `\`/addproject Sahi Rasta | Full Stack Web | Career guidance platform built and acquired | https://sahirasta.com | https://github.com\``;
 
       await sendTelegramReply(chatId, helpMessage);
       return res.status(200).json({ ok: true });
@@ -261,6 +263,51 @@ export default async function handler(req: any, res: any) {
       );
 
       return res.status(200).json({ ok: true, action: 'add_essay', data: newEssay });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 5. /addproject or /project COMMAND
+    // ─────────────────────────────────────────────────────────────
+    if (text.startsWith('/addproject') || text.startsWith('/project')) {
+      const payload = text.replace(/^\/(?:addproject|project)/, '').trim();
+      const parts = payload.split('|').map((p) => p.trim());
+
+      const title = cleanField(parts[0] || 'Untitled Project');
+      const category = cleanField(parts[1] || 'Web Development');
+      const description = cleanField(parts[2] || 'Project description and overview.');
+      const live_url = cleanField(parts[3] || '');
+      const github_url = cleanField(parts[4] || '');
+      const video_url = cleanField(parts[5] || '');
+      const image_url = cleanField(parts[6] || '');
+
+      const newProj = {
+        id: `proj-${Date.now()}`,
+        title,
+        category,
+        description,
+        live_url: live_url || null,
+        github_url: github_url || null,
+        video_url: video_url || null,
+        image_url: image_url || null,
+        tags: [category, 'Web', 'Design'],
+        status: 'Completed',
+        sort_order: 0,
+      };
+
+      await supabase.from('portfolio_projects').upsert(newProj);
+
+      await sendTelegramReply(
+        chatId,
+        `🚀 *Portfolio Project Added!*\n\n` +
+        `*Title:* ${newProj.title}\n` +
+        `*Category:* ${newProj.category}\n` +
+        `*Description:* ${newProj.description}\n` +
+        (newProj.live_url ? `*Live:* ${newProj.live_url}\n` : '') +
+        (newProj.video_url ? `*Video:* ${newProj.video_url}\n` : '') +
+        `\n_Saved in Supabase and published on portfolio!_`
+      );
+
+      return res.status(200).json({ ok: true, action: 'add_project', data: newProj });
     }
 
     await sendTelegramReply(
