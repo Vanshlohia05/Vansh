@@ -177,7 +177,7 @@ export const GuestbookView: React.FC<GuestbookViewProps> = ({
                 type="text"
                 required
                 maxLength={50}
-                placeholder="e.g. Sarthak or Anonymous"
+                placeholder="Type your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-1.5 text-sub bg-white border border-neutral-200 rounded focus:outline-none focus:border-black transition-colors"
