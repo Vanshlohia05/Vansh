@@ -176,7 +176,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <p className="text-sm text-neutral-700 leading-relaxed mt-6 max-w-3xl">
           A highly motivated Bachelor of Business Administration (BBA) student with over three years of experience in
           community program coordination and event organization, gained through various volunteer leadership roles.
-          Experienced in full-lifecycle project coordination, accounting & taxation compliance, rapid generative AI workflows, vibe coding, and digital design.
+          Experienced in full-lifecycle project coordination, accounting & taxation compliance, rapid generative AI workflows, AI assisted coding, and digital design.
         </p>
       </section>
 
@@ -191,7 +191,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {[
             { title: 'GeM & Udyam Portals', desc: 'Government Registrations & MSME' },
             { title: 'Tally Prime & Tax', desc: 'Bookkeeping, Ledgers & ITR-1' },
-            { title: 'Fullstack & Vibe Coding', desc: 'Next.js, React, Tailwind & Vite' },
+            { title: 'Fullstack & AI Assisted Coding', desc: 'Next.js, React, Tailwind & Vite' },
             { title: 'Cloud & BaaS Architecture', desc: 'Firebase, Supabase & WebRTC' },
             { title: 'Project Coordination', desc: 'End-to-End Lifecycle Execution' },
             { title: 'Volunteer Leadership', desc: 'Community Program Coordination' },

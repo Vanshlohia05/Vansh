@@ -51,7 +51,7 @@ const VANSH_SKILLS = [
   { text: 'Udyam & GeM Compliance', cat: 'REGULATORY' },
   { text: 'Graphic Design (Canva)', cat: 'DESIGN' },
   { text: 'Project Coordination', cat: 'LEADERSHIP' },
-  { text: 'Vibe Coding', cat: 'CODE' },
+  { text: 'AI Assisted Coding', cat: 'CODE' },
   { text: 'SahiRasta Platform Lead', cat: 'PRODUCT' },
   { text: 'Wishpers of the soul (Poetry)', cat: 'WRITING' },
   { text: 'Team Management', cat: 'LEADERSHIP' },
