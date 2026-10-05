@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, ArrowUpRight, X, Shuffle, Shield } from 'lucide-react';
 import { playClickSound, toggleSound, isSoundEnabled } from '../utils/sound';
 
-export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook' | 'admin';
+export type NavTab = 'story' | 'home' | 'writings' | 'stuff' | 'guestbook' | 'admin' | 'seo';
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -191,6 +191,13 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Admin Mode</span>
             </div>
           )}
+
+          {activeTab === 'seo' && (
+            <div className="flex items-center gap-1.5 text-micro text-emerald-700 font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>SEO/AEO Context</span>
+            </div>
+          )}
         </div>
 
         {/* Col 7 & 8: About Toggle & Audio button */}
@@ -350,7 +357,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </li>
                 <li>
                   <a
-                    href="https://www.linkedin.com/in/vanshlohia/"
+                    href="https://www.linkedin.com/in/vansh-lohia-b8928428b/"
                     target="_blank"
                     rel="noreferrer"
                     className="ul-link text-black inline-flex items-center gap-1 hover:text-neutral-600"
@@ -361,10 +368,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </li>
                 <li>
                   <a
-                    href="mailto:lohiavansh24.work@gmail.com"
+                    href="mailto:vanshlohia2005@gmail.com"
                     className="ul-link text-black inline-flex items-center gap-1 hover:text-neutral-600"
                   >
-                    <span>lohiavansh24.work@gmail.com</span>
+                    <span>vanshlohia2005@gmail.com</span>
                     <ArrowUpRight size={11} className="text-neutral-400" />
                   </a>
                 </li>

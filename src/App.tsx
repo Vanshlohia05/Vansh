@@ -6,6 +6,7 @@ import { WritingsView } from './components/WritingsView';
 import { StuffView } from './components/StuffView';
 import { GuestbookView } from './components/GuestbookView';
 import { AdminView } from './components/AdminView';
+import { SeoAeoView } from './components/SeoAeoView';
 import { ProjectModal } from './components/ProjectModal';
 import { ArticleModal } from './components/ArticleModal';
 import { KingCursor } from './components/KingCursor';
@@ -89,11 +90,14 @@ export const App: React.FC = () => {
   // Sync tab with URL hash and pathname
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '') as NavTab;
-      const path = window.location.pathname.replace(/^\//, '').split('/')[0] as NavTab;
-      const target = (hash || path) as NavTab;
-      if (['story', 'home', 'writings', 'stuff', 'guestbook', 'admin'].includes(target)) {
-        setActiveTabState(target);
+      const rawHash = window.location.hash.replace('#', '').toLowerCase();
+      const rawPath = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
+      const target = rawHash || rawPath;
+
+      if (['seo', 'aeo', 'llms', 'llm'].includes(target)) {
+        setActiveTabState('seo');
+      } else if (['story', 'home', 'writings', 'stuff', 'guestbook', 'admin'].includes(target)) {
+        setActiveTabState(target as NavTab);
       }
     };
 
@@ -300,6 +304,10 @@ export const App: React.FC = () => {
 
         {activeTab === 'admin' && (
           <AdminView onExit={() => setActiveTab('story')} />
+        )}
+
+        {activeTab === 'seo' && (
+          <SeoAeoView onBackToHome={() => setActiveTab('home')} />
         )}
       </main>
 

@@ -197,7 +197,7 @@ export const DEFAULT_CV_ITEMS: CvItem[] = [
     subtitle: 'Bachelor of Business Administration - BBA, Business Administration and Management, General',
     dateRange: 'June 2024 - August 2027 (Expected)',
     location: 'Jaipur, Rajasthan',
-    badge: 'Penultimate 2nd Year',
+    badge: '3rd/Final Year',
     link: '',
     description: '3rd Sem SGPA: 8.0 • 77.6%',
     bulletPoints: [

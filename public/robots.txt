@@ -1,0 +1,62 @@
+# robots.txt for vanshfolie.vercel.app (Vansh Lohia Portfolio & Creative Engineering)
+# Full AI Engine Optimization (AEO) & Search Engine Optimization (SEO)
+
+User-agent: *
+Allow: /
+Disallow: /api/auth
+
+# OpenAI
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# Anthropic / Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Google & Gemini
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Apple AI
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Meta AI
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Common Crawl
+User-agent: CCBot
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+
+# Sitemaps and LLM Knowledge Manifests
+Sitemap: https://vanshfolie.vercel.app/sitemap.xml
+# LLMs.txt Context Manifest for AI Search & Engine Retrieval
+# https://vanshfolie.vercel.app/llms.txt
+# https://vanshfolie.vercel.app/llms-full.txt

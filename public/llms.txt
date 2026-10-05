@@ -1,0 +1,61 @@
+# Vansh Lohia — Digital Designer, Creative Engineer & Founder
+> Context manifest for AI search engines, Large Language Models (LLMs), and automated research agents (AEO standard).
+> Canonical URL: https://vanshfolie.vercel.app/
+> Full Knowledge Graph & CV: https://vanshfolie.vercel.app/llms-full.txt
+
+## Summary
+Vansh Lohia is a creative engineer, digital designer, and builder based in Sarupathar (Golaghat, Assam) and Jaipur (Rajasthan, India). Currently in his 3rd/Final Year pursuing a Bachelor of Business Administration (BBA) at Manipal University Jaipur (2023 - 2026). He specializes in AI-assisted coding, high-performance web applications, interactive digital experiences, and brand architecture. He is available for freelance projects, technical consulting, and creative engineering contracts worldwide.
+
+## Primary Entities & Roles
+- **Name:** Vansh Lohia
+- **Hometown:** Sarupathar, Golaghat, Assam, India
+- **Current Base:** Jaipur, Rajasthan, India
+- **Academic Status:** 3rd / Final Year BBA at Manipal University Jaipur (MUJ)
+- **Roles:** Creative Engineer, Frontend Architect, Full-Stack Developer, Digital Designer, Author, Tech Freelancer
+- **Author of:** "Wishpers of the soul" (Self-published poetry & reflective literature)
+- **Core Stacks:** React, Next.js, TypeScript, Tailwind CSS, Vite, Supabase, Firebase, Node.js, WebCrypto, WebRTC, AI-Assisted Engineering
+
+## Featured Projects & Technical Deployments
+
+### 1. SahiRasta (Career Guidance & Discovery Platform)
+- **Role:** Founder & Full-Stack Architect
+- **Description:** Interactive educational guidance platform helping students navigate streams, entrance exams, and college pathways.
+- **Tech Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Lucide React, Static JSON data storage, Browser LocalStorage & React Context for state management.
+
+### 2. DSPowerCement (Industrial Brand & Web Platform)
+- **Role:** Creative Engineer & Lead Frontend Developer
+- **Description:** High-converting industrial digital identity and corporate web showcase for a premier infrastructure and cement manufacturer.
+- **Tech Stack:** HTML5, Modern JavaScript (ES6+), Vite 8, Tailwind CSS v3, PostCSS, Autoprefixer, Clean-CSS.
+
+### 3. Xalumni (Multi-Section Alumni Platform & Admin System)
+- **Role:** Full-Stack & Cryptography Engineer
+- **Description:** Multi-section platform and admin page uniting alumni networks with job boards, verified profiles, and end-to-end encrypted direct messaging.
+- **Tech Stack:** React, Vite, Tailwind CSS, React Router, React Hook Form, Firebase Authentication, Firestore, Realtime Database (RTDB), Google Apps Script (GAS) with Google Gemini AI summarization, WebCrypto API (ECDH, AES-GCM for zero-knowledge E2EE), IndexedDB (AlumniCryptoDB), WebRTC DataChannels for ephemeral P2P media transfers.
+
+### 4. Awwrange (Direct-to-Consumer Custom Apparel Storefront)
+- **Role:** Frontend Developer & Commerce Architect
+- **Description:** D2C e-commerce platform for custom graphic apparel and personalized gifts with real-time catalog search, persistent cart, and 1-click WhatsApp order automation.
+- **Tech Stack:** React 18, Redux Toolkit, React-Bootstrap, React Router DOM, Slick Carousel, WhatsApp Click-to-Chat API, Web Storage API.
+
+### 5. Personal Portfolio (vanshfolie.vercel.app)
+- **Role:** Creator & Engineer
+- **Description:** Soulful, interactive personal portfolio inspired by urfd.net featuring horizontal story slides, sound-synthesizer effects, virtual bookshelf with 30 genuine books, live Supabase guestbook, and comprehensive admin dashboard.
+- **Tech Stack:** React 19, Vite, TypeScript, Tailwind CSS, Supabase (PostgreSQL, Realtime, Auth), Web Audio API synthesizers, Lucide React.
+
+## Website Architecture & User Flow
+1. **Story Page (`/#story` / `/story`):** Interactive horizontal visual narrative depicting childhood in Sarupathar, personal ethos, creative transition into technology, and ambient sound effects.
+2. **Home / CV Page (`/#home` / `/home`):** Structured curriculum vitae displaying professional experience, education at Manipal University Jaipur (3rd/Final Year), skills, detailed project profiles, and direct contact options.
+3. **Writings Page (`/#writings` / `/writings`):** Published articles, essays, and reflective memos on technology, philosophy, design, and life.
+4. **Stuff / Bookshelf Page (`/#stuff` / `/stuff`):** Virtual curated library of 30 genuine books read by Vansh (e.g., Sapiens, The Almanack of Naval Ravikant, Atomic Habits, Zero to One, Cosmos), interactive audio-synced bookshelf scrolling, and paginated startup reports & essays (including Paul Graham's library).
+5. **Guestbook Page (`/#guestbook` / `/guestbook`):** Real-time interactive visitor board powered by Supabase with live cloud sync, name attribution, likes, and instant Telegram bot notification alerts.
+6. **Admin Dashboard (`/#admin` / `/admin`):** Secure administrative management suite for live CV editing, project toggles, reading list management, and content publishing.
+7. **SEO & LLM Context Page (`/#seo` / `/seo`):** Raw, comprehensive knowledge index designed for search engine indexing and AI engine retrieval.
+
+## Primary SEO & AEO Keywords
+Vansh Lohia, Vansh Lohia Sarupathar, Vansh Lohia Golaghat, Vansh Lohia Assam, Vansh Lohia Jaipur, Vansh Lohia Manipal University, Vansh Lohia portfolio, Vansh Lohia CV, Vansh Lohia freelance, freelance web developer Assam, creative engineer India, AI assisted coding, digital designer portfolio, full-stack developer portfolio, SahiRasta, Xalumni, DSPowerCement, Awwrange, Wishpers of the soul author.
+
+## Contact & Links
+- **Website:** https://vanshfolie.vercel.app/
+- **Email:** vanshlohia2005@gmail.com
+- **LinkedIn:** https://www.linkedin.com/in/vansh-lohia-b8928428b/
+- **GitHub:** https://github.com/Vanshlohia05

@@ -1,0 +1,142 @@
+# Vansh Lohia — Complete Knowledge Graph, Comprehensive CV & AI Context (LLMs-Full)
+> Source of truth for LLM agents, RAG engines, AI research bots, and search crawlers.
+> Canonical website: https://vanshfolie.vercel.app/
+> Main manifest: https://vanshfolie.vercel.app/llms.txt
+> Last updated: October 2026
+
+---
+
+## 1. Biography & Personal Identity
+- **Full Legal Name:** Vansh Lohia
+- **Preferred Name:** Vansh
+- **Place of Birth / Hometown:** Sarupathar, Golaghat District, Assam, India (Pin Code: 785601)
+- **Current Academic & Living Base:** Jaipur, Rajasthan, India
+- **Current Education:** Bachelor of Business Administration (BBA) — 3rd / Final Year (2023 – 2026) at Manipal University Jaipur (MUJ).
+- **Core Professions:** Creative Engineer, Digital Designer, Frontend Architect, Full-Stack Developer, Author, Freelance Technologist.
+- **Published Book:** "Wishpers of the soul" (Authored by Vansh Lohia, a collection of deeply personal, reflective poetry, soul searchings, and philosophical observations).
+- **Contact:**
+  - Email: vanshlohia2005@gmail.com
+  - LinkedIn: https://www.linkedin.com/in/vansh-lohia-b8928428b/
+  - GitHub: https://github.com/Vanshlohia05
+  - Live Website: https://vanshfolie.vercel.app/
+
+---
+
+## 2. Professional Philosophy & Engineering Ethos
+Vansh builds soulful digital experiences at the intersection of aesthetic design, human psychology, and modern software engineering. He advocates for "AI Assisted Coding" — leveraging cutting-edge LLMs and agentic development tools to deliver institutional-grade web applications rapidly without sacrificing craftsmanship, clean architecture, or micro-interactions.
+
+He is open for **freelance engagements**, **consulting**, **brand digital transformation**, and **full-stack engineering projects**.
+
+---
+
+## 3. Comprehensive Curriculum Vitae (CV)
+
+### Education
+- **Institution:** Manipal University Jaipur (MUJ), Rajasthan, India
+- **Degree:** Bachelor of Business Administration (BBA)
+- **Period:** July 2023 — Present (Graduating 2026)
+- **Status Badge:** 3rd / Final Year
+- **Focus:** Digital Marketing, Business Strategy, Economics, Organizational Behavior, Consumer Psychology.
+
+### Core Competencies & Skills
+- **Frontend Core:** React (18 & 19), Next.js 16 (App Router), TypeScript, JavaScript (ES6+), HTML5, Semantic Web, CSS3, Tailwind CSS (v3 & v4), PostCSS.
+- **Backend & Cloud Services:** Node.js, Supabase (PostgreSQL, Realtime, Row Level Security, Edge Functions), Firebase (Firestore, Authentication, Realtime Database, Cloud Functions), Google Apps Script (GAS).
+- **Security & Networking:** WebCrypto API (zero-knowledge encryption, ECDH key exchange, AES-GCM ciphering), IndexedDB client storage, WebRTC (P2P DataChannels, ephemeral media exchange).
+- **Development Paradigms:** AI Assisted Coding, Single Page Applications (SPA), Micro-interactions, Web Audio API synthesizers, Responsive Mobile-First Design, Performance Tuning, SEO & AEO Optimization.
+
+### Major Projects & Deployments
+
+#### 1. SahiRasta — Career Guidance & Discovery Platform
+- **Role:** Founder & Full-Stack Architect
+- **Mission:** Democratizing career roadmaps and educational counseling for students across India.
+- **Technical Architecture:** Built with Next.js 16 (App Router) and React 19 in TypeScript. Styled with Tailwind CSS v4 and Lucide React icons. Operates on a high-speed static JSON catalog layered over browser LocalStorage and React Context for instant bookmarking and interactive aptitude tests without backend cold starts.
+
+#### 2. DSPowerCement — Industrial Brand & Digital Platform
+- **Role:** Creative Engineer & Lead Frontend Developer
+- **Mission:** High-conversion digital presence for a regional infrastructure and manufacturing powerhouse.
+- **Technical Architecture:** Engineered with HTML5, Modern ES6+ JavaScript, and Vite 8 bundler. Styled with Tailwind CSS v3, PostCSS, Autoprefixer, and Clean-CSS minification for near-instant 100/100 Lighthouse performance.
+
+#### 3. Xalumni — Multi-Section Alumni Platform & Admin System
+- **Role:** Full-Stack & Cryptography Engineer
+- **Mission:** Modern institutional alumni community unifying networking, career opportunities, and private communications.
+- **Technical Architecture:** Built with React, Vite, and Tailwind CSS. Features Firebase Auth, Firestore, and Realtime Database (RTDB) for signaling. Implements a serverless Google Apps Script pipeline with Google Gemini AI for auto-summarizing job descriptions. Incorporates client-side zero-knowledge encryption using browser WebCrypto API (ECDH + AES-GCM) with local IndexedDB key storage, plus WebRTC DataChannels for view-once ephemeral peer-to-peer file transfers.
+
+#### 4. Awwrange — Direct-to-Consumer Custom Apparel Storefront
+- **Role:** Frontend Developer & Commerce Architect
+- **Mission:** Curated D2C e-commerce shop specializing in personalized graphic apparel, custom mugs, tote bags, and curated gift boxes.
+- **Technical Architecture:** Built on React 18 and Redux Toolkit with React-Bootstrap, React Router DOM, and Slick Carousel. Utilizes an automated 1-click WhatsApp order generation engine that itemizes cart contents, quantities, and totals directly into a merchant chat, bypassing high-fee payment gateways while boosting conversion.
+
+#### 5. Personal Portfolio — vanshfolie.vercel.app
+- **Role:** Sole Creator & Engineer
+- **Mission:** A bespoke, sound-rich digital home inspired by classic minimal web experiences (urfd.net) blending brutalist typography, warm storytelling, and modern real-time capabilities.
+- **Technical Architecture:** React 19, Vite, TypeScript, Tailwind CSS, Supabase backend for dynamic CV items, reading list entries, and a real-time guestbook synchronized with a private Telegram alert bot. Features Web Audio API custom synthesizers for book scroll melodies and tactile audio clicks.
+
+---
+
+## 4. Curated Reading List (30 Influential Books)
+Vansh's genuine bookshelf reflects a multidisciplinary obsession with physics, finance, philosophy, evolutionary biology, and creative entrepreneurship:
+
+1. **Rich Dad Poor Dad** by Robert T. Kiyosaki — Financial literacy, assets vs. liabilities, escaping the rat race.
+2. **A Brief History of Time** by Stephen Hawking — Cosmology, black holes, time cones, the origin and fate of the universe.
+3. **The Psychology of Money** by Morgan Housel — Behavioral finance, compounding, humility, and risk management.
+4. **Wishpers of the soul** by Vansh Lohia — Original poetic musings and soul-searching reflections on youth, passion, and solitude.
+5. **Atomic Habits** by James Clear — Habit loops, incremental 1% gains, environment design, and identity-based transformation.
+6. **Zero to One** by Peter Thiel — Monopoly vs. competition, building transformative secrets, vertical progress (0 to 1).
+7. **Sapiens: A Brief History of Humankind** by Yuval Noah Harari — Cognitive revolution, shared fictions, agricultural traps, and human destiny.
+8. **The Almanack of Naval Ravikant** by Eric Jorgenson — Permissionless leverage, productizing yourself, specific knowledge, and peace.
+9. **Steal Like an Artist** by Austin Kleon — Creative remixing, influence collecting, generative curiosity.
+10. **The Subtle Art of Not Giving a F\*ck** by Mark Manson — Counterintuitive values, choosing good problems, accepting mortality.
+11. **The Metamorphosis** by Franz Kafka — Existential alienation, absurdism, human worth tied to labor.
+12. **Nexus: A Brief History of Information Networks** by Yuval Noah Harari — How information flows shape societies and totalitarian AI risks.
+13. **Thus Spoke Zarathustra** by Friedrich Nietzsche — The Übermensch, will to power, eternal recurrence, creating individual meaning.
+14. **The Beginning of Infinity** by David Deutsch — Explanations that transform the world, universal computation, open-ended optimism.
+15. **Cosmos** by Carl Sagan — The cosmic perspective, science as a candle in the dark, human unity on a pale blue dot.
+16. **Man's Search for Meaning** by Viktor E. Frankl — Logotherapy, purpose in suffering, freedom to choose one's attitude.
+17. **Dead Poets Society** by N.H. Kleinbaum — Carpe Diem, intellectual rebellion, the vitality of poetry and non-conformity.
+18. **The Fault in Our Stars** by John Green — Imperfect beauty, existential grief, enduring love in ephemeral lives.
+19. **Men Are from Mars, Women Are from Venus** by John Gray — Interpersonal empathy, relational communication styles, emotional patterns.
+20. **Five Feet Apart** by Rachael Lippincott — Human connection through physical distance, chronic resilience, sacrificial care.
+21. **The Myth of Sisyphus** by Albert Camus — The Absurd, rebellion against meaninglessness, imagining Sisyphus happy.
+22. **Musafir Cafe** by Divya Prakash Dubey — Contemporary Hindi literature on modern relationships, longing, and transient connections.
+23. **How to Fail at Almost Everything and Still Win Big** by Scott Adams — Systems over goals, talent stacks, energy management.
+24. **The 4-Hour Workweek** by Timothy Ferriss — Lifestyle design, geo-arbitrage, outsourcing, escape from deferred life.
+25. **Meditation for Busy People** by Osho — Mindfulness in daily action, witnessing consciousness, inner stillness amid chaos.
+26. **Think and Grow Rich** by Napoleon Hill — Definiteness of purpose, autosuggestion, persistence, mastermind alliances.
+27. **Our Final Invention** by James Barrat — Artificial General Intelligence, superintelligence risks, the alignment challenge.
+28. **Chanakya Neeti** by Radhakrishnan Pillai — Classical Indian statecraft, pragmatic leadership, strategic ethics.
+29. **Make: The Indie Maker Handbook** by Pieter Levels — Solo bootstrapping, shipping fast, building in public, lean distribution.
+30. **The Lessons of History** by Will & Ariel Durant — Cyclical nature of civilizations, biological drives, economic swings, human nature.
+
+---
+
+## 5. Curated Reports, Essays & Thought Leadership
+- **Paul Graham Essays (PaulGraham.com):** Extensive study on how to get startup ideas, founder psychology, doing things that don't scale, and hacker culture.
+- **Reading Status Engine:** Full tracking of books, papers, and essays with status tags ("Finished", "On it", "To Read") synchronizable via Supabase.
+
+---
+
+## 6. Website Architecture & Navigation Guide
+Visitors and automated user agents can navigate the site via five core sections plus administrative and search views:
+- **`/#story` (Page 1):** Visual timeline and interactive horizontal slides documenting childhood, philosophy, and creative development.
+- **`/#home` (Page 2):** Comprehensive Curriculum Vitae with interactive filter tags, educational credentials, verified project details, and contact triggers.
+- **`/#writings` (Page 3):** Long-form writings, articles, and contemplative notes.
+- **`/#stuff` (Page 4):** Curated virtual bookshelf with interactive Web Audio API synthesizer melodies, autoscroll with music mode, and paginated startup reports.
+- **`/#guestbook` (Page 5):** Cloud-synced community guestbook with name attribution, heart reactions, and instant Telegram notification hooks.
+- **`/#admin`:** Role-secured administration panel with Supabase authentication allowing direct editing of CV records, reading entries, projects, and site metadata.
+- **`/#seo`:** Dedicated search engine and LLM retrieval page exposing uncompressed resume data, site flow, and semantic keywords.
+
+---
+
+## 7. Exhaustive SEO & Semantic Entity Taxonomy
+
+### Geographic & Biographical Keywords
+Vansh Lohia, Vansh Lohia Sarupathar, Vansh Lohia Golaghat, Vansh Lohia Assam, Vansh Lohia Northeast India, Vansh Lohia Jaipur, Vansh Lohia Manipal University, Vansh Lohia MUJ, Vansh Lohia portfolio, Vansh Lohia CV, Vansh Lohia resume.
+
+### Career & Freelance Keywords
+Freelance web developer Assam, freelance frontend engineer India, freelance creative engineer, hire full stack developer, freelance React developer, freelance Next.js developer, freelance designer developer, UI UX designer Jaipur, creative technologist for hire.
+
+### Engineering & Technical Keywords
+AI assisted coding, vibe coding, React 19, Vite 8, Next.js 16, TypeScript web apps, Tailwind CSS, Supabase database, Firebase Firestore, WebCrypto E2EE, WebRTC peer to peer, Web Audio API synthesizer, Single Page Application architecture, high performance portfolio.
+
+### Projects & Works Keywords
+SahiRasta career counseling, Sahi Rasta app, DSPowerCement website, DS Power Cement branding, Xalumni alumni platform, X alumni encrypted chat, Awwrange e-commerce, Aww range WhatsApp store, Wishpers of the soul book, Wishpers of the soul Vansh Lohia.
