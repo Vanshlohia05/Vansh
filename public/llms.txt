@@ -18,28 +18,28 @@ Vansh Lohia is a creative engineer, digital designer, and builder based in Sarup
 ## Featured Projects & Technical Deployments
 
 ### 1. SahiRasta (Career Guidance & Discovery Platform)
-- **Role:** Founder & Full-Stack Architect
-- **Description:** Interactive educational guidance platform helping students navigate streams, entrance exams, and college pathways.
+- **Role:** Co-Founder & Developer
+- **Description:** Educational guidance platform helping students navigate streams, entrance exams, and college pathways.
 - **Tech Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Lucide React, Static JSON data storage, Browser LocalStorage & React Context for state management.
 
 ### 2. DSPowerCement (Industrial Brand & Web Platform)
-- **Role:** Creative Engineer & Lead Frontend Developer
-- **Description:** High-converting industrial digital identity and corporate web showcase for a premier infrastructure and cement manufacturer.
+- **Role:** Web Developer & Brand Designer (Sold)
+- **Description:** Sold client project — responsive catalog site with procurement inquiry flows and brand identity for a regional cement manufacturer.
 - **Tech Stack:** HTML5, Modern JavaScript (ES6+), Vite 8, Tailwind CSS v3, PostCSS, Autoprefixer, Clean-CSS.
 
-### 3. Xalumni (Multi-Section Alumni Platform & Admin System)
-- **Role:** Full-Stack & Cryptography Engineer
-- **Description:** Multi-section platform and admin page uniting alumni networks with job boards, verified profiles, and end-to-end encrypted direct messaging.
-- **Tech Stack:** React, Vite, Tailwind CSS, React Router, React Hook Form, Firebase Authentication, Firestore, Realtime Database (RTDB), Google Apps Script (GAS) with Google Gemini AI summarization, WebCrypto API (ECDH, AES-GCM for zero-knowledge E2EE), IndexedDB (AlumniCryptoDB), WebRTC DataChannels for ephemeral P2P media transfers.
+### 3. Xalumni (Multi-Section Alumni & Office Platform)
+- **Role:** Full-Stack Developer
+- **Description:** Multi-section platform and admin page uniting alumni and workplace networks with job boards, verified profiles, encrypted chat, audio calls, 48-hour and 20-day auto-delete, and zero-cost model.
+- **Tech Stack:** React, Vite, Tailwind CSS, React Router, React Hook Form, Firebase (Auth, Firestore, Realtime DB, Hosting), Google Apps Script with Gemini AI, end-to-end encrypted messaging.
 
 ### 4. Awwrange (Direct-to-Consumer Custom Apparel Storefront)
-- **Role:** Frontend Developer & Commerce Architect
+- **Role:** Founder & Full-Stack Developer
 - **Description:** D2C e-commerce platform for custom graphic apparel and personalized gifts with real-time catalog search, persistent cart, and 1-click WhatsApp order automation.
 - **Tech Stack:** React 18, Redux Toolkit, React-Bootstrap, React Router DOM, Slick Carousel, WhatsApp Click-to-Chat API, Web Storage API.
 
 ### 5. Personal Portfolio (vanshfolie.vercel.app)
-- **Role:** Creator & Engineer
-- **Description:** Soulful, interactive personal portfolio inspired by urfd.net featuring horizontal story slides, sound-synthesizer effects, virtual bookshelf with 30 genuine books, live Supabase guestbook, and comprehensive admin dashboard.
+- **Role:** Designer & Creative Developer
+- **Description:** Minimalist digital garden featuring horizontal story slides, sound-synthesizer effects, virtual bookshelf with 30 genuine books, live Supabase guestbook, and comprehensive admin dashboard.
 - **Tech Stack:** React 19, Vite, TypeScript, Tailwind CSS, Supabase (PostgreSQL, Realtime, Auth), Web Audio API synthesizers, Lucide React.
 
 ## Website Architecture & User Flow

@@ -40,34 +40,34 @@ He is open for **freelance engagements**, **consulting**, **brand digital transf
 
 ### Core Competencies & Skills
 - **Frontend Core:** React (18 & 19), Next.js 16 (App Router), TypeScript, JavaScript (ES6+), HTML5, Semantic Web, CSS3, Tailwind CSS (v3 & v4), PostCSS.
-- **Backend & Cloud Services:** Node.js, Supabase (PostgreSQL, Realtime, Row Level Security, Edge Functions), Firebase (Firestore, Authentication, Realtime Database, Cloud Functions), Google Apps Script (GAS).
-- **Security & Networking:** WebCrypto API (zero-knowledge encryption, ECDH key exchange, AES-GCM ciphering), IndexedDB client storage, WebRTC (P2P DataChannels, ephemeral media exchange).
+- **Backend & Cloud Services:** Node.js, Supabase (PostgreSQL, Realtime, Edge Functions), Firebase (Firestore, Authentication, Realtime Database, Cloud Functions), Google Apps Script (GAS).
+- **Security & Networking:** End-to-end encrypted messaging, secure local storage, WebRTC (P2P DataChannels, ephemeral media exchange).
 - **Development Paradigms:** AI Assisted Coding, Single Page Applications (SPA), Micro-interactions, Web Audio API synthesizers, Responsive Mobile-First Design, Performance Tuning, SEO & AEO Optimization.
 
 ### Major Projects & Deployments
 
 #### 1. SahiRasta — Career Guidance & Discovery Platform
-- **Role:** Founder & Full-Stack Architect
+- **Role:** Co-Founder & Developer
 - **Mission:** Democratizing career roadmaps and educational counseling for students across India.
 - **Technical Architecture:** Built with Next.js 16 (App Router) and React 19 in TypeScript. Styled with Tailwind CSS v4 and Lucide React icons. Operates on a high-speed static JSON catalog layered over browser LocalStorage and React Context for instant bookmarking and interactive aptitude tests without backend cold starts.
 
-#### 2. DSPowerCement — Industrial Brand & Digital Platform
-- **Role:** Creative Engineer & Lead Frontend Developer
-- **Mission:** High-conversion digital presence for a regional infrastructure and manufacturing powerhouse.
-- **Technical Architecture:** Engineered with HTML5, Modern ES6+ JavaScript, and Vite 8 bundler. Styled with Tailwind CSS v3, PostCSS, Autoprefixer, and Clean-CSS minification for near-instant 100/100 Lighthouse performance.
+#### 2. DSPowerCement — Industrial Brand & Digital Platform (Sold)
+- **Role:** Web Developer & Brand Designer
+- **Mission:** Sold client project — responsive catalog site with procurement inquiry flows and brand identity for a regional infrastructure and manufacturing powerhouse.
+- **Technical Architecture:** Built with HTML5, Modern ES6+ JavaScript, and Vite 8 bundler. Styled with Tailwind CSS v3, PostCSS, Autoprefixer, and Clean-CSS minification for fast performance.
 
-#### 3. Xalumni — Multi-Section Alumni Platform & Admin System
-- **Role:** Full-Stack & Cryptography Engineer
-- **Mission:** Modern institutional alumni community unifying networking, career opportunities, and private communications.
-- **Technical Architecture:** Built with React, Vite, and Tailwind CSS. Features Firebase Auth, Firestore, and Realtime Database (RTDB) for signaling. Implements a serverless Google Apps Script pipeline with Google Gemini AI for auto-summarizing job descriptions. Incorporates client-side zero-knowledge encryption using browser WebCrypto API (ECDH + AES-GCM) with local IndexedDB key storage, plus WebRTC DataChannels for view-once ephemeral peer-to-peer file transfers.
+#### 3. Xalumni — Multi-Section Alumni & Office Platform
+- **Role:** Full-Stack Developer
+- **Mission:** Alumni and workplace community platform uniting networking, career opportunities, and direct communications.
+- **Technical Architecture:** Built with React, Vite, and Tailwind CSS. Features Firebase Auth, Firestore, and Realtime Database for signaling. Includes end-to-end encrypted messaging, audio calls, 48-hour and 20-day auto-delete, view-once media transfers, and a zero-cost infrastructure model.
 
 #### 4. Awwrange — Direct-to-Consumer Custom Apparel Storefront
-- **Role:** Frontend Developer & Commerce Architect
+- **Role:** Founder & Full-Stack Developer
 - **Mission:** Curated D2C e-commerce shop specializing in personalized graphic apparel, custom mugs, tote bags, and curated gift boxes.
 - **Technical Architecture:** Built on React 18 and Redux Toolkit with React-Bootstrap, React Router DOM, and Slick Carousel. Utilizes an automated 1-click WhatsApp order generation engine that itemizes cart contents, quantities, and totals directly into a merchant chat, bypassing high-fee payment gateways while boosting conversion.
 
 #### 5. Personal Portfolio — vanshfolie.vercel.app
-- **Role:** Sole Creator & Engineer
+- **Role:** Designer & Creative Developer
 - **Mission:** A bespoke, sound-rich digital home inspired by classic minimal web experiences (urfd.net) blending brutalist typography, warm storytelling, and modern real-time capabilities.
 - **Technical Architecture:** React 19, Vite, TypeScript, Tailwind CSS, Supabase backend for dynamic CV items, reading list entries, and a real-time guestbook synchronized with a private Telegram alert bot. Features Web Audio API custom synthesizers for book scroll melodies and tactile audio clicks.
 

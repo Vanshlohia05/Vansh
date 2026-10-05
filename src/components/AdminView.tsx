@@ -810,7 +810,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
           </form>
 
           <div className="pt-2 text-center text-[10px] text-neutral-400">
-            <span>Timing-safe HMAC-SHA256 authenticated</span>
+            <span>Secure authenticated session</span>
           </div>
 
         </div>

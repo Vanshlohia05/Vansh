@@ -27,7 +27,7 @@ export const DEFAULT_PORTFOLIO_PROJECTS: PortfolioProject[] = [
     year: '2026',
     status: 'Live Platform',
     description:
-      'Conceptualized, architected, and engineered SahiRasta from scratch. Scaled user onboarding with structured academic roadmaps, stream selection quizzes, and interactive decision trees.',
+      'Built SahiRasta from scratch with structured academic roadmaps, stream selection quizzes, and interactive decision trees.',
     techStack: [
       'Next.js 16 (App Router)',
       'React 19',
@@ -49,9 +49,9 @@ export const DEFAULT_PORTFOLIO_PROJECTS: PortfolioProject[] = [
     tagline: 'Industrial distribution platform, web architecture & digital identity (dspowercement.com)',
     category: 'Brand & Web Architecture',
     year: '2026',
-    status: 'Client Work',
+    status: 'Sold',
     description:
-      'Engineered modern digital brand infrastructure and supply-chain web presence for premier industrial cement distribution across North-East India (dspowercement.com).',
+      'Sold client project — built a responsive catalog site with procurement inquiry flows and brand identity for a premier cement manufacturer (dspowercement.com).',
     techStack: [
       'HTML5',
       'Modern JavaScript (ES6+)',
@@ -73,7 +73,7 @@ export const DEFAULT_PORTFOLIO_PROJECTS: PortfolioProject[] = [
     year: '2025',
     status: 'Live',
     description:
-      'High-engagement alumni web platform connecting students, mentors, and graduates with real-time matchmaking, automated Gemini AI job summaries, end-to-end encrypted messaging, and peer mentorship directories.',
+      'Multi section platform and admin page for alumni directory and office networks. Features encrypted chat, audio calls, 48-hour and 20-day auto-delete, and a zero-cost operational model.',
     techStack: [
       'React',
       'Vite',
@@ -82,8 +82,8 @@ export const DEFAULT_PORTFOLIO_PROJECTS: PortfolioProject[] = [
       'React Hook Form',
       'Firebase (Auth, Firestore, RTDB, Hosting)',
       'Google Apps Script & Gemini AI',
-      'WebCrypto API (E2EE)',
-      'WebRTC DataChannels (P2P)',
+      'End-to-End Encryption',
+      'WebRTC DataChannels',
     ],
     liveUrl: 'https://xalumni.web.app',
     githubUrl: 'https://github.com/Vanshlohia05',

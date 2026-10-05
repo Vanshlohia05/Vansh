@@ -22,14 +22,14 @@ Author: "Wishpers of the soul" (Poetry & Philosophy)
 SKILLS & SPECIALIZATIONS:
 - AI Assisted Coding, React 19, Next.js 16, Vite 8, TypeScript, Tailwind CSS
 - Supabase (PostgreSQL, Realtime, Auth), Firebase (Firestore, RTDB, Auth), Google Apps Script, Google Gemini AI
-- WebCrypto API (ECDH, AES-GCM Zero-Knowledge E2EE), WebRTC DataChannels, Web Audio API
+- End-to-end encrypted messaging, WebRTC DataChannels, Web Audio API
 
 PROJECTS:
-1. SahiRasta: Career guidance & discovery platform (Next.js 16, React 19, TypeScript, Tailwind CSS v4, LocalStorage).
-2. DSPowerCement: Industrial brand & digital corporate platform (HTML5, Modern JS ES6+, Vite 8, Tailwind CSS v3).
-3. Xalumni: Multi-section platform and admin page (React, Vite, Firebase, Gemini AI, WebCrypto E2EE, WebRTC).
-4. Awwrange: D2C custom apparel storefront with 1-click WhatsApp order automation (React 18, Redux Toolkit).
-5. Personal Portfolio: Interactive sound-synthesizer portfolio with live Supabase guestbook & admin suite.
+1. SahiRasta: Career guidance & discovery platform (Co-Founder & Developer).
+2. DSPowerCement: Sold client project — responsive catalog site with procurement inquiry flows (Web Developer & Brand Designer).
+3. Xalumni: Multi-section alumni & office platform with encrypted chat, audio calls, auto-delete, zero-cost model (Full-Stack Developer).
+4. Awwrange: D2C custom apparel storefront with 1-click WhatsApp order automation (Founder & Full-Stack Developer).
+5. Personal Portfolio: Interactive digital garden with bookshelf symphony, live guestbook, and admin suite (Designer & Creative Developer).
 
 CONTACT:
 Email: lohiavansh24.work@gmail.com
@@ -222,7 +222,7 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
               <div className="border border-neutral-200 rounded-lg p-4 bg-white space-y-1">
                 <span className="text-xs font-mono text-neutral-400 uppercase">Security & Networking</span>
                 <p className="text-sm font-medium text-black">
-                  WebCrypto API (zero-knowledge ECDH, AES-GCM encryption), IndexedDB client vaults, WebRTC DataChannels (peer-to-peer ephemeral streaming).
+                  End-to-end encrypted messaging, secure local client storage, and peer-to-peer ephemeral streaming.
                 </p>
               </div>
             </div>
@@ -238,10 +238,10 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
             <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-base font-bold text-black">1. SahiRasta</h4>
-                <span className="text-xs font-mono text-neutral-500">Founder &amp; Full-Stack Architect</span>
+                <span className="text-xs font-mono text-neutral-500">Co-Founder &amp; Developer</span>
               </div>
               <p className="text-sm text-neutral-600">
-                An interactive career guidance and exploration portal helping high school and college students navigate entrance exams, college tiers, and stream decisions with clarity.
+                Built the educational guidance and career roadmapping platform tailored for Indian students.
               </p>
               <div className="text-xs font-mono text-neutral-500 bg-neutral-50 p-2.5 rounded border border-neutral-100">
                 <strong>Tech Stack:</strong> Next.js 16 (App Router) &bull; React 19 &bull; TypeScript &bull; Tailwind CSS v4 &bull; Lucide React &bull; Static JSON Catalog &bull; Browser LocalStorage &amp; React Context &bull; ESLint &amp; PostCSS
@@ -252,10 +252,15 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
             <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-base font-bold text-black">2. DSPowerCement</h4>
-                <span className="text-xs font-mono text-neutral-500">Creative Engineer &amp; Lead Frontend</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 text-black border border-neutral-200 font-bold">
+                    SOLD
+                  </span>
+                  <span className="text-xs font-mono text-neutral-500">Web Developer &amp; Brand Designer</span>
+                </div>
               </div>
               <p className="text-sm text-neutral-600">
-                High-converting digital showcase and corporate presence for a premier regional infrastructure and industrial manufacturing company.
+                Sold client project — built a responsive catalog site with procurement inquiry flows and brand identity.
               </p>
               <div className="text-xs font-mono text-neutral-500 bg-neutral-50 p-2.5 rounded border border-neutral-100">
                 <strong>Tech Stack:</strong> HTML5 &bull; Modern JavaScript (ES6+) &bull; Vite 8 &bull; Tailwind CSS v3 &bull; PostCSS &bull; Autoprefixer &bull; Clean-CSS
@@ -266,16 +271,16 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
             <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-base font-bold text-black">3. Xalumni</h4>
-                <span className="text-xs font-mono text-neutral-500">Multi-section platform and admin page</span>
+                <span className="text-xs font-mono text-neutral-500">Full-Stack Developer</span>
               </div>
               <p className="text-sm text-neutral-600">
-                A multi-section alumni platform connecting graduates with job boards, verified profiles, AI job summarization, zero-knowledge encrypted messaging, and peer-to-peer media exchange.
+                Multi-section platform and admin page for alumni directory and office networks. Features encrypted chat, audio calls, 48-hour and 20-day auto-delete, and a zero-cost operational model.
               </p>
               <div className="text-xs font-mono text-neutral-500 bg-neutral-50 p-2.5 rounded border border-neutral-100 space-y-1">
                 <div><strong>Frontend:</strong> React &bull; Vite &bull; Tailwind CSS &bull; React Router &bull; React Hook Form</div>
                 <div><strong>Backend:</strong> Firebase Auth &bull; Firestore &bull; Realtime Database (RTDB) &bull; Firebase Hosting</div>
                 <div><strong>Automation &amp; AI:</strong> Google Apps Script (GAS) &bull; Google Gemini API &bull; Google Forms</div>
-                <div><strong>Security &amp; P2P:</strong> WebCrypto API (ECDH, AES-GCM E2EE) &bull; IndexedDB &bull; WebRTC DataChannels</div>
+                <div><strong>Security &amp; Messaging:</strong> End-to-end encrypted messaging, local secure key storage, view-once media</div>
               </div>
             </div>
 
@@ -283,7 +288,7 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
             <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-base font-bold text-black">4. Awwrange</h4>
-                <span className="text-xs font-mono text-neutral-500">Frontend Developer &amp; Commerce Architect</span>
+                <span className="text-xs font-mono text-neutral-500">Founder &amp; Full-Stack Developer</span>
               </div>
               <p className="text-sm text-neutral-600">
                 Direct-to-consumer e-commerce storefront for customized graphic apparel, mugs, totes, and curated gifting sets featuring live catalog search and automated 1-click WhatsApp order generation.
@@ -297,10 +302,10 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
             <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-base font-bold text-black">5. Personal Portfolio</h4>
-                <span className="text-xs font-mono text-neutral-500">Sole Creator &amp; Engineer</span>
+                <span className="text-xs font-mono text-neutral-500">Designer &amp; Creative Developer</span>
               </div>
               <p className="text-sm text-neutral-600">
-                Minimalist, sound-synthesized digital universe inspired by urfd.net featuring horizontal story slides, sound effects, 30-book interactive library with autoscroll melodies, real-time Supabase guestbook, and full admin suite.
+                Minimalist, sound-synthesized digital universe inspired by urfd.net featuring horizontal story slides, 30-book interactive library with autoscroll melodies, real-time Supabase guestbook, and full admin suite.
               </p>
               <div className="text-xs font-mono text-neutral-500 bg-neutral-50 p-2.5 rounded border border-neutral-100">
                 <strong>Tech Stack:</strong> React 19 &bull; Vite &bull; TypeScript &bull; Tailwind CSS &bull; Supabase (Postgres, Realtime, Auth) &bull; Web Audio API Synthesizers &bull; Telegram Bot Webhook
@@ -473,7 +478,7 @@ Open for worldwide freelance, brand engineering, and technical contracts.`;
                   'Tailwind CSS v4',
                   'Supabase PostgreSQL Realtime',
                   'Firebase Firestore BaaS',
-                  'WebCrypto E2EE ECDH AES-GCM',
+                  'End-to-End Encrypted Messaging',
                   'WebRTC DataChannels P2P',
                   'Web Audio API Sound Synthesizer',
                   'Google Gemini API automation',
