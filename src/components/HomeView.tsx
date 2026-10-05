@@ -141,29 +141,20 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Quick Contact Info */}
           <div className="flex flex-col gap-1.5 text-xs font-mono text-neutral-600 bg-neutral-50 p-3.5 rounded border border-neutral-200/60">
             <a
-              href="mailto:lohiavansh24.work@gmail.com"
+              href="mailto:vanshlohia2005@gmail.com"
               className="flex items-center gap-2 hover:text-blue-800 transition-colors text-blue-600 font-medium"
             >
               <Mail size={12} className="text-blue-500" />
-              <span>lohiavansh24.work@gmail.com</span>
+              <span>vanshlohia2005@gmail.com</span>
             </a>
             <a
-              href="https://www.linkedin.com/in/vanshlohia/"
+              href="https://www.linkedin.com/in/vansh-lohia-b8928428b/"
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 hover:text-black transition-colors text-blue-600 font-medium"
             >
               <ExternalLink size={12} className="text-blue-500" />
-              <span>linkedin.com/in/vanshlohia ↗</span>
-            </a>
-            <a
-              href="https://www.instagram.com/vanshlohia05"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 hover:text-black transition-colors text-neutral-600"
-            >
-              <ExternalLink size={12} className="text-neutral-400" />
-              <span>instagram.com/vanshlohia05 ↗</span>
+              <span>linkedin.com/in/vansh-lohia-b8928428b/ ↗</span>
             </a>
             <div className="flex items-center gap-2 text-neutral-500">
               <MapPin size={12} className="text-neutral-400" />
