@@ -20,7 +20,6 @@ import {
   insertGuestbookEntry,
   likeGuestbookEntry,
   subscribeToGuestbookChanges,
-  syncLocalEntriesToSupabase,
 } from './data/guestbook';
 import { toggleSound } from './utils/sound';
 
@@ -49,15 +48,12 @@ export const App: React.FC = () => {
 
     // 2. Fetch live data from Supabase across all devices
     fetchGuestbookEntries().then((live) => {
-      if (live && live.length > 0) {
+      if (Array.isArray(live)) {
         setGuestbookEntries(live);
       }
     });
 
-    // 3. Sync any unsaved local entries to the cloud
-    syncLocalEntriesToSupabase();
-
-    // 4. Real-time updates: whenever someone signs anywhere, all devices update instantly
+    // 3. Real-time updates: whenever someone signs, likes, or deletes anywhere, all devices update instantly
     const unsubscribe = subscribeToGuestbookChanges(
       (newEntry) => {
         setGuestbookEntries((prev) => {
@@ -114,7 +110,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'guestbook') {
       fetchGuestbookEntries().then((live) => {
-        if (live && live.length > 0) {
+        if (Array.isArray(live)) {
           setGuestbookEntries(live);
         }
       });
@@ -122,7 +118,7 @@ export const App: React.FC = () => {
 
     const handleWindowFocus = () => {
       fetchGuestbookEntries().then((live) => {
-        if (live && live.length > 0) {
+        if (Array.isArray(live)) {
           setGuestbookEntries(live);
         }
       });
@@ -153,7 +149,7 @@ export const App: React.FC = () => {
 
   const handleRefreshGuestbook = async () => {
     const live = await fetchGuestbookEntries();
-    if (live && live.length > 0) {
+    if (Array.isArray(live)) {
       setGuestbookEntries(live);
     }
   };

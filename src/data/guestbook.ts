@@ -135,7 +135,7 @@ export const mapEntryToRow = (entry: GuestbookEntry) => ({
 
 /**
  * Fetches all guestbook entries from Supabase, sorted by timestamp descending.
- * Merges with any unsynced local entries and saves to cache.
+ * Stores the fresh remote state directly to cache without resurrecting deleted items.
  */
 export const fetchGuestbookEntries = async (): Promise<GuestbookEntry[]> => {
   try {
@@ -149,14 +149,10 @@ export const fetchGuestbookEntries = async (): Promise<GuestbookEntry[]> => {
       return loadGuestbookEntries();
     }
 
-    if (data && Array.isArray(data) && data.length > 0) {
+    if (data && Array.isArray(data)) {
       const liveEntries = data.map(mapRowToEntry);
-      // Preserve any local un-synced entries
-      const local = loadGuestbookEntries();
-      const unsyncedLocal = local.filter((l) => !liveEntries.some((le) => le.id === l.id));
-      const combined = [...liveEntries, ...unsyncedLocal];
-      saveGuestbookEntries(combined);
-      return combined;
+      saveGuestbookEntries(liveEntries);
+      return liveEntries;
     }
   } catch (err) {
     console.warn('Supabase guestbook network error:', err);
@@ -208,12 +204,19 @@ export const likeGuestbookEntry = async (id: string): Promise<boolean> => {
 };
 
 /**
- * Deletes a guestbook entry (used by admin moderation).
+ * Deletes a guestbook entry globally across all devices from Supabase & local cache.
  */
 export const deleteGuestbookEntry = async (id: string): Promise<boolean> => {
   try {
+    const current = loadGuestbookEntries().filter((e) => e.id !== id);
+    saveGuestbookEntries(current);
+
     const { error } = await supabase.from('guestbook').delete().eq('id', id);
-    return !error;
+    if (error) {
+      console.error('Failed to delete guestbook entry from Supabase:', error);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.warn('Failed to delete guestbook entry:', err);
     return false;
@@ -222,7 +225,7 @@ export const deleteGuestbookEntry = async (id: string): Promise<boolean> => {
 
 /**
  * Subscribes to real-time changes on the guestbook table.
- * Whenever someone signs or likes from any device, updates trigger immediately.
+ * Whenever someone signs, likes, or deletes from any device, updates trigger immediately everywhere.
  */
 export const subscribeToGuestbookChanges = (
   onInsert: (entry: GuestbookEntry) => void,
@@ -253,8 +256,9 @@ export const subscribeToGuestbookChanges = (
       'postgres_changes',
       { event: 'DELETE', schema: 'public', table: 'guestbook' },
       (payload) => {
-        if (payload.old && payload.old.id) {
-          onDelete(String(payload.old.id));
+        const deletedId = payload.old?.id || (payload as any).old?.id;
+        if (deletedId) {
+          onDelete(String(deletedId));
         }
       }
     )
@@ -263,23 +267,4 @@ export const subscribeToGuestbookChanges = (
   return () => {
     supabase.removeChannel(channel);
   };
-};
-
-/**
- * Synchronizes any previously saved local entries to Supabase if they are not yet stored.
- */
-export const syncLocalEntriesToSupabase = async (): Promise<void> => {
-  try {
-    const local = loadGuestbookEntries();
-    const customLocal = local.filter(
-      (e) => !INITIAL_GUESTBOOK_ENTRIES.some((init) => init.id === e.id)
-    );
-    if (customLocal.length === 0) return;
-
-    for (const entry of customLocal) {
-      await supabase.from('guestbook').upsert(mapEntryToRow(entry), { onConflict: 'id' });
-    }
-  } catch (e) {
-    console.warn('Silent local guestbook sync check:', e);
-  }
 };
