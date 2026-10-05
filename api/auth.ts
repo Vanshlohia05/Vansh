@@ -93,7 +93,15 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { action, passcode, token, newPasscode } = req.body || {};
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+    const { action, passcode, token, newPasscode } = body || {};
 
     // 1. Verify existing session token
     if (action === 'verify') {

@@ -203,30 +203,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
     setAuthError('');
 
     try {
-      // 1. Try serverless backend verification first
+      // 1. Direct Supabase PostgreSQL bcrypt RPC verification (instant, zero serverless latency)
       let authenticated = false;
       let sessionToken = '';
 
       try {
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'login', passcode: passcodeInput }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.token) {
-            authenticated = true;
-            sessionToken = data.token;
-          }
-        }
-      } catch (apiErr) {
-        console.warn('API route fallback to direct Supabase RPC:', apiErr);
-      }
-
-      // 2. Direct Supabase Postgres RPC verification
-      if (!authenticated) {
         const { data: isValid, error: rpcError } = await supabase.rpc('verify_admin_passcode', {
           entered_passcode: passcodeInput.trim(),
         });
@@ -234,6 +215,29 @@ export const AdminView: React.FC<AdminViewProps> = ({ onExit }) => {
         if (!rpcError && isValid === true) {
           authenticated = true;
           sessionToken = `supabase_verified_${Date.now()}`;
+        }
+      } catch (rpcErr) {
+        console.warn('Direct Supabase RPC error, trying API fallback:', rpcErr);
+      }
+
+      // 2. Fallback to serverless API route if direct RPC was blocked by client network
+      if (!authenticated) {
+        try {
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login', passcode: passcodeInput.trim() }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.token) {
+              authenticated = true;
+              sessionToken = data.token;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('API route fallback error:', apiErr);
         }
       }
 
