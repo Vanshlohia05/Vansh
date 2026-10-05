@@ -129,7 +129,7 @@ export const DEFAULT_CV_ITEMS: CvItem[] = [
     section: 'experience',
     title: 'Agarwalla & Associates - CMA Firm',
     subtitle: 'Accounts & Tax Intern',
-    dateRange: 'July 2026 - September 2026 (3 months)',
+    dateRange: 'Jul 2026 - Sep 2026',
     location: 'Sarupathar, Assam, India · On-site',
     badge: 'INTERNSHIP',
     link: '',
