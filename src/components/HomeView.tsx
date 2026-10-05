@@ -143,6 +143,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <ExternalLink size={12} className="text-blue-500" />
               <span>linkedin.com/in/vanshlohia ↗</span>
             </a>
+            <a
+              href="https://www.instagram.com/vanshlohia05"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 hover:text-black transition-colors text-neutral-600"
+            >
+              <ExternalLink size={12} className="text-neutral-400" />
+              <span>instagram.com/vanshlohia05 ↗</span>
+            </a>
             <div className="flex items-center gap-2 text-neutral-500">
               <MapPin size={12} className="text-neutral-400" />
               <span>Sarupathar, Assam, India - 785601</span>
@@ -167,12 +176,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { title: 'Accounting & Taxation', desc: 'Tally, ITR-1, Udyam & GeM' },
-            { title: 'Graphic Design', desc: 'Canva & Visual Layout' },
-            { title: 'Vibe Coding', desc: 'GenAI & Fullstack Prototyping' },
-            { title: 'Project Coordination', desc: 'End-to-End Execution' },
-            { title: 'Volunteer Management', desc: 'Leadership & Community' },
-            { title: 'Meeting Deadlines', desc: 'High-discipline Execution' },
+            { title: 'GeM & Udyam Portals', desc: 'Government Registrations & MSME' },
+            { title: 'Tally Prime & Tax', desc: 'Bookkeeping, Ledgers & ITR-1' },
+            { title: 'Fullstack & Vibe Coding', desc: 'Next.js, React, Tailwind & Vite' },
+            { title: 'Cloud & BaaS Architecture', desc: 'Firebase, Supabase & WebRTC' },
+            { title: 'Project Coordination', desc: 'End-to-End Lifecycle Execution' },
+            { title: 'Volunteer Leadership', desc: 'Community Program Coordination' },
           ].map((skill, idx) => (
             <div
               key={idx}
@@ -219,11 +228,28 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       </p>
                     )}
                     {item.bulletPoints && item.bulletPoints.length > 0 && (
-                      <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
-                        {item.bulletPoints.map((pt, pIdx) => (
-                          <li key={pIdx}>{pt}</li>
-                        ))}
-                      </ul>
+                      <div className="space-y-2 mt-2">
+                        <ul className="space-y-1.5 text-xs text-neutral-700 list-disc list-inside">
+                          {item.bulletPoints
+                            .filter((pt) => !pt.startsWith('Tech Stack:'))
+                            .map((pt, pIdx) => (
+                              <li key={pIdx}>{pt}</li>
+                            ))}
+                        </ul>
+                        {item.bulletPoints.find((pt) => pt.startsWith('Tech Stack:')) && (
+                          <div className="pt-2 border-t border-neutral-200/60">
+                            <span className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                              Tech Stack:
+                            </span>
+                            <div className="text-[11px] font-mono text-neutral-800 bg-white p-2 rounded border border-neutral-200/70 leading-relaxed">
+                              {item.bulletPoints
+                                .find((pt) => pt.startsWith('Tech Stack:'))
+                                ?.replace('Tech Stack:', '')
+                                .trim()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="mt-4 pt-3 border-t border-neutral-200/60 text-micro font-mono text-neutral-400 flex items-center justify-between">
