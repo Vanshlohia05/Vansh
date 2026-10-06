@@ -9,7 +9,18 @@ import {
   saveEssays,
 } from '../data/reading';
 import { supabase } from '../utils/supabase';
-import { playClickSound, playIndianSymphonyNote, INDIAN_SYMPHONY_NOTES } from '../utils/sound';
+import { playClickSound } from '../utils/sound';
+import {
+  playSwarNote,
+  playSoftClosingNote,
+  ensureAudioContext,
+  SWAR_CYCLE,
+  PC_KEY_CYCLE,
+  SWAR_FREQUENCIES,
+  SwarName,
+  InstrumentType,
+} from '../utils/sargamSynth';
+import { SargamPanel } from './SargamPanel';
 import {
   ArrowUpRight,
   BookOpen,
@@ -18,6 +29,8 @@ import {
   Shuffle,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface ReadingSectionProps {
@@ -37,6 +50,33 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
   const shelfScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
+  const autoScrollRafRef = useRef<number | null>(null);
+
+  // Sargam Synth interactive state
+  const [sargamPanelOpen, setSargamPanelOpen] = useState(false);
+  const [instrument, setInstrument] = useState<InstrumentType>('flute');
+  const [activeSwar, setActiveSwar] = useState<SwarName | null>(null);
+  const [targetNote, setTargetNote] = useState<SwarName | null>(null);
+  const [isPlayItYourself, setIsPlayItYourself] = useState<boolean>(false);
+  const [advanceTrigger, setAdvanceTrigger] = useState<number>(0);
+
+  // Timers & Mute during shuffle
+  const isShufflingRef = useRef<boolean>(false);
+  const shuffleTimeoutRef = useRef<number | null>(null);
+  const activeSwarTimerRef = useRef<number | null>(null);
+  const lastPlayedSlotRef = useRef<number>(-1);
+  const lastNoteTimeRef = useRef<number>(0);
+
+  // Edge hover auto-scroll refs
+  const edgeScrollDirRef = useRef<'left' | 'right' | null>(null);
+  const edgeScrollRafRef = useRef<number | null>(null);
+  const hasHoveredShelfRef = useRef<boolean>(false);
+  const hasPlayedClosingNoteRef = useRef<boolean>(false);
+
+  // Book spine long press & sound refs
+  const activeBookVoiceStopperRef = useRef<(() => void) | null>(null);
+  const bookPointerDownTimeRef = useRef<number>(0);
 
   // Floating hover preview state for Essays
   const [hoveredEssay, setHoveredEssay] = useState<EssayItem | null>(null);
@@ -220,12 +260,57 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   }, []);
 
-  // Indian Classical Symphony Note Tracking (Phone touch & PC scroll)
-  const lastPlayedSymphonyNoteRef = useRef<number>(-1);
-  const lastNoteTimeRef = useRef<number>(0);
-  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
-  const autoScrollRafRef = useRef<number | null>(null);
+  // Highlight all books that share the same note for 400ms
+  const triggerNoteHighlight = useCallback((swar: SwarName) => {
+    if (isShufflingRef.current) return;
+    setActiveSwar(swar);
+    if (activeSwarTimerRef.current) {
+      clearTimeout(activeSwarTimerRef.current);
+    }
+    activeSwarTimerRef.current = window.setTimeout(() => {
+      setActiveSwar(null);
+    }, 400);
+  }, []);
 
+  // Play a slot note with the current instrument
+  const playSlotNote = useCallback(
+    (swar: SwarName, duration: number = 0.35, vol: number = 0.08) => {
+      if (isShufflingRef.current) return;
+      ensureAudioContext();
+      const freq = SWAR_FREQUENCIES[swar];
+      if (freq) {
+        playSwarNote(freq, instrument, duration, vol);
+        triggerNoteHighlight(swar);
+      }
+    },
+    [instrument, triggerNoteHighlight]
+  );
+
+  // Scroll listener: playing repeating 8-scale notes as books pass by
+  const handleShelfScrollWithSound = useCallback(() => {
+    checkShelfScroll();
+    if (isShufflingRef.current) return;
+    const el = shelfScrollRef.current;
+    if (!el || books.length === 0) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll > 15) {
+      const progress = Math.max(0, Math.min(1, el.scrollLeft / maxScroll));
+      const currentSlot = Math.min(books.length - 1, Math.floor(progress * books.length));
+      const noteIndex = currentSlot % 8;
+      const swar = SWAR_CYCLE[noteIndex];
+
+      const now = Date.now();
+      if (currentSlot !== lastPlayedSlotRef.current && now - lastNoteTimeRef.current > 45) {
+        ensureAudioContext();
+        playSlotNote(swar, 0.28, 0.08);
+        lastPlayedSlotRef.current = currentSlot;
+        lastNoteTimeRef.current = now;
+      }
+    }
+  }, [books.length, checkShelfScroll, playSlotNote]);
+
+  // Autoscroll stop callback
   const stopAutoscroll = useCallback(() => {
     setIsAutoScrolling(false);
     if (autoScrollRafRef.current) {
@@ -234,30 +319,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     }
   }, []);
 
-  // Scroll listener: dividing the symphony notes across the scrollable length of the shelf
-  const handleShelfScrollWithSound = useCallback(() => {
-    checkShelfScroll();
-    const el = shelfScrollRef.current;
-    if (!el) return;
-
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    if (maxScroll > 15) {
-      const progress = Math.max(0, Math.min(1, el.scrollLeft / maxScroll));
-      const noteIdx = Math.min(
-        INDIAN_SYMPHONY_NOTES.length - 1,
-        Math.floor(progress * INDIAN_SYMPHONY_NOTES.length)
-      );
-
-      const now = Date.now();
-      if (noteIdx !== lastPlayedSymphonyNoteRef.current && now - lastNoteTimeRef.current > 45) {
-        playIndianSymphonyNote(noteIdx, 0.08);
-        lastPlayedSymphonyNoteRef.current = noteIdx;
-        lastNoteTimeRef.current = now;
-      }
-    }
-  }, [checkShelfScroll]);
-
-  // Autoscroll with music emoji: glides across shelf while playing the complete symphony
+  // Autoscroll toggle
   const toggleAutoscroll = () => {
     if (isAutoScrolling) {
       stopAutoscroll();
@@ -267,20 +329,20 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     const el = shelfScrollRef.current;
     if (!el) return;
 
+    ensureAudioContext();
+    stopEdgeScroll();
     setIsAutoScrolling(true);
     playClickSound('high');
 
     const maxScroll = el.scrollWidth - el.clientWidth;
     if (maxScroll <= 0) return;
 
-    // If near the end, rewind to beginning
     if (el.scrollLeft >= maxScroll - 30) {
       el.scrollLeft = 0;
     }
 
     const startPos = el.scrollLeft;
     const distance = maxScroll - startPos;
-    // ~10 seconds for a gentle, melodic traversal across all books
     const duration = Math.max(5000, (distance / maxScroll) * 11000);
     const startTime = performance.now();
 
@@ -300,37 +362,164 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     autoScrollRafRef.current = requestAnimationFrame(step);
   };
 
-  // Hover over individual book spine on PC plays corresponding symphony note
-  const handleBookMouseEnter = (idx: number) => {
-    if (!canHover) return;
-    const total = Math.max(1, books.length - 1);
-    const noteIdx = Math.min(
-      INDIAN_SYMPHONY_NOTES.length - 1,
-      Math.floor((idx / total) * INDIAN_SYMPHONY_NOTES.length)
-    );
-    playIndianSymphonyNote(noteIdx, 0.09);
-    lastPlayedSymphonyNoteRef.current = noteIdx;
+  // Hover over individual book spine plays corresponding slot note (bookIndex % 8)
+  const handleBookMouseEnter = (slotIndex: number) => {
+    if (!canHover || isShufflingRef.current) return;
+    ensureAudioContext();
+    const noteIndex = slotIndex % 8;
+    const swar = SWAR_CYCLE[noteIndex];
+    playSlotNote(swar, 0.35, 0.08);
   };
+
+  // Hover-edge autoscroll: edge stop function
+  const stopEdgeScroll = useCallback(() => {
+    edgeScrollDirRef.current = null;
+    if (edgeScrollRafRef.current) {
+      cancelAnimationFrame(edgeScrollRafRef.current);
+      edgeScrollRafRef.current = null;
+    }
+  }, []);
+
+  // Hover keeps going past the edge: smoothly auto-scrolls shelf with notes playing as books pass
+  const startEdgeScroll = useCallback(
+    (dir: 'left' | 'right') => {
+      if (edgeScrollDirRef.current === dir && edgeScrollRafRef.current) return;
+      stopAutoscroll();
+      edgeScrollDirRef.current = dir;
+      if (edgeScrollRafRef.current) {
+        cancelAnimationFrame(edgeScrollRafRef.current);
+      }
+
+      const step = () => {
+        const el = shelfScrollRef.current;
+        if (!el || !edgeScrollDirRef.current) return;
+
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        if (maxScroll <= 0) {
+          stopEdgeScroll();
+          return;
+        }
+
+        if (edgeScrollDirRef.current === 'right') {
+          if (el.scrollLeft >= maxScroll - 1) {
+            // Reached right edge (last book) -> soft closing note
+            if (!hasPlayedClosingNoteRef.current) {
+              playSoftClosingNote();
+              hasPlayedClosingNoteRef.current = true;
+            }
+            stopEdgeScroll();
+            return;
+          }
+          el.scrollLeft += 4.5;
+          edgeScrollRafRef.current = requestAnimationFrame(step);
+        } else if (edgeScrollDirRef.current === 'left') {
+          if (el.scrollLeft <= 1) {
+            // Reached left edge (first book) -> soft closing note
+            if (!hasPlayedClosingNoteRef.current) {
+              playSoftClosingNote();
+              hasPlayedClosingNoteRef.current = true;
+            }
+            stopEdgeScroll();
+            return;
+          }
+          el.scrollLeft -= 4.5;
+          edgeScrollRafRef.current = requestAnimationFrame(step);
+        }
+      };
+
+      edgeScrollRafRef.current = requestAnimationFrame(step);
+    },
+    [stopAutoscroll, stopEdgeScroll]
+  );
 
   // Hover-edge autoscroll on PC: gliding gently when listening while hovering near edges
   const handleShelfHoverMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    hasHoveredShelfRef.current = true;
     if (isAutoScrolling || !canHover || !shelfScrollRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const width = rect.width;
 
-    if (x > width * 0.85) {
-      shelfScrollRef.current.scrollBy({ left: 7, behavior: 'auto' });
-    } else if (x < width * 0.15) {
-      shelfScrollRef.current.scrollBy({ left: -7, behavior: 'auto' });
+    if (x > width * 0.88) {
+      shelfScrollRef.current.scrollBy({ left: 6, behavior: 'auto' });
+    } else if (x < width * 0.12) {
+      shelfScrollRef.current.scrollBy({ left: -6, behavior: 'auto' });
     }
   };
+
+  // Global mouse & interaction tracking:
+  // When cursor leaves the shelf off left/right into blank area, shelf keeps auto-scrolling
+  // Stops when cursor returns, clicks/touches anything, reaches the end, or tab loses focus.
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!canHover || !shelfScrollRef.current) return;
+
+      const rect = shelfScrollRef.current.getBoundingClientRect();
+      const inVerticalBand = e.clientY >= rect.top - 120 && e.clientY <= rect.bottom + 120;
+
+      if (!inVerticalBand) {
+        if (edgeScrollDirRef.current) {
+          stopEdgeScroll();
+        }
+        return;
+      }
+
+      // Inside shelf horizontally: cursor has returned!
+      if (e.clientX >= rect.left && e.clientX <= rect.right) {
+        hasHoveredShelfRef.current = true;
+        hasPlayedClosingNoteRef.current = false;
+        if (edgeScrollDirRef.current) {
+          stopEdgeScroll();
+        }
+        return;
+      }
+
+      // Cursor moves off the left or right end into blank area:
+      if (hasHoveredShelfRef.current && !isAutoScrolling) {
+        if (e.clientX < rect.left) {
+          startEdgeScroll('left');
+        } else if (e.clientX > rect.right) {
+          startEdgeScroll('right');
+        }
+      }
+    };
+
+    const handleInteractionStop = () => {
+      stopEdgeScroll();
+      ensureAudioContext();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopEdgeScroll();
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('pointerdown', handleInteractionStop);
+    window.addEventListener('touchstart', handleInteractionStop);
+    window.addEventListener('blur', stopEdgeScroll);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('pointerdown', handleInteractionStop);
+      window.removeEventListener('touchstart', handleInteractionStop);
+      window.removeEventListener('blur', stopEdgeScroll);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stopEdgeScroll();
+    };
+  }, [canHover, startEdgeScroll, stopEdgeScroll]);
 
   useEffect(() => {
     return () => {
       if (autoScrollRafRef.current) cancelAnimationFrame(autoScrollRafRef.current);
+      stopEdgeScroll();
+      if (activeBookVoiceStopperRef.current) {
+        activeBookVoiceStopperRef.current();
+      }
     };
-  }, []);
+  }, [stopEdgeScroll]);
 
   useEffect(() => {
     const el = shelfScrollRef.current;
@@ -348,14 +537,22 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
   const scrollShelf = (direction: 'left' | 'right') => {
     if (!shelfScrollRef.current) return;
     stopAutoscroll();
+    stopEdgeScroll();
+    ensureAudioContext();
     playClickSound('tick');
     const scrollAmount = direction === 'left' ? -320 : 320;
     shelfScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
-  // 2. Shuffle Handlers
+  // 2. Shuffle Handlers (Shuffle-safe: positions retain their notes)
   const handleShuffleBooks = useCallback(() => {
-    playClickSound('pop');
+    isShufflingRef.current = true;
+    setActiveSwar(null);
+    if (shuffleTimeoutRef.current) clearTimeout(shuffleTimeoutRef.current);
+    shuffleTimeoutRef.current = window.setTimeout(() => {
+      isShufflingRef.current = false;
+    }, 450);
+
     setBooks((prev) => {
       const items = [...prev];
       for (let i = items.length - 1; i > 0; i--) {
@@ -455,8 +652,51 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
     setPreviewVisible(false);
   };
 
-  // 4. Book Selection with Realistic Shelf Slide Sound & Elevation Animation
-  const handleBookClick = (book: BookItem) => {
+  // 4. Book Selection & Sound (Slot-based repeating 8-scale notes)
+  const handleBookPointerDown = (slotIndex: number, e: React.PointerEvent) => {
+    if (isShufflingRef.current) return;
+    ensureAudioContext();
+    bookPointerDownTimeRef.current = Date.now();
+    const noteIndex = slotIndex % 8;
+    const swar = SWAR_CYCLE[noteIndex];
+    const freq = SWAR_FREQUENCIES[swar];
+
+    if (activeBookVoiceStopperRef.current) {
+      activeBookVoiceStopperRef.current();
+      activeBookVoiceStopperRef.current = null;
+    }
+
+    // Sustain note while held down (long press like a real instrument)
+    activeBookVoiceStopperRef.current = playSwarNote(freq, instrument, -1, 0.08);
+    triggerNoteHighlight(swar);
+  };
+
+  const releaseBookVoice = () => {
+    if (activeBookVoiceStopperRef.current) {
+      activeBookVoiceStopperRef.current();
+      activeBookVoiceStopperRef.current = null;
+    }
+  };
+
+  const handleBookClick = (book: BookItem, slotIndex: number) => {
+    ensureAudioContext();
+    const noteIndex = slotIndex % 8;
+    const swar = SWAR_CYCLE[noteIndex];
+    const heldMs = Date.now() - bookPointerDownTimeRef.current;
+
+    if (!isShufflingRef.current) {
+      if (heldMs < 200) {
+        playSlotNote(swar, 0.45, 0.085);
+      } else {
+        triggerNoteHighlight(swar);
+      }
+
+      // In "Play it yourself" practice mode: check if this is the required note
+      if (isPlayItYourself && targetNote && swar === targetNote) {
+        setAdvanceTrigger((prev) => prev + 1);
+      }
+    }
+
     if (selectedBook?.id === book.id) {
       // Push book back into shelf
       playClickSound('book-push');
@@ -467,6 +707,46 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
       setSelectedBook(book);
     }
   };
+
+  // PC Keyboard listeners for playing notes: [S, R, G, M, P, D, N, Z, K]
+  useEffect(() => {
+    const keyMap: Record<string, SwarName> = {
+      s: 'Sa',
+      S: 'Sa',
+      r: 'Re',
+      R: 'Re',
+      g: 'Ga',
+      G: 'Ga',
+      m: 'Ma',
+      M: 'Ma',
+      p: 'Pa',
+      P: 'Pa',
+      d: 'Dha',
+      D: 'Dha',
+      n: 'Ni',
+      N: 'Ni',
+      z: "Sa'",
+      Z: "Sa'",
+      k: 'ni',
+      K: 'ni',
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (targetTag === 'input' || targetTag === 'textarea') return;
+
+      const swar = keyMap[e.key];
+      if (swar && !e.repeat && !isShufflingRef.current) {
+        playSlotNote(swar, 0.35, 0.08);
+        if (isPlayItYourself && targetNote && swar === targetNote) {
+          setAdvanceTrigger((prev) => prev + 1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlayItYourself, playSlotNote, targetNote]);
 
   // Filtered essays & Pagination (10 items per page)
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -553,11 +833,26 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
             </span>
           </div>
 
-          {/* Left/Right Scroll Controls for 100+ Books */}
+          {/* Left/Right Scroll Controls & Interactive Sargam Synth Toggle */}
           <div className="flex items-center gap-1">
             <span className="text-micro font-mono text-neutral-400 hidden sm:inline mr-2">
               Hover across shelf for symphony • Click spine to draw out
             </span>
+            <button
+              onClick={() => {
+                ensureAudioContext();
+                setSargamPanelOpen((prev) => !prev);
+              }}
+              title={sargamPanelOpen ? 'Hide Sargam synth' : 'Open Sargam synth'}
+              aria-label={sargamPanelOpen ? 'Hide Sargam synth' : 'Open Sargam synth'}
+              className={`p-1 rounded border transition-colors cursor-pointer mr-0.5 ${
+                sargamPanelOpen
+                  ? 'bg-black text-[#d2fd78] border-black shadow-xs'
+                  : 'border-neutral-200 text-black hover:bg-neutral-100'
+              }`}
+            >
+              {sargamPanelOpen ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
             <button
               onClick={() => scrollShelf('left')}
               disabled={!canScrollLeft}
@@ -588,97 +883,188 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({ externalShuffleT
         {/* Shelf Frame (Smooth touch scroll & scalable for 100+ books) */}
         <div
           onMouseMove={handleShelfHoverMove}
+          onMouseEnter={() => {
+            hasHoveredShelfRef.current = true;
+            hasPlayedClosingNoteRef.current = false;
+            stopEdgeScroll();
+          }}
+          onPointerDown={() => ensureAudioContext()}
           className="relative pt-8 pb-3"
         >
           <div
             ref={shelfScrollRef}
-            className="w-full overflow-x-auto scroll-smooth pb-4 no-scrollbar"
+            className="w-full overflow-x-auto pb-3 no-scrollbar"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="inline-flex items-end justify-start gap-2.5 px-3 min-w-max h-[270px]">
-              {books.map((book, idx) => {
-                const isSelected = selectedBook?.id === book.id;
+            <div className="inline-flex flex-col min-w-full px-3">
+              {/* Row 1: Books + Note names directly under books (above wooden plank) */}
+              <div className="inline-flex items-end justify-start gap-2.5 min-w-max h-[278px]">
+                {books.map((book, idx) => {
+                  const isSelected = selectedBook?.id === book.id;
+                  const swar = SWAR_CYCLE[idx % 8];
+                  const isNoteActive = activeSwar === swar;
+                  const isTarget = isPlayItYourself && targetNote === swar;
 
-                return (
-                  <button
-                    key={book.id}
-                    onClick={() => handleBookClick(book)}
-                    onMouseEnter={() => handleBookMouseEnter(idx)}
-                    aria-pressed={isSelected}
-                    title={`${book.title} by ${book.author} (${book.year})`}
-                    style={{
-                      height: `${book.h}px`,
-                      width: `${book.w}px`,
-                      backgroundColor: book.c,
-                      color: book.fg,
-                      animationDelay: `${idx * 40}ms`,
-                    }}
-                    className={`relative group rounded-t-xs transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between items-center py-3 px-1 border border-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-black book-spine shrink-0 select-none ${
-                      isSelected
-                        ? '-translate-y-7 shadow-2xl ring-2 ring-black scale-[1.04] z-30'
-                        : 'hover:-translate-y-4 hover:rotate-[-1.5deg] hover:shadow-xl z-10'
-                    }`}
-                  >
-                    {/* 2D-to-3D Illusion Shading Overlays */}
+                  return (
                     <div
-                      className="absolute inset-0 rounded-t-xs pointer-events-none"
-                      style={{
-                        background:
-                          'linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(255,255,255,0.18) 7%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.02) 80%, rgba(0,0,0,0.26) 100%)',
-                      }}
-                    />
-
-                    {/* Spine Top Bevel */}
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/25 rounded-t-xs pointer-events-none" />
-
-                    {/* Top Year Tag & Status Indicator */}
-                    <div className="flex flex-col items-center shrink-0">
-                      {book.status === 'On it' && (
-                        <span
-                          className="w-1.5 h-1.5 rounded-full bg-[#d2fd78] shadow-xs mb-0.5 animate-pulse"
-                          title="Currently Reading (On it)"
-                        />
-                      )}
-                      <span
-                        className="text-[9px] font-mono tracking-tighter opacity-80 select-none"
-                        style={{ color: book.fg }}
+                      key={book.id}
+                      style={{ width: `${book.w}px` }}
+                      className="flex flex-col items-center justify-end h-full shrink-0"
+                    >
+                      <button
+                        onClick={() => handleBookClick(book, idx)}
+                        onMouseEnter={() => handleBookMouseEnter(idx)}
+                        onPointerDown={(e) => handleBookPointerDown(idx, e)}
+                        onPointerUp={releaseBookVoice}
+                        onPointerLeave={releaseBookVoice}
+                        onPointerCancel={releaseBookVoice}
+                        aria-pressed={isSelected}
+                        title={`${book.title} by ${book.author} (${book.year})`}
+                        style={{
+                          height: `${book.h}px`,
+                          width: `${book.w}px`,
+                          backgroundColor: book.c,
+                          color: book.fg,
+                          animationDelay: `${idx * 40}ms`,
+                          touchAction: 'manipulation',
+                        }}
+                        className={`relative group rounded-t-xs transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between items-center py-3 px-1 border border-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-black book-spine shrink-0 select-none ${
+                          isSelected
+                            ? '-translate-y-7 shadow-2xl ring-2 ring-black scale-[1.04] z-30'
+                            : isNoteActive
+                            ? 'note-active z-20'
+                            : isTarget
+                            ? 'note-target z-20'
+                            : 'hover:-translate-y-4 hover:rotate-[-1.5deg] hover:shadow-xl z-10'
+                        }`}
                       >
-                        {book.year}
+                        {/* 2D-to-3D Illusion Shading Overlays */}
+                        <div
+                          className="absolute inset-0 rounded-t-xs pointer-events-none"
+                          style={{
+                            background:
+                              'linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(255,255,255,0.18) 7%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.02) 80%, rgba(0,0,0,0.26) 100%)',
+                          }}
+                        />
+
+                        {/* Spine Top Bevel */}
+                        <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/25 rounded-t-xs pointer-events-none" />
+
+                        {/* Top Year Tag & Status Indicator */}
+                        <div className="flex flex-col items-center shrink-0">
+                          {book.status === 'On it' && (
+                            <span
+                              className="w-1.5 h-1.5 rounded-full bg-[#d2fd78] shadow-xs mb-0.5 animate-pulse"
+                              title="Currently Reading (On it)"
+                            />
+                          )}
+                          <span
+                            className="text-[9px] font-mono tracking-tighter opacity-80 select-none"
+                            style={{ color: book.fg }}
+                          >
+                            {book.year}
+                          </span>
+                        </div>
+
+                        {/* Spine Title (Vertical Writing Mode) */}
+                        <span
+                          className="text-xs font-medium tracking-tight whitespace-nowrap overflow-hidden select-none px-0.5 leading-none"
+                          style={{
+                            writingMode: 'vertical-rl',
+                            textOrientation: 'mixed',
+                            transform: 'rotate(180deg)',
+                            color: book.fg,
+                            maxHeight: `${book.h - 55}px`,
+                          }}
+                        >
+                          {book.title}
+                        </span>
+
+                        {/* Bottom Author Tag */}
+                        <span
+                          className="text-[9px] font-mono tracking-tighter opacity-80 truncate max-w-[90%] select-none shrink-0"
+                          style={{ color: book.fg }}
+                        >
+                          {book.author.split(' ').pop()}
+                        </span>
+                      </button>
+
+                      {/* Note Name directly under the book, just above the wooden shelf plank */}
+                      <div
+                        className={`w-full flex items-center justify-center font-mono text-[10px] select-none transition-all duration-200 ${
+                          sargamPanelOpen
+                            ? 'opacity-100 max-h-5 py-0.5'
+                            : 'opacity-0 max-h-0 overflow-hidden py-0'
+                        } ${
+                          isNoteActive
+                            ? 'text-black font-bold scale-110'
+                            : isTarget
+                            ? 'text-black font-bold animate-pulse'
+                            : 'text-neutral-500'
+                        }`}
+                      >
+                        {swar}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Row 2: Solid 2.5D Wooden Shelf Base Plank */}
+              <div className="w-full h-3.5 bg-neutral-900 rounded-xs shadow-md border-t border-white/20 relative my-0.5">
+                <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 opacity-90 rounded-xs" />
+              </div>
+
+              {/* Row 3: PC Key Labels in square brackets below shelf plank */}
+              <div
+                className={`inline-flex items-center justify-start gap-2.5 transition-all duration-200 min-w-max pc-key-row ${
+                  sargamPanelOpen
+                    ? 'opacity-100 max-h-6 py-1'
+                    : 'opacity-0 max-h-0 overflow-hidden py-0'
+                }`}
+              >
+                {books.map((book, slotIndex) => {
+                  const swar = SWAR_CYCLE[slotIndex % 8];
+                  const isNoteActive = activeSwar === swar;
+                  const isTarget = isPlayItYourself && targetNote === swar;
+                  return (
+                    <div
+                      key={slotIndex}
+                      style={{ width: `${book.w}px` }}
+                      className="flex items-center justify-center shrink-0"
+                    >
+                      <span
+                        className={`font-mono text-[9px] select-none transition-all duration-150 ${
+                          isNoteActive
+                            ? 'text-black font-bold scale-110'
+                            : isTarget
+                            ? 'text-black font-bold animate-pulse'
+                            : 'text-neutral-400'
+                        }`}
+                      >
+                        [{PC_KEY_CYCLE[slotIndex % 8]}]
                       </span>
                     </div>
-
-                    {/* Spine Title (Vertical Writing Mode) */}
-                    <span
-                      className="text-xs font-medium tracking-tight whitespace-nowrap overflow-hidden select-none px-0.5 leading-none"
-                      style={{
-                        writingMode: 'vertical-rl',
-                        textOrientation: 'mixed',
-                        transform: 'rotate(180deg)',
-                        color: book.fg,
-                        maxHeight: `${book.h - 55}px`,
-                      }}
-                    >
-                      {book.title}
-                    </span>
-
-                    {/* Bottom Author Tag */}
-                    <span
-                      className="text-[9px] font-mono tracking-tighter opacity-80 truncate max-w-[90%] select-none shrink-0"
-                      style={{ color: book.fg }}
-                    >
-                      {book.author.split(' ').pop()}
-                    </span>
-                  </button>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
-
-          {/* Solid 2.5D Wooden Shelf Base Plank */}
-          <div className="w-full h-3.5 bg-neutral-900 rounded-xs shadow-md border-t border-white/20 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 opacity-90 rounded-xs" />
-          </div>
         </div>
+
+        {/* Interactive Sargam Synth Panel (Opens smoothly in gap below shelf) */}
+        <SargamPanel
+          isOpen={sargamPanelOpen}
+          instrument={instrument}
+          onInstrumentChange={setInstrument}
+          targetNote={targetNote}
+          onTargetNoteChange={setTargetNote}
+          isPlayItYourself={isPlayItYourself}
+          onTogglePlayItYourself={() => setIsPlayItYourself((prev) => !prev)}
+          advanceTrigger={advanceTrigger}
+          onPlaySwar={(swar) => playSlotNote(swar, 0.45, 0.085)}
+          onClose={() => setSargamPanelOpen(false)}
+        />
 
         {/* Selected Book Detail Card (Appears smoothly BELOW shelf when drawn out) */}
         {selectedBook ? (

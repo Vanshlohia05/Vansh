@@ -615,6 +615,55 @@ button:hover, a:hover {
   will-change: transform;
 }
 
+/* ── Sargam Panel Smooth Slide-in Animation ── */
+@keyframes sargamSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sargam-slide-enter {
+  animation: sargamSlideDown 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Sargam Book Note Highlighting ── */
+.note-active {
+  transform: translateY(-4px) !important;
+  outline: 2px solid #d2fd78;
+  box-shadow: 0 4px 14px rgba(210, 253, 120, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease-out, outline 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+@keyframes noteTargetPulse {
+  0%, 100% {
+    transform: translateY(0);
+    outline: 1.5px solid rgba(210, 253, 120, 0.45);
+    box-shadow: 0 0 0 rgba(210, 253, 120, 0);
+  }
+  50% {
+    transform: translateY(-3px);
+    outline: 2px solid #d2fd78;
+    box-shadow: 0 4px 14px rgba(210, 253, 120, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.note-target {
+  animation: noteTargetPulse 1.4s ease-in-out infinite;
+  z-index: 20 !important;
+}
+
+/* Hide PC keyboard shortcuts on touch-only screens */
+@media (pointer: coarse) {
+  .pc-key-row {
+    display: none !important;
+  }
+}
+
 /* ── Accessibility: prefers-reduced-motion ── */
 @media (prefers-reduced-motion: reduce) {
   .hero-stage * {

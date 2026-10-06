@@ -76,9 +76,46 @@ export const HomeView: React.FC<HomeViewProps> = ({
     }, 1200);
   }, [onNavigateToWritings]);
 
+  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
+  const autoScrollRafRef = useRef<number | null>(null);
+
+  const stopAutoscroll = useCallback(() => {
+    setIsAutoScrolling(false);
+    if (autoScrollRafRef.current) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
+  }, []);
+
+  const toggleAutoscroll = () => {
+    if (isAutoScrolling) {
+      stopAutoscroll();
+      return;
+    }
+
+    playClickSound('high');
+    setIsAutoScrolling(true);
+
+    const step = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (window.scrollY >= maxScroll - 10) {
+        stopAutoscroll();
+        return;
+      }
+
+      window.scrollBy({ top: 2.5, behavior: 'auto' });
+      autoScrollRafRef.current = requestAnimationFrame(step);
+    };
+
+    autoScrollRafRef.current = requestAnimationFrame(step);
+  };
+
   // Scroll Down only — No scroll up navigation
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      if (isAutoScrolling) {
+        stopAutoscroll();
+      }
       if (Date.now() - mountTimeRef.current < 700) return;
       const scrollPos = window.innerHeight + window.scrollY;
       const isBottom = scrollPos >= document.documentElement.scrollHeight - 20;
@@ -90,6 +127,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      if (isAutoScrolling) {
+        stopAutoscroll();
+      }
       touchStartY.current = e.touches[0].clientY;
     };
 
@@ -115,8 +155,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
+      if (autoScrollRafRef.current) {
+        cancelAnimationFrame(autoScrollRafRef.current);
+      }
     };
-  }, [triggerScrollToWritings]);
+  }, [isAutoScrolling, stopAutoscroll, triggerScrollToWritings]);
 
   return (
     <div className="relative w-full min-h-screen pt-20 pb-16 px-4 max-w-4xl mx-auto select-text font-sans page-transition">
@@ -136,6 +179,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <p className="text-sm font-mono text-neutral-500 mt-1">
               Bachelor of Business Administration • Creative Engineer • Project Lead
             </p>
+            <div className="mt-3.5 flex items-center gap-2 flex-wrap">
+              <button
+                onClick={toggleAutoscroll}
+                title="Automatically scroll through the CV"
+                className={`flex items-center gap-1.5 px-3 py-1 rounded text-micro font-mono transition-all cursor-pointer border ${
+                  isAutoScrolling
+                    ? 'bg-black text-[#d2fd78] border-black font-semibold shadow-xs scale-105'
+                    : 'bg-neutral-100 hover:bg-neutral-200 text-black border-neutral-200 font-medium'
+                }`}
+              >
+                <span>{isAutoScrolling ? 'Stop Autoscroll ⏸' : 'Autoscroll CV 📜'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Quick Contact Info */}
@@ -533,8 +589,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* Scroll Next Page Cue */}
         <button
-          onClick={triggerScrollToWritings}
+          onClick={() => {
+            playClickSound('high');
+            onNavigateToWritings?.();
+          }}
           className="flex items-center gap-1.5 text-xs text-black font-semibold hover:text-blue-600 transition-colors cursor-pointer animate-pulse"
+          title="Proceed to Page 3: Writings"
         >
           <span>Scroll down for Page 3: Writings</span>
           <ArrowDown size={13} className="animate-bounce" />
