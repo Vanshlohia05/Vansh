@@ -10,6 +10,7 @@ import { SeoAeoView } from './components/SeoAeoView';
 import { ProjectModal } from './components/ProjectModal';
 import { ArticleModal } from './components/ArticleModal';
 import { KingCursor } from './components/KingCursor';
+import { VellumOverlay } from './components/VellumOverlay';
 import { StuffItem } from './data/stuff';
 import { Artwork } from './data/homeArtworks';
 import { Article } from './data/writings';
@@ -41,6 +42,12 @@ export const App: React.FC = () => {
   // Modals
   const [selectedProject, setSelectedProject] = useState<StuffItem | Artwork | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+
+  // Vellum Drafting Grid Layer (Default ON 8pm-8am, normal view 8am-8pm)
+  const [vellumActive, setVellumActive] = useState<boolean>(() => {
+    const hour = new Date().getHours();
+    return hour >= 20 || hour < 8;
+  });
 
   // Initialize guestbook from local cache & synchronize live from Supabase
   useEffect(() => {
@@ -245,6 +252,8 @@ export const App: React.FC = () => {
           setActiveTab('guestbook');
           setGuestbookFormOpen(true);
         }}
+        vellumActive={vellumActive}
+        onToggleVellum={() => setVellumActive((prev) => !prev)}
       />
 
       {/* Main Page Content */}
@@ -336,6 +345,12 @@ export const App: React.FC = () => {
       <ArticleModal
         article={selectedArticle}
         onClose={() => setSelectedArticle(null)}
+      />
+
+      {/* Vellum Drafting Grid Layer */}
+      <VellumOverlay
+        isOpen={vellumActive}
+        onClose={() => setVellumActive(false)}
       />
 
     </div>

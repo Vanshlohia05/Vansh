@@ -14,6 +14,8 @@ interface HeaderProps {
   homeSlideInfo?: { current: number; total: number; title: string };
   guestbookCount?: number;
   onOpenSignGuestbook?: () => void;
+  vellumActive?: boolean;
+  onToggleVellum?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,7 +24,9 @@ export const Header: React.FC<HeaderProps> = ({
   onShuffle,
   homeSlideInfo,
   guestbookCount,
-  onOpenSignGuestbook
+  onOpenSignGuestbook,
+  vellumActive,
+  onToggleVellum,
 }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
@@ -200,8 +204,27 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* Col 7 & 8: About Toggle & Audio button */}
-        <div className="col-span-1 md:col-span-1 lg:col-span-2 flex items-center justify-end gap-3">
+        {/* Col 7 & 8: Grid, Audio & About Toggle */}
+        <div className="col-span-1 md:col-span-1 lg:col-span-2 flex items-center justify-end gap-2.5">
+          {/* Vellum Drafting Grid Toggle (Emoji only, no text) */}
+          {onToggleVellum && (
+            <button
+              onClick={() => {
+                playClickSound('tick');
+                onToggleVellum();
+              }}
+              title={vellumActive ? 'Hide Architectural Drafting Grid' : 'Show Architectural Drafting Grid'}
+              aria-label="Toggle Drafting Grid"
+              className={`flex items-center justify-center w-6 h-6 rounded border transition-all cursor-pointer text-xs ${
+                vellumActive
+                  ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
+                  : 'text-neutral-500 hover:text-black border-neutral-200 hover:border-neutral-400 bg-white/80'
+              }`}
+            >
+              <span className="leading-none text-[11px] select-none">📐</span>
+            </button>
+          )}
+
           {/* Subtle Sound Toggle */}
           <button
             onClick={handleSoundToggle}
@@ -301,6 +324,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               5. Guestbook
             </button>
+            {onToggleVellum && (
+              <button
+                onClick={() => {
+                  playClickSound('tick');
+                  onToggleVellum();
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-left py-1.5 px-2.5 rounded text-sub cursor-pointer transition-colors font-mono flex items-center justify-between ${
+                  vellumActive ? 'bg-blue-900 text-white font-medium shadow-sm' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
+                }`}
+              >
+                <span className="text-base select-none">📐</span>
+                <span className="text-[10px] font-sans">{vellumActive ? 'ON' : 'OFF'}</span>
+              </button>
+            )}
           </div>
         </div>
       )}
